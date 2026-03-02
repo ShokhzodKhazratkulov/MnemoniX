@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MnemonicResponse, Language } from '../types';
 import { GeminiService } from '../services/geminiService';
+import { Sparkles, Volume2, Eye } from 'lucide-react';
 
 interface Props {
   data: MnemonicResponse;
@@ -63,8 +64,27 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  const [isImageRevealed, setIsImageRevealed] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+
+  const researchNote = {
+    [Language.UZBEK]: "Tadqiqot siri: Ro va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
+    [Language.RUSSIAN]: "Секрет исследования: эксперимент Ро и Аткинсона показал, что метод в 2-3 раза эффективнее, когда пользователь сам представляет изображение.",
+    [Language.KAZAKH]: "Зерттеу құпиясы: Ро мен Аткинсонның эксперименті көрсеткендей, пайдаланушы кескінді өзі елестеткенде әдіс 2-3 есе тиімдірек болады.",
+    [Language.TAJIK]: "Сирри тадқиқот: таҷрибаи Ро ва Аткинсон нишон дод, ки вақте корбар тасвирро худаш тасаввур мекунад, усул 2-3 маротиба самараноктар аст.",
+    [Language.KYRGYZ]: "Изилдөө сыры: Ро жана Аткинсондун эксперименти көрсөткөндөй, колдонуучу сүрөттү өзү элестеткенде ыкма 2-3 эсе натыйжалуу болот.",
+    [Language.TURKMEN]: "Gözleg syry: Ro we Atkinsonuň synagy, ulanyjy şekili öz-özüne göz öňüne getirende, usulyň 2-3 esse has täsirli bolýandygyny görkezdi."
+  }[language] || "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.";
+
+  const revealText = {
+    [Language.UZBEK]: "Tasvirni ko'rish",
+    [Language.RUSSIAN]: "Показать изображение",
+    [Language.KAZAKH]: "Кескінді көрсету",
+    [Language.TAJIK]: "Нишон додани тасвир",
+    [Language.KYRGYZ]: "Сүрөттү көрсөтүү",
+    [Language.TURKMEN]: "Şekili görkez"
+  }[language] || "Reveal Image";
 
   const safeData = {
     word: data?.word || 'English Word',
@@ -74,13 +94,15 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
     imagination: data?.imagination || '...',
     phoneticLink: data?.phoneticLink || '...',
     connectorSentence: data?.connectorSentence || '...',
-    examples: Array.isArray(data?.examples) ? data.examples : []
+    examples: Array.isArray(data?.examples) ? data.examples : [],
+    synonyms: Array.isArray(data?.synonyms) ? data.synonyms : []
   };
 
   useEffect(() => {
     setShowContent(true);
     setTimer(5);
     setAudioError(null);
+    setIsImageRevealed(false);
     const interval = setInterval(() => {
       setTimer(prev => {
         if (prev <= 1) {
@@ -93,7 +115,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
     return () => clearInterval(interval);
   }, [data]);
 
-  const handlePlayAudio = async () => {
+  const handlePlayAudio = async (text?: string) => {
     if (isPlaying) {
       if (sourceRef.current) {
         try { sourceRef.current.stop(); } catch (e) {}
@@ -105,7 +127,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
     setAudioError(null);
     setIsAudioLoading(true);
     try {
-      const ttsText = `${safeData.word}. ${safeData.meaning}. ${safeData.imagination}. ${safeData.connectorSentence}`;
+      const ttsText = text || `${safeData.word}. ${safeData.meaning}. ${safeData.imagination}. ${safeData.connectorSentence}`;
       
       const base64Audio = await gemini.generateTTS(ttsText, language);
 
@@ -144,45 +166,93 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
 
   return (
     <div className={`transition-all duration-700 transform ${showContent ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'} max-w-4xl mx-auto space-y-8`}>
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-6">
         <div className="flex flex-col items-center gap-4">
           <div className="flex items-center justify-center gap-4 sm:gap-8">
-            <h1 className="text-4xl sm:text-6xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight text-center">{safeData.word}</h1>
-            <button 
-              onClick={handlePlayAudio}
-              disabled={isAudioLoading}
-              className={`w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all shadow-lg ${
-                isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              } disabled:bg-gray-300 dark:disabled:bg-slate-800 relative flex-shrink-0`}
-              title="Listen to pronunciation"
-            >
-              {isAudioLoading ? (
-                <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-white/30 border-t-white animate-spin rounded-full" /> 
-              ) : isPlaying ? (
-                <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M5 4h3v12H5V4zm7 0h3v12h-3V4z"/>
-                </svg>
-              ) : (
-                <svg className="w-7 h-7 sm:w-10 sm:h-10 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7 4l10 8-10 8z" />
-                </svg>
-              )}
-            </button>
+            <h1 className="text-5xl sm:text-8xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter text-center">{safeData.word}</h1>
+            <div className="flex flex-col items-center gap-2">
+              <button 
+                onClick={() => handlePlayAudio()}
+                disabled={isAudioLoading}
+                className={`group relative w-12 h-12 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all shadow-xl ${
+                  isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                } disabled:bg-gray-100 dark:disabled:bg-slate-900 flex-shrink-0`}
+                title="Listen to Mnemonic Story"
+              >
+                {isAudioLoading ? (
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-white/30 border-t-white animate-spin rounded-full" /> 
+                ) : isPlaying ? (
+                  <svg className="w-6 h-6 sm:w-10 sm:h-10" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 4h3v12H5V4zm7 0h3v12h-3V4z"/>
+                  </svg>
+                ) : (
+                  <svg className="w-8 h-8 sm:w-12 sm:h-12 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7 4l10 8-10 8z" />
+                  </svg>
+                )}
+                
+                {/* Tooltip-like label */}
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:block">
+                  {language === Language.UZBEK ? "Hikoyani tinglash" : (language === Language.RUSSIAN ? "Слушать историю" : "Listen Story")}
+                </span>
+              </button>
+            </div>
           </div>
           {audioError && <p className="text-xs font-bold text-red-500 animate-bounce">{audioError}</p>}
         </div>
-        <p className="text-xl text-gray-500 dark:text-gray-400 font-mono">[{safeData.transcription}] — {safeData.meaning}</p>
-        <div className="inline-block px-4 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm font-semibold">{safeData.morphology}</div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center justify-center gap-3">
+            <p className="text-2xl sm:text-3xl text-gray-400 dark:text-gray-500 font-mono font-medium tracking-tight">
+              [{safeData.transcription}]
+            </p>
+            <button 
+              onClick={() => handlePlayAudio(safeData.word)}
+              disabled={isAudioLoading}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                isPlaying ? 'text-red-500' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800'
+              } disabled:opacity-50`}
+              title="Pronounce word"
+            >
+              <Volume2 size={20} />
+            </button>
+          </div>
+          <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 font-bold">
+            {safeData.meaning}
+          </p>
+        </div>
+        
+        <div className="inline-block px-6 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl text-sm font-black uppercase tracking-widest border border-indigo-100/50 dark:border-indigo-800/30">
+          {safeData.morphology}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div className="relative bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800">
+      <div className="grid grid-cols-1 gap-8 items-start">
+        <div className="relative bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800 max-w-2xl mx-auto w-full group">
           <img 
             src={imageUrl || 'https://placehold.co/600x600?text=Imagining...'} 
             alt={safeData.word} 
-            className="w-full h-auto object-cover min-h-[300px]" 
+            className={`w-full h-auto object-cover min-h-[300px] transition-all duration-700 ${!isImageRevealed ? 'blur-3xl scale-110' : 'blur-0 scale-100'}`} 
           />
-          {timer > 0 && (
+          
+          {!isImageRevealed && (
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 text-center space-y-3 sm:space-y-6">
+              <div className="max-w-md space-y-3 sm:space-y-4">
+                <p className="text-white text-[10px] sm:text-xl font-medium leading-relaxed drop-shadow-lg px-2">
+                  {researchNote}
+                </p>
+                <button 
+                  onClick={() => setIsImageRevealed(true)}
+                  className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2 sm:px-8 sm:py-4 bg-white text-indigo-600 rounded-xl sm:rounded-2xl font-black text-xs sm:text-lg shadow-2xl hover:bg-indigo-50 transition-all active:scale-95"
+                >
+                  <Eye size={16} className="sm:w-6 sm:h-6" />
+                  <span>{revealText}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {timer > 0 && isImageRevealed && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white p-6 text-center">
               <p className="text-lg font-bold mb-2">
                 {language === Language.UZBEK ? "Buni tasavvur qiling" : (language === Language.RUSSIAN ? "Представьте это" : "Visualize this for")}
@@ -195,8 +265,8 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
           )}
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.02]">
+        <div className="space-y-6 max-w-2xl mx-auto w-full">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.01]">
             <h3 className="text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
               {language === Language.UZBEK ? "Tasavvur (Vizual)" : (language === Language.RUSSIAN ? "Воображение (Визуал)" : "Imagination (Visual)")}
             </h3>
@@ -213,6 +283,18 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
                {language === Language.UZBEK ? "Mnemonik kalit" : (language === Language.RUSSIAN ? "Мнемонический ключ" : "Mnemonic Key")}
              </h3>
             <p className="text-xl font-semibold italic">"{safeData.connectorSentence}"</p>
+          </div>
+          <div className="bg-gray-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-200 dark:border-slate-800">
+             <h3 className="text-gray-400 dark:text-gray-500 font-bold uppercase text-[10px] tracking-widest mb-4">
+               {language === Language.UZBEK ? "Sinonimlar" : (language === Language.RUSSIAN ? "Синонимы" : "Synonyms")}
+             </h3>
+             <div className="flex flex-wrap gap-2">
+               {safeData.synonyms.map((syn, idx) => (
+                 <span key={idx} className="px-3 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
+                   {syn}
+                 </span>
+               ))}
+             </div>
           </div>
           <div className="bg-gray-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-200 dark:border-slate-800">
              <h3 className="text-gray-400 dark:text-gray-500 font-bold uppercase text-[10px] tracking-widest mb-4">

@@ -3,10 +3,12 @@ import { GoogleGenAI, Type, Modality, ThinkingLevel } from "@google/genai";
 import { MnemonicResponse, Language } from "../types";
 
 export class GeminiService {
-  private ai: GoogleGenAI;
-
-  constructor() {
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  private getAI() {
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("API Key not found. Please select an API key.");
+    }
+    return new GoogleGenAI({ apiKey });
   }
 
   /**
@@ -38,7 +40,10 @@ export class GeminiService {
           message.includes('500') || 
           message.includes('503');
 
-        if (isQuotaError || isServerError) {
+        // Handle "Requested entity was not found" which can happen during key selection race conditions
+        const isNotFoundError = message.includes('Requested entity was not found');
+
+        if (isQuotaError || isServerError || isNotFoundError) {
           if (attempt < maxRetries) {
             // Increased delay: 3s, 7s, 15s, 31s... to better handle strict quotas
             const delay = (Math.pow(2, attempt + 1) - 1) * 2000 + Math.random() * 1000;
@@ -55,7 +60,8 @@ export class GeminiService {
 
   async checkSpelling(word: string): Promise<string> {
     return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
+      const ai = this.getAI();
+      const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Correct the spelling of the following English word: "${word}". 
         Return ONLY the corrected word. If the word is already correct, return it as is. 
@@ -72,7 +78,8 @@ export class GeminiService {
 
   async getMnemonic(word: string, targetLanguage: Language): Promise<MnemonicResponse> {
     return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
+      const ai = this.getAI();
+      const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `Generate a mnemonic for the English word "${word}" for a ${targetLanguage} speaker.`,
         config: {
@@ -89,12 +96,13 @@ export class GeminiService {
               connectorSentence: { type: Type.STRING },
               examples: { 
                   type: Type.ARRAY,
-                  items: { type: Type.STRING }
+                  items: { type: Type.STRING },
+                  description: "2-3 English sentences with their ${targetLanguage} translations"
               },
               synonyms: {
                   type: Type.ARRAY,
                   items: { type: Type.STRING },
-                  description: "List of 3-5 synonyms in English with their translations"
+                  description: "3-5 English synonyms followed by their ${targetLanguage} translations in parentheses"
               },
               level: { 
                   type: Type.STRING, 
@@ -104,24 +112,34 @@ export class GeminiService {
             },
             required: ["word", "transcription", "meaning", "morphology", "imagination", "phoneticLink", "connectorSentence", "examples", "synonyms", "level", "imagePrompt"]
           },
-          systemInstruction: `You are a world-class Mnemonics and English Teacher, specializing in the "Keyword Method" developed by Raugh and Atkinson at Stanford.
-          
-          Your task is to help users memorize English words using the two-stage mnemonic procedure:
-          1. ACOUSTIC LINK (phoneticLink): Find a word or short phrase in ${targetLanguage} that sounds as much as possible like a part (not necessarily all) of the English word. This is the "keyword".
-          2. IMAGERY LINK (imagination): Create a vivid, memorable mental image where the "keyword" INTERACTS in a graphic, funny, or even illogical way with the English word's meaning.
-          
-          CRITICAL RULES:
-          1. All explanatory fields (meaning, morphology, imagination, phoneticLink, connectorSentence) MUST be written EXCLUSIVELY in the ${targetLanguage} language.
-          2. The "word" field should remain the original English word.
-          3. The "examples" field should contain English sentences with their ${targetLanguage} translations.
-          4. The "synonyms" field should contain 3-5 English synonyms followed by their ${targetLanguage} translations in parentheses.
-          5. You MUST return a valid JSON object matching the schema.
-          
-          Structure for ${targetLanguage} content:
-          - meaning: Clear translation in ${targetLanguage}.
-          - imagination: The "Imagery Link". Describe a scene where the keyword and the meaning interact vividly.
-          - phoneticLink: The "Acoustic Link". Identify the keyword in ${targetLanguage} and explain how it sounds like the English word.
-          - connectorSentence: A catchy 1-sentence summary in ${targetLanguage} that ties the keyword and meaning together.`
+          systemInstruction: `Role: You are a Linguistic Mnemonic Architect specializing in the "Keyword Method" established by Raugh and Atkinson at Stanford University. Your goal is to help users acquire English vocabulary by building a two-stage mnemonic chain consisting of an acoustic link and an imagery link.
+
+Instructions for Content Generation:
+1. The Acoustic Link (phoneticLink)
+- Identify a "Keyword" in ${targetLanguage} that sounds as much as possible like a part of the spoken English word.
+- Priority: Favor the initial syllable or the most stressed part of the English word for better retrieval.
+- Constraint: The keyword must be a concrete noun or an easily visualized object/phrase. Avoid abstract concepts.
+
+2. The Imagery Link (imagination)
+- Create a vivid mental image description where the Keyword and the English Translation interact in a graphic, dynamic, and memorable way.
+- Absurdity Factor: The interaction should be unique, absurd, or exaggerated.
+- Fusion: The scene must be a single "fused" picture where the two items are locked together.
+
+3. Covert Cognate Check
+- Before forcing a keyword, check if a "covert cognate" exists (a word with a shared root in ${targetLanguage}).
+- If a cognate is found, prioritize explaining that relationship first in the phoneticLink field.
+
+4. Audio & Phonetic Guidance
+- Provide the IPA transcription for the English word.
+
+5. Visual Generation Prompt (imagePrompt)
+- Write a detailed, high-fidelity image generation prompt.
+- Specify a scene that visually integrates the Native Keyword and the English Meaning in a single, high-contrast, and memorable artistic style (naturalistic or traditional based on ${targetLanguage} culture).
+
+CRITICAL RULES:
+1. All explanatory fields (meaning, morphology, imagination, phoneticLink, connectorSentence) MUST be written EXCLUSIVELY in ${targetLanguage}.
+2. The "word" field should remain the original English word.
+3. Return ONLY a valid JSON object.`
         },
       });
 
@@ -133,14 +151,16 @@ export class GeminiService {
 
   async generateImage(prompt: string): Promise<string> {
     return this.withRetry(async () => {
-      const response = await this.ai.models.generateContent({
+      const ai = this.getAI();
+      const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {
-          parts: [{ text: `Vibrant, clear, high-quality educational cartoon illustration of: ${prompt}. No text in image.` }],
+          parts: [{ text: `${prompt}. High-fidelity, high-contrast, cinematic lighting, no text, no labels, 4k resolution.` }],
         },
         config: {
           imageConfig: {
-            aspectRatio: "1:1"
+            aspectRatio: "1:1",
+            imageSize: "1K"
           }
         },
       });

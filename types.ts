@@ -50,3 +50,12 @@ export enum AppView {
   FLASHCARDS = 'FLASHCARDS',
   PROFILE = 'PROFILE'
 }
+
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}

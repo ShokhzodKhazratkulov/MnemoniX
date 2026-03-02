@@ -1,9 +1,55 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { SavedMnemonic, Language } from '../types';
-import { RotateCcw, Flag, ChevronLeft, ChevronRight, X, CheckCircle } from 'lucide-react';
+import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2 } from 'lucide-react';
 import { MnemonicCard } from './MnemonicCard';
 import { motion, AnimatePresence } from 'motion/react';
+import { GeminiService } from '../services/geminiService';
+
+const gemini = new GeminiService();
+
+function decode(base64: string) {
+  if (!base64) return new Uint8Array(0);
+  try {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+  } catch (e) {
+    console.error("Base64 decode error:", e);
+    return new Uint8Array(0);
+  }
+}
+
+async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer | null> {
+  if (data.length === 0) return null;
+  const byteLength = data.byteLength;
+  const bufferToUse = byteLength % 2 === 0 ? data.buffer : data.buffer.slice(0, byteLength - 1);
+  const dataInt16 = new Int16Array(bufferToUse);
+  const frameCount = dataInt16.length / numChannels;
+  if (frameCount <= 0) return null;
+  try {
+    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+    for (let channel = 0; channel < numChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      for (let i = 0; i < frameCount; i++) {
+        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+      }
+    }
+    return buffer;
+  } catch (e) {
+    console.error("Error creating audio buffer:", e);
+    return null;
+  }
+}
 
 interface Props {
   savedMnemonics: SavedMnemonic[];
@@ -32,6 +78,48 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
   const [isFlipped, setIsFlipped] = useState(false);
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [selectedWord, setSelectedWord] = useState<SavedMnemonic | null>(null);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioContextRef = React.useRef<AudioContext | null>(null);
+  const sourceRef = React.useRef<AudioBufferSourceNode | null>(null);
+
+  const handlePlayAudio = async (text: string) => {
+    if (isPlaying) {
+      if (sourceRef.current) {
+        try { sourceRef.current.stop(); } catch (e) {}
+      }
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsAudioLoading(true);
+    try {
+      const base64Audio = await gemini.generateTTS(text, language);
+      if (!base64Audio) throw new Error("No audio data");
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+
+      const decodedData = decode(base64Audio);
+      const audioBuffer = await decodeAudioData(decodedData, audioContextRef.current, 24000, 1);
+
+      if (!audioBuffer) throw new Error("Failed to decode audio");
+
+      const source = audioContextRef.current.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContextRef.current.destination);
+      source.onended = () => setIsPlaying(false);
+      
+      sourceRef.current = source;
+      source.start(0);
+      setIsPlaying(true);
+    } catch (error) {
+      console.error("Audio error:", error);
+    } finally {
+      setIsAudioLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (forceCloseDetail) {
@@ -100,8 +188,8 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
   if (!isStarted) {
     if (selectedWord) {
       return (
-        <div className="max-w-4xl mx-auto animate-fadeIn mt-4 px-4 space-y-6">
-          <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] p-6 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-900 relative">
+        <div className="max-w-4xl mx-auto animate-fadeIn mt-4 px-2 sm:px-4 space-y-6">
+          <div className="bg-white dark:bg-slate-950 rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-900 relative">
             {/* Desktop/Tablet Back Button */}
             <button 
               onClick={() => setSelectedWord(null)}
@@ -217,43 +305,38 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
               <p className="text-white/70 font-mono mt-2 text-lg sm:text-xl drop-shadow-md">[{current.data.transcription}]</p>
             </div>
             
-            <div className="absolute top-6 left-6 sm:top-8 sm:left-8 flex gap-2">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleHard(current.id, !current.isHard);
-                }}
-                className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-2xl transition-all ${
-                  current.isHard ? 'bg-red-500 text-white' : 'bg-white/10 text-white/40 hover:bg-white/20'
-                }`}
-              >
-                <Flag size={20} fill={current.isHard ? "currentColor" : "none"} />
-              </button>
-
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleMastered(current.id, !current.isMastered);
-                }}
-                className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-2xl transition-all ${
-                  current.isMastered ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/40 hover:bg-white/20'
-                }`}
-              >
-                <CheckCircle size={20} fill={current.isMastered ? "currentColor" : "none"} />
-              </button>
-            </div>
-
             <div className="absolute top-6 right-6 sm:top-8 right-8 bg-white/10 backdrop-blur-xl px-4 py-1.5 sm:px-5 sm:py-2 rounded-full text-white/60 text-[10px] sm:text-xs font-black tracking-widest border border-white/5">
               {currentIndex + 1} / {filtered.length}
             </div>
           </div>
 
           {/* Back Side */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-16 flex flex-col justify-start sm:justify-center text-center shadow-2xl border-4 border-indigo-500 overflow-y-auto custom-scrollbar">
-            <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-24">
-              <div className="space-y-1 sm:space-y-2">
+          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 flex flex-col justify-start text-center shadow-2xl border-4 border-indigo-500 overflow-y-auto custom-scrollbar">
+            {/* Decorative Top Bar (White Line) */}
+            <div className="w-20 h-2 bg-white/30 rounded-full mx-auto mb-8 flex-shrink-0" />
+            
+            <div className="space-y-6 sm:space-y-10">
+              <div className="space-y-1 sm:space-y-2 relative">
                 <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "So'z" : (language === Language.RUSSIAN ? "Слово" : "Word")}</span>
-                <h3 className="text-4xl sm:text-5xl font-black text-white tracking-tighter">{current.word}</h3>
+                <div className="flex items-center justify-center gap-4">
+                  <h3 className="text-4xl sm:text-5xl font-black text-white tracking-tighter">{current.word}</h3>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(current.word);
+                    }}
+                    disabled={isAudioLoading}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                      isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-white/20 text-white hover:bg-white/30'
+                    } disabled:opacity-50`}
+                  >
+                    {isAudioLoading ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+                    ) : (
+                      <Volume2 size={20} />
+                    )}
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-1 sm:space-y-2">
@@ -261,7 +344,7 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
                 <p className="text-white font-black text-2xl sm:text-3xl px-2">{current.data.meaning}</p>
               </div>
 
-              <div className="space-y-2 sm:space-y-3 bg-white/10 rounded-3xl p-4 sm:p-6 backdrop-blur-md border border-white/10">
+              <div className="space-y-3 sm:space-y-4 bg-white/10 rounded-3xl p-6 sm:p-10 backdrop-blur-md border border-white/10">
                 <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Tasavvur" : (language === Language.RUSSIAN ? "Воображение" : "Imagination")}</span>
                 <p className="text-white/90 text-base sm:text-lg italic leading-relaxed">{current.data.imagination}</p>
               </div>
@@ -270,23 +353,58 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
                  <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Mnemonik bog'liqlik" : (language === Language.RUSSIAN ? "Мнемоническая связь" : "Mnemonic Link")}</span>
                  <p className="text-indigo-100 font-bold text-sm sm:text-base px-2">{current.data.phoneticLink}</p>
               </div>
+
+              {current.data.synonyms && current.data.synonyms.length > 0 && (
+                <div className="space-y-1 sm:space-y-2">
+                  <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Sinonimlar" : (language === Language.RUSSIAN ? "Синонимы" : "Synonyms")}</span>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {current.data.synonyms.map((syn, idx) => (
+                      <span key={idx} className="px-2 py-0.5 bg-white/10 rounded-lg text-xs font-medium text-white/90">
+                        {syn}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <button 
           onClick={handleShuffle}
-          className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-white rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+          className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-white rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95 flex-shrink-0"
           title="Shuffle"
         >
-          <RotateCcw size={24} />
+          <Shuffle size={20} className="sm:size-6" />
         </button>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button 
+            onClick={() => onToggleHard(current.id, !current.isHard)}
+            className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-all ${
+              current.isHard ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-red-500'
+            }`}
+            title="Mark as Hard"
+          >
+            <Flag size={20} fill={current.isHard ? "currentColor" : "none"} />
+          </button>
+
+          <button 
+            onClick={() => onToggleMastered(current.id, !current.isMastered)}
+            className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-all ${
+              current.isMastered ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-emerald-500'
+            }`}
+            title="Mark as Mastered"
+          >
+            <CheckCircle size={20} fill={current.isMastered ? "currentColor" : "none"} />
+          </button>
+        </div>
 
         <button 
           onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-          className="flex-1 py-4 sm:py-5 bg-gray-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-2xl font-black transition-all disabled:opacity-30 active:scale-95 text-base sm:text-lg"
+          className="flex-1 py-3 sm:py-5 bg-gray-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-2xl font-black transition-all disabled:opacity-30 active:scale-95 text-sm sm:text-lg"
           disabled={currentIndex === 0}
         >
           {t.prev}
@@ -301,7 +419,7 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
               setCurrentIndex(0);
             }
           }}
-          className="flex-[2] py-4 sm:py-5 bg-indigo-600 text-white rounded-2xl font-black shadow-2xl shadow-indigo-500/20 transition-all active:scale-95 text-lg sm:text-xl"
+          className="flex-[1.5] py-3 sm:py-5 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-500/20 transition-all active:scale-95 text-sm sm:text-lg"
         >
           {currentIndex === filtered.length - 1 ? t.finish : t.next}
         </button>

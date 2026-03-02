@@ -18,34 +18,34 @@ const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
         {/* Step 1 */}
-        <div className="group glass-card p-10 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-500">
+        <div className="group bg-white/90 dark:bg-slate-900/60 backdrop-blur-lg border border-gray-100 dark:border-slate-800/20 rounded-[2.5rem] shadow-xl shadow-indigo-500/5 p-10 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-500">
           <div className="w-16 h-16 bg-indigo-500/10 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-8 group-hover:scale-110 transition-transform">
             <Search size={32} strokeWidth={2.5} />
           </div>
-          <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-4">{t.howItWorksStep1}</h4>
-          <p className="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+          <h4 className="text-2xl font-black text-slate-900 dark:text-white mb-4">{t.howItWorksStep1}</h4>
+          <p className="text-slate-600 dark:text-gray-400 font-medium leading-relaxed">
             {t.howItWorksStep1Desc}
           </p>
         </div>
 
         {/* Step 2 */}
-        <div className="group glass-card p-10 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-500">
+        <div className="group bg-white/90 dark:bg-slate-900/60 backdrop-blur-lg border border-gray-100 dark:border-slate-800/20 rounded-[2.5rem] shadow-xl shadow-indigo-500/5 p-10 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-500">
           <div className="w-16 h-16 bg-purple-500/10 dark:bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 mb-8 group-hover:scale-110 transition-transform">
             <Sparkles size={32} strokeWidth={2.5} />
           </div>
-          <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-4">{t.howItWorksStep2}</h4>
-          <p className="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+          <h4 className="text-2xl font-black text-slate-900 dark:text-white mb-4">{t.howItWorksStep2}</h4>
+          <p className="text-slate-600 dark:text-gray-400 font-medium leading-relaxed">
             {t.howItWorksStep2Desc}
           </p>
         </div>
 
         {/* Step 3 */}
-        <div className="group glass-card p-10 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-500">
+        <div className="group bg-white/90 dark:bg-slate-900/60 backdrop-blur-lg border border-gray-100 dark:border-slate-800/20 rounded-[2.5rem] shadow-xl shadow-indigo-500/5 p-10 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-500">
           <div className="w-16 h-16 bg-emerald-500/10 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-8 group-hover:scale-110 transition-transform">
             <Brain size={32} strokeWidth={2.5} />
           </div>
-          <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-4">{t.howItWorksStep3}</h4>
-          <p className="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+          <h4 className="text-2xl font-black text-slate-900 dark:text-white mb-4">{t.howItWorksStep3}</h4>
+          <p className="text-slate-600 dark:text-gray-400 font-medium leading-relaxed">
             {t.howItWorksStep3Desc}
           </p>
         </div>

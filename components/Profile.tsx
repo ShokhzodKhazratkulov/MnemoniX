@@ -9,29 +9,14 @@ import { Language } from '../types';
 interface Props {
   user: User | null;
   totalWords: number;
+  masteredCount: number;
   onSignOut: () => void;
   onSignIn: () => void;
   language: Language;
   t: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, totalWords, onSignOut, onSignIn, language, t }) => {
-  const [masteredCount, setMasteredCount] = useState(0);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchStats = async () => {
-      const { count } = await supabase
-        .from('user_words')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('status', 'mastered');
-      
-      setMasteredCount(count || 0);
-    };
-    fetchStats();
-  }, [user?.id]);
-
+export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSignOut, onSignIn, language, t }) => {
   const joinDate = user ? new Date(user.created_at).toLocaleDateString(
     language === Language.RUSSIAN ? 'ru-RU' : 
     language === Language.UZBEK ? 'uz-UZ' : 'en-US', 

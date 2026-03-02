@@ -175,33 +175,33 @@ export const SearchPage: React.FC<SearchPageProps> = ({
       {/* Content Area */}
       <div className="min-h-[400px]">
         {state === AppState.LOADING && (
-          <div className="flex flex-col items-center justify-center py-20 space-y-10">
+          <div className="flex flex-col items-center justify-center py-8 sm:py-12 space-y-6 sm:space-y-8">
             {/* Custom Loading Animation from Screenshot */}
             <div className="relative flex items-center justify-center">
               {/* Outer Ring */}
-              <div className="w-48 h-48 border-[6px] border-gray-100 dark:border-slate-800 rounded-full"></div>
+              <div className="w-32 h-32 sm:w-48 sm:h-48 border-[6px] border-gray-100 dark:border-slate-800 rounded-full"></div>
               {/* Spinning Progress */}
-              <div className="absolute inset-0 w-48 h-48 border-[6px] border-transparent border-t-indigo-600 border-r-indigo-400 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 w-32 h-32 sm:w-48 sm:h-48 border-[6px] border-transparent border-t-indigo-600 border-r-indigo-400 rounded-full animate-spin"></div>
               {/* Inner Circle with M */}
-              <div className="absolute w-32 h-32 bg-indigo-600/10 dark:bg-indigo-500/10 rounded-full flex items-center justify-center">
-                <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                  <span className="text-4xl font-black">M</span>
+              <div className="absolute w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600/10 dark:bg-indigo-500/10 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                  <span className="text-3xl sm:text-4xl font-black">M</span>
                 </div>
               </div>
             </div>
 
-            <div className="text-center space-y-6">
-              <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white max-w-md mx-auto leading-tight">
+            <div className="text-center space-y-4">
+              <p className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white max-w-md mx-auto leading-tight">
                 {t.loadingStory}
               </p>
-              <div className="space-y-4">
-                <p className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] text-sm uppercase animate-pulse">
+              <div className="space-y-3">
+                <p className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] text-xs sm:text-sm uppercase animate-pulse">
                   {mnemonic ? t.creatingImage : t.checkingSpelling}
                 </p>
                 <div className="flex justify-center gap-2">
-                  <div className="w-3 h-3 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-3 h-3 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-3 h-3 bg-indigo-600 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce"></div>
                 </div>
               </div>
             </div>

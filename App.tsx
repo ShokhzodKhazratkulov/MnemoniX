@@ -40,8 +40,6 @@ import AboutSection from './components/AboutSection';
 import { SearchPage } from './components/SearchPage';
 import { FeedbackModal } from './components/FeedbackModel';
 
-const gemini = new GeminiService();
-
 const TRANSLATIONS: Record<Language, any> = {
   [Language.UZBEK]: {
     heroTitle: "Xorijiy so'zlarni bir zumda eslab qoling",
@@ -462,6 +460,10 @@ const TRANSLATIONS: Record<Language, any> = {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [hasKey, setHasKey] = useState(true);
+
+  const gemini = React.useMemo(() => new GeminiService(), []);
+
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<AppView>(AppView.HOME);
   const [viewHistory, setViewHistory] = useState<AppView[]>([]);
@@ -664,6 +666,8 @@ export default function App() {
   if (!user && !isGuest) {
     return <Auth onSuccess={() => {}} onGuestMode={() => setIsGuest(true)} />;
   }
+
+  const masteredCount = savedMnemonics.filter(m => m.isMastered).length;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] transition-colors duration-500 font-sans selection:bg-indigo-100 selection:text-indigo-900">
@@ -960,6 +964,7 @@ export default function App() {
               <Profile 
                 user={user} 
                 totalWords={savedMnemonics.length} 
+                masteredCount={masteredCount}
                 onSignOut={() => { supabase.auth.signOut(); setIsGuest(false); }} 
                 onSignIn={() => setIsGuest(false)}
                 language={language}
