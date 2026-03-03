@@ -48,7 +48,37 @@ export enum AppView {
   SEARCH = 'SEARCH',
   DASHBOARD = 'DASHBOARD',
   FLASHCARDS = 'FLASHCARDS',
-  PROFILE = 'PROFILE'
+  PROFILE = 'PROFILE',
+  POSTS = 'POSTS',
+  MY_POSTS = 'MY_POSTS',
+  CREATE_POST = 'CREATE_POST'
+}
+
+export interface Post {
+  id: string;
+  post_metadata: {
+    username: string;
+    timestamp: number;
+    user_id: string;
+  };
+  mnemonic_data: {
+    english_word: string;
+    native_keyword: string;
+    story: string;
+  };
+  visuals: {
+    user_uploaded_image: string | null;
+    ui_style: 'light' | 'dark';
+  };
+  language: Language;
+  engagement: {
+    likes: number;
+    dislikes: number;
+    impression_emojis: { emoji: string; count: number }[];
+    user_liked?: boolean;
+    user_disliked?: boolean;
+    user_emoji?: string;
+  };
 }
 
 declare global {

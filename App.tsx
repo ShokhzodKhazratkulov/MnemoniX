@@ -39,6 +39,7 @@ import { Profile } from './components/Profile';
 import AboutSection from './components/AboutSection';
 import { SearchPage } from './components/SearchPage';
 import { FeedbackModal } from './components/FeedbackModel';
+import { Posts } from './components/Posts';
 
 const TRANSLATIONS: Record<Language, any> = {
   [Language.UZBEK]: {
@@ -52,6 +53,7 @@ const TRANSLATIONS: Record<Language, any> = {
     navSearch: "Qidiruv",
     navDash: "Statistika",
     navFlash: "Kartalar",
+    navPosts: "Postlar",
     navProfile: "Profil",
     howItWorksTitle: "Bu qanday ishlaydi?",
     howItWorksStep1: "So'zni qidiring",
@@ -107,7 +109,8 @@ const TRANSLATIONS: Record<Language, any> = {
       editProfile: "Profilni tahrirlash",
       signOut: "Chiqish",
       signIn: "Kirish / Hisob yaratish",
-      hardWords: "Qiyin so'zlar"
+      hardWords: "Qiyin so'zlar",
+      yourPosts: "Sening Postlaring"
     }
   },
   [Language.RUSSIAN]: {
@@ -121,6 +124,7 @@ const TRANSLATIONS: Record<Language, any> = {
     navSearch: "Поиск",
     navDash: "Статистика",
     navFlash: "Карты",
+    navPosts: "Посты",
     navProfile: "Профиль",
     howItWorksTitle: "Как это работает?",
     howItWorksStep1: "Найдите слово",
@@ -176,7 +180,8 @@ const TRANSLATIONS: Record<Language, any> = {
       editProfile: "Редактировать профиль",
       signOut: "Выйти",
       signIn: "Войти / Создать аккаунт",
-      hardWords: "Трудные слова"
+      hardWords: "Трудные слова",
+      yourPosts: "Ваши Посты"
     }
   },
   [Language.KAZAKH]: {
@@ -190,6 +195,7 @@ const TRANSLATIONS: Record<Language, any> = {
     navSearch: "Іздеу",
     navDash: "Статистика",
     navFlash: "Карталар",
+    navPosts: "Посттар",
     navProfile: "Профиль",
     howItWorksTitle: "Бұл қалай жұмыс істейді?",
     howItWorksStep1: "Сөзді іздеңіз",
@@ -245,7 +251,8 @@ const TRANSLATIONS: Record<Language, any> = {
       editProfile: "Профильді өңдеу",
       signOut: "Шығу",
       signIn: "Кіру / Тіркелгі жасау",
-      hardWords: "Қиын сөздер"
+      hardWords: "Қиын сөздер",
+      yourPosts: "Сіздің Посттарыңыз"
     }
   },
   [Language.TAJIK]: {
@@ -259,6 +266,7 @@ const TRANSLATIONS: Record<Language, any> = {
     navSearch: "Ҷустуҷӯ",
     navDash: "Омор",
     navFlash: "Кортҳо",
+    navPosts: "Постҳо",
     navProfile: "Профил",
     howItWorksTitle: "Ин чӣ гуна кор мекунад?",
     howItWorksStep1: "Калимаро ҷӯед",
@@ -314,7 +322,8 @@ const TRANSLATIONS: Record<Language, any> = {
       editProfile: "Таҳрири профил",
       signOut: "Баромадан",
       signIn: "Даромадан / Сохтани ҳисоб",
-      hardWords: "Калимаҳои душвор"
+      hardWords: "Калимаҳои душвор",
+      yourPosts: "Постҳои Шумо"
     }
   },
   [Language.KYRGYZ]: {
@@ -328,6 +337,7 @@ const TRANSLATIONS: Record<Language, any> = {
     navSearch: "Издөө",
     navDash: "Статистика",
     navFlash: "Карталар",
+    navPosts: "Посттор",
     navProfile: "Профиль",
     howItWorksTitle: "Бул кантип иштейт?",
     howItWorksStep1: "Сөздү издеңиз",
@@ -383,7 +393,8 @@ const TRANSLATIONS: Record<Language, any> = {
       editProfile: "Профилди түзөтүү",
       signOut: "Чыгуу",
       signIn: "Кирүү / Аккаунт түзүү",
-      hardWords: "Кыйын сөздөр"
+      hardWords: "Кыйын сөздөр",
+      yourPosts: "Сиздин Постторуңуз"
     }
   },
   [Language.TURKMEN]: {
@@ -397,6 +408,7 @@ const TRANSLATIONS: Record<Language, any> = {
     navSearch: "Gözleg",
     navDash: "Statistika",
     navFlash: "Kartalar",
+    navPosts: "Postlar",
     navProfile: "Profil",
     howItWorksTitle: "Bu nähili işleýär?",
     howItWorksStep1: "Sözi gözläň",
@@ -452,7 +464,8 @@ const TRANSLATIONS: Record<Language, any> = {
       editProfile: "Profili tahrirlemek",
       signOut: "Çykmak",
       signIn: "Girmek / Hasap döretmek",
-      hardWords: "Kyn sözler"
+      hardWords: "Kyn sözler",
+      yourPosts: "Seniň Postlaryň"
     }
   },
 };
@@ -508,9 +521,19 @@ export default function App() {
     }
 
     // 3. Specific views that should always go to HOME
-    if (view === AppView.FLASHCARDS || view === AppView.DASHBOARD || view === AppView.SEARCH) {
+    if (view === AppView.FLASHCARDS || view === AppView.DASHBOARD || view === AppView.SEARCH || view === AppView.POSTS) {
       setView(AppView.HOME);
       setViewHistory([]);
+      return;
+    }
+
+    if (view === AppView.MY_POSTS) {
+      setView(AppView.PROFILE);
+      return;
+    }
+
+    if (view === AppView.CREATE_POST) {
+      setView(AppView.POSTS);
       return;
     }
 
@@ -734,6 +757,7 @@ export default function App() {
               {[
                 { id: AppView.HOME, label: t.navHome },
                 { id: AppView.SEARCH, label: t.navSearch },
+                { id: AppView.POSTS, label: t.navPosts },
                 { id: AppView.DASHBOARD, label: t.navDash },
                 { id: AppView.FLASHCARDS, label: t.navFlash }
               ].map((item) => (
@@ -987,9 +1011,28 @@ export default function App() {
                 masteredCount={masteredCount}
                 onSignOut={() => { supabase.auth.signOut(); setIsGuest(false); }} 
                 onSignIn={() => setIsGuest(false)}
+                onNavigate={navigateTo}
                 language={language}
                 t={t.profile}
               />
+            </motion.div>
+          )}
+
+          {view === AppView.POSTS && (
+            <motion.div key="posts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Posts user={user} language={language} theme={theme} viewMode="all" onNavigate={setView} />
+            </motion.div>
+          )}
+
+          {view === AppView.MY_POSTS && (
+            <motion.div key="my-posts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Posts user={user} language={language} theme={theme} viewMode="mine" onNavigate={setView} />
+            </motion.div>
+          )}
+
+          {view === AppView.CREATE_POST && (
+            <motion.div key="create-post" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Posts user={user} language={language} theme={theme} viewMode="create" onNavigate={setView} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -1001,6 +1044,7 @@ export default function App() {
           {[
             { id: AppView.HOME, icon: <Home size={22} />, label: t.navHome },
             { id: AppView.SEARCH, icon: <Search size={22} />, label: t.navSearch },
+            { id: AppView.POSTS, icon: <MessageSquare size={22} />, label: t.navPosts },
             { id: AppView.DASHBOARD, icon: <LayoutDashboard size={22} />, label: t.navDash },
             { id: AppView.FLASHCARDS, icon: <Layers size={22} />, label: t.navFlash }
           ].map((item) => (

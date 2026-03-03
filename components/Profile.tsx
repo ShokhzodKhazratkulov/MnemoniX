@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { User } from '@supabase/supabase-js';
 import { motion } from 'motion/react';
-import { User as UserIcon, BookOpen, Award, Calendar, Settings, ChevronRight, LogOut } from 'lucide-react';
+import { User as UserIcon, BookOpen, Award, Calendar, Settings, ChevronRight, LogOut, MessageSquare } from 'lucide-react';
 
-import { Language } from '../types';
+import { Language, AppView } from '../types';
 
 interface Props {
   user: User | null;
@@ -12,11 +12,12 @@ interface Props {
   masteredCount: number;
   onSignOut: () => void;
   onSignIn: () => void;
+  onNavigate: (view: AppView) => void;
   language: Language;
   t: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSignOut, onSignIn, language, t }) => {
+export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSignOut, onSignIn, onNavigate, language, t }) => {
   const joinDate = user ? new Date(user.created_at).toLocaleDateString(
     language === Language.RUSSIAN ? 'ru-RU' : 
     language === Language.UZBEK ? 'uz-UZ' : 'en-US', 
@@ -107,6 +108,21 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSi
             </div>
             <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
           </button>
+
+          {user && (
+            <button 
+              onClick={() => onNavigate(AppView.MY_POSTS)}
+              className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
+                  <MessageSquare size={20} />
+                </div>
+                <span className="font-bold text-gray-700 dark:text-gray-300">{t.yourPosts}</span>
+              </div>
+              <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
           
           {user ? (
             <button 
