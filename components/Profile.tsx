@@ -10,6 +10,7 @@ interface Props {
   user: User | null;
   totalWords: number;
   masteredCount: number;
+  userPostCount: number;
   onSignOut: () => void;
   onSignIn: () => void;
   onNavigate: (view: AppView) => void;
@@ -17,7 +18,7 @@ interface Props {
   t: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSignOut, onSignIn, onNavigate, language, t }) => {
+export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, userPostCount, onSignOut, onSignIn, onNavigate, language, t }) => {
   const joinDate = user ? new Date(user.created_at).toLocaleDateString(
     language === Language.RUSSIAN ? 'ru-RU' : 
     language === Language.UZBEK ? 'uz-UZ' : 'en-US', 
@@ -55,7 +56,7 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSi
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -72,9 +73,9 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSi
         </motion.div>
 
         <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
           className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6"
         >
           <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center">
@@ -83,6 +84,22 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, onSi
           <div>
             <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.mastered}</p>
             <p className="text-3xl font-black text-gray-900 dark:text-white">{masteredCount}</p>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => onNavigate(AppView.MY_POSTS)}
+          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-indigo-500 transition-colors group"
+        >
+          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <MessageSquare size={32} />
+          </div>
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.yourPosts}</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{userPostCount}</p>
           </div>
         </motion.div>
       </div>

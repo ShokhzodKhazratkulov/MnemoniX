@@ -28,6 +28,7 @@ import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic } from './
 import { GeminiService } from './services/geminiService';
 import { supabase } from './services/supabase';
 import { User } from '@supabase/supabase-js';
+import { usePosts } from './PostContext';
 
 // Components
 import { Dashboard } from './components/Dashboard';
@@ -491,7 +492,13 @@ export default function App() {
   const [imageUrl, setImageUrl] = useState('');
   const [savedMnemonics, setSavedMnemonics] = useState<SavedMnemonic[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { posts } = usePosts();
   const [showFeedback, setShowFeedback] = useState(false);
+
+  // Scroll to top on view change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -1009,6 +1016,7 @@ export default function App() {
                 user={user} 
                 totalWords={savedMnemonics.length} 
                 masteredCount={masteredCount}
+                userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id).length}
                 onSignOut={() => { supabase.auth.signOut(); setIsGuest(false); }} 
                 onSignIn={() => setIsGuest(false)}
                 onNavigate={navigateTo}

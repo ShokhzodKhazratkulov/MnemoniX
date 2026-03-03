@@ -18,7 +18,8 @@ import {
   Loader2,
   Search,
   ChevronLeft,
-  Mic
+  Mic,
+  Eye
 } from 'lucide-react';
 import { Language, Post, AppView } from '../types';
 import { supabase } from '../services/supabase';
@@ -97,7 +98,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       loginRequired: "Post yaratish uchun tizimga kiring",
       researchNote: "Tadqiqot siri: Raugh va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
       searchPlaceholder: "So'zlarni yoki kalit so'zlarni qidirish...",
-      yourPosts: "Sening Postlaring"
+      yourPosts: "Sening Postlaring",
+      revealImage: "Tasvirni ko'rish"
     },
     [Language.RUSSIAN]: {
       title: "Сообщество",
@@ -111,7 +113,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       loginRequired: "Войдите, чтобы создать пост",
       researchNote: "Секрет исследования: Эксперимент Ро и Аткинсона показал, что метод в 2-3 раза эффективнее, когда пользователь сам представляет образ.",
       searchPlaceholder: "Поиск слов или ключевых слов...",
-      yourPosts: "Ваши Посты"
+      yourPosts: "Ваши Посты",
+      revealImage: "Показать изображение"
     },
     [Language.KAZAKH]: {
       title: "Қауымдастық",
@@ -125,7 +128,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       loginRequired: "Пост жасау үшін жүйеге кіріңіз",
       researchNote: "Зерттеу құпиясы: Ро мен Аткинсонның тәжірибесі көрсеткендей, пайдаланушы бейнені өзі елестеткенде әдіс 2-3 есе тиімдірек болады.",
       searchPlaceholder: "Сөздерді немесе кілт сөздерді іздеу...",
-      yourPosts: "Сіздің Посттарыңыз"
+      yourPosts: "Сіздің Посттарыңыз",
+      revealImage: "Кескінді көрсету"
     },
     [Language.TAJIK]: {
       title: "Ҳамҷамоа",
@@ -139,7 +143,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       loginRequired: "Барои эҷоди пост ворид шавед",
       researchNote: "Сирри тадқиқот: Таҷрибаи Ро ва Аткинсон нишон дод, ки вақте корбар тасвирро худаш тасаввур мекунад, метод 2-3 маротиба самараноктар мешавад.",
       searchPlaceholder: "Ҷустуҷӯи калимаҳо ё калимаҳои калидӣ...",
-      yourPosts: "Постҳои Шумо"
+      yourPosts: "Постҳои Шумо",
+      revealImage: "Нишон додани тасвир"
     },
     [Language.KYRGYZ]: {
       title: "Коомчулук",
@@ -153,7 +158,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       loginRequired: "Пост түзүү үчүн кириңиз",
       researchNote: "Изилдөө сыры: Ро жана Аткинсондун тажрыйбасы көрсөткөндөй, колдонуучу образды өзү элестеткенде ыкма 2-3 эсе натыйжалуу болот.",
       searchPlaceholder: "Сөздөрдү же ачкыч сөздөрдү издөө...",
-      yourPosts: "Сиздин Постторуңуз"
+      yourPosts: "Сиздин Постторуңуз",
+      revealImage: "Сүрөттү көрсөтүү"
     },
     [Language.TURKMEN]: {
       title: "Jemgyýet",
@@ -167,7 +173,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       loginRequired: "Post döretmek üçin ulgama giriň",
       researchNote: "Gözleg syry: Ro we Atkinsonyň tejribesi görkezişi ýaly, ulanyjy şekili özi göz öňüne getirende usul 2-3 esse has täsirli bolýar.",
       searchPlaceholder: "Sözleri ýa-da açar sözleri gözle...",
-      yourPosts: "Seniň Postlaryň"
+      yourPosts: "Seniň Postlaryň",
+      revealImage: "Şekili görkez"
     }
   }[language] || {
     title: "Community",
@@ -180,7 +187,9 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
     empty: "No posts yet. Be the first to share!",
     loginRequired: "Sign in to create a post",
     researchNote: "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.",
-    searchPlaceholder: "Search words or keywords..."
+    searchPlaceholder: "Search words or keywords...",
+    yourPosts: "Your Posts",
+    revealImage: "Reveal Image"
   };
 
   useEffect(() => {
@@ -360,7 +369,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
           </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} theme={theme} onUpdate={(updater) => updatePost(post.id, updater)} />
+            <PostCard key={post.id} post={post} theme={theme} t={t} onUpdate={(updater) => updatePost(post.id, updater)} />
           ))
         ) : (
           <div className="text-center py-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl">
@@ -373,7 +382,9 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
   );
 };
 
-const PostCard: React.FC<{ post: Post, theme: string, onUpdate: (updater: (post: Post) => Post) => void }> = ({ post, theme, onUpdate }) => {
+const PostCard: React.FC<{ post: Post, theme: string, t: any, onUpdate: (updater: (post: Post) => Post) => void }> = ({ post, theme, t, onUpdate }) => {
+  const [isImageRevealed, setIsImageRevealed] = useState(false);
+
   const handleLike = () => {
     onUpdate(prev => ({
       ...prev,
@@ -491,13 +502,28 @@ const PostCard: React.FC<{ post: Post, theme: string, onUpdate: (updater: (post:
 
         {/* Image if exists */}
         {post.visuals.user_uploaded_image && (
-          <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800">
+          <div className="relative rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-800 group">
             <img 
               src={post.visuals.user_uploaded_image} 
               alt={post.mnemonic_data.english_word}
-              className="w-full h-auto object-cover max-h-80"
+              className={`w-full h-auto object-cover max-h-80 transition-all duration-700 ${!isImageRevealed ? 'blur-3xl scale-110' : 'blur-0 scale-100'}`}
               referrerPolicy="no-referrer"
             />
+            
+            {!isImageRevealed && (
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center space-y-3">
+                <p className="text-white text-[10px] font-medium leading-relaxed drop-shadow-lg max-w-xs">
+                  {t.researchNote}
+                </p>
+                <button 
+                  onClick={() => setIsImageRevealed(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-xl font-black text-xs shadow-xl hover:bg-indigo-50 transition-all active:scale-95"
+                >
+                  <Eye size={14} />
+                  <span>{t.revealImage}</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
