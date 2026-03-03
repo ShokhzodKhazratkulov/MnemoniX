@@ -67,6 +67,17 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
   const [isImageRevealed, setIsImageRevealed] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (sourceRef.current) {
+        try { sourceRef.current.stop(); } catch (e) {}
+      }
+    };
+  }, []);
 
   const researchNote = {
     [Language.UZBEK]: "Tadqiqot siri: Ro va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
@@ -149,18 +160,20 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
       const source = audioContextRef.current.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(audioContextRef.current.destination);
-      source.onended = () => setIsPlaying(false);
+      source.onended = () => {
+        if (isMounted.current) setIsPlaying(false);
+      };
       
       sourceRef.current = source;
       source.start(0);
-      setIsPlaying(true);
+      if (isMounted.current) setIsPlaying(true);
     } catch (error: any) {
       console.error("Audio Playback Error:", error);
       const message = error?.message || String(error);
       const isQuota = message.includes('429') || message.includes('RESOURCE_EXHAUSTED');
-      setAudioError(isQuota ? "Audio limit reached (429). Please wait." : "Audio error. Try again.");
+      if (isMounted.current) setAudioError(isQuota ? "Audio limit reached (429). Please wait." : "Audio error. Try again.");
     } finally {
-      setIsAudioLoading(false);
+      if (isMounted.current) setIsAudioLoading(false);
     }
   };
 

@@ -35,10 +35,21 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
     const last7DaysCount = savedMnemonics.filter(m => m.timestamp >= sevenDaysAgo).length;
     const averageDaily = Math.round(last7DaysCount / 7);
 
-    // Level logic (mock for now)
+    // Level logic: Analyze today's words first, then all words
+    const todayWords = savedMnemonics.filter(m => m.timestamp >= today);
+    const targetWords = todayWords.length > 0 ? todayWords : savedMnemonics;
+    
     let level = "BEGINNER";
-    if (totalCount > 100) level = "INTERMEDIATE";
-    if (totalCount > 500) level = "ADVANCED";
+    if (targetWords.length > 0) {
+      const levelCounts: Record<string, number> = {};
+      targetWords.forEach(m => {
+        const l = (m.data.level || 'BEGINNER').toUpperCase();
+        levelCounts[l] = (levelCounts[l] || 0) + 1;
+      });
+      
+      // Find the level with the highest count
+      level = Object.entries(levelCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+    }
 
     // Chart data
     const chartData = [];

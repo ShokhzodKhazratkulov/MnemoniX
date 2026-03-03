@@ -57,7 +57,9 @@ interface Props {
   onToggleHard: (id: string, isHard: boolean) => void;
   onToggleMastered: (id: string, isMastered: boolean) => void;
   onDetailChange?: (isOpen: boolean) => void;
+  onReviewChange?: (isReviewing: boolean) => void;
   forceCloseDetail?: boolean;
+  forceCloseReview?: boolean;
 }
 
 const FLASH_T: Record<Language, any> = {
@@ -69,7 +71,7 @@ const FLASH_T: Record<Language, any> = {
   [Language.TURKMEN]: { title: "Fleş-kartalar", range: "Döwri saýlaň", empty: "Heniz hiç zat öwrenilmedi", start: "Başlamak", next: "Indiki", prev: "Öňki", finish: "Tamamlamak", from: "Başlanýan senesi", to: "Gutarýan senesi", hint: "Kartany öwürmek üçin basyň", hardWords: "Kyn sözler" },
 };
 
-export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggleHard, onToggleMastered, onDetailChange, forceCloseDetail }) => {
+export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggleHard, onToggleMastered, onDetailChange, onReviewChange, forceCloseDetail, forceCloseReview }) => {
   const t = FLASH_T[language];
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -82,6 +84,17 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
   const [isPlaying, setIsPlaying] = useState(false);
   const audioContextRef = React.useRef<AudioContext | null>(null);
   const sourceRef = React.useRef<AudioBufferSourceNode | null>(null);
+  const isMounted = React.useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (sourceRef.current) {
+        try { sourceRef.current.stop(); } catch (e) {}
+      }
+    };
+  }, []);
 
   const handlePlayAudio = async (text: string) => {
     if (isPlaying) {
@@ -109,15 +122,17 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
       const source = audioContextRef.current.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(audioContextRef.current.destination);
-      source.onended = () => setIsPlaying(false);
+      source.onended = () => {
+        if (isMounted.current) setIsPlaying(false);
+      };
       
       sourceRef.current = source;
       source.start(0);
-      setIsPlaying(true);
+      if (isMounted.current) setIsPlaying(true);
     } catch (error) {
       console.error("Audio error:", error);
     } finally {
-      setIsAudioLoading(false);
+      if (isMounted.current) setIsAudioLoading(false);
     }
   };
 
@@ -126,6 +141,16 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
       setSelectedWord(null);
     }
   }, [forceCloseDetail]);
+
+  useEffect(() => {
+    if (forceCloseReview) {
+      setIsStarted(false);
+    }
+  }, [forceCloseReview]);
+
+  useEffect(() => {
+    onReviewChange?.(isStarted);
+  }, [isStarted, onReviewChange]);
 
   useEffect(() => {
     onDetailChange?.(!!selectedWord);

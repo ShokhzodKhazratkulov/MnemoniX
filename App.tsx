@@ -469,7 +469,9 @@ export default function App() {
   const [viewHistory, setViewHistory] = useState<AppView[]>([]);
   const [state, setState] = useState<AppState>(AppState.IDLE);
   const [isFlashcardDetailOpen, setIsFlashcardDetailOpen] = useState(false);
+  const [isFlashcardReviewOpen, setIsFlashcardReviewOpen] = useState(false);
   const [forceCloseFlashcardDetail, setForceCloseFlashcardDetail] = useState(false);
+  const [forceCloseFlashcardReview, setForceCloseFlashcardReview] = useState(false);
   const [language, setLanguage] = useState<Language>(Language.UZBEK);
   const [searchQuery, setSearchQuery] = useState('');
   const [mnemonic, setMnemonic] = useState<MnemonicResponse | null>(null);
@@ -491,12 +493,28 @@ export default function App() {
   };
 
   const goBack = () => {
+    // 1. If reviewing flashcards, go back to flashcards list
+    if (view === AppView.FLASHCARDS && isFlashcardReviewOpen) {
+      setForceCloseFlashcardReview(true);
+      setTimeout(() => setForceCloseFlashcardReview(false), 100);
+      return;
+    }
+
+    // 2. If viewing flashcard detail (hard word), go back to flashcards list
     if (view === AppView.FLASHCARDS && isFlashcardDetailOpen) {
       setForceCloseFlashcardDetail(true);
       setTimeout(() => setForceCloseFlashcardDetail(false), 100);
       return;
     }
 
+    // 3. Specific views that should always go to HOME
+    if (view === AppView.FLASHCARDS || view === AppView.DASHBOARD || view === AppView.SEARCH) {
+      setView(AppView.HOME);
+      setViewHistory([]);
+      return;
+    }
+
+    // 4. Default back behavior
     if (viewHistory.length > 0) {
       const prev = viewHistory[viewHistory.length - 1];
       setViewHistory(prev => prev.slice(0, -1));
@@ -689,7 +707,7 @@ export default function App() {
 
           {/* Mobile Back Button */}
           <div className="md:hidden flex-1 flex items-center">
-            {(view !== AppView.HOME || isFlashcardDetailOpen) && (
+            {(view !== AppView.HOME || isFlashcardDetailOpen || isFlashcardReviewOpen) && (
               <button 
                 onClick={goBack}
                 className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl text-gray-500 dark:text-gray-400 active:scale-90 transition-transform"
@@ -954,7 +972,9 @@ export default function App() {
                 onToggleHard={handleToggleHard}
                 onToggleMastered={handleToggleMastered}
                 onDetailChange={setIsFlashcardDetailOpen}
+                onReviewChange={setIsFlashcardReviewOpen}
                 forceCloseDetail={forceCloseFlashcardDetail}
+                forceCloseReview={forceCloseFlashcardReview}
               />
             </motion.div>
           )}
