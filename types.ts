@@ -54,6 +54,17 @@ export enum AppView {
   CREATE_POST = 'CREATE_POST'
 }
 
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url: string | null;
+  trial_ends_at: string;
+  is_pro: boolean;
+  subscription_id: string | null;
+  created_at: string;
+}
+
 export interface Post {
   id: string;
   post_metadata: {

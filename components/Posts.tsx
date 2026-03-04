@@ -22,12 +22,10 @@ import {
   Eye
 } from 'lucide-react';
 import { Language, Post, AppView } from '../types';
-import { supabase } from '../services/supabase';
-import { User } from '@supabase/supabase-js';
 import { usePosts } from '../PostContext';
 
 interface Props {
-  user: User | null;
+  user: any;
   language: Language;
   theme: 'light' | 'dark';
   viewMode?: 'all' | 'mine' | 'create';
@@ -70,12 +68,8 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-        const fileName = `${user.id}/${Date.now()}-${file.name}`;
-        
-        // Use the existing uploadBase64 from supabase.ts
-        const { uploadBase64 } = await import('../services/supabase');
-        const publicUrl = await uploadBase64(base64, 'posts', fileName, file.type);
-        setNewPost(prev => ({ ...prev, image: publicUrl }));
+        // For local development, just use the base64 string
+        setNewPost(prev => ({ ...prev, image: base64 }));
         setIsUploading(false);
       };
       reader.readAsDataURL(file);

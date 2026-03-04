@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../services/supabase';
-import { User } from '@supabase/supabase-js';
+import React from 'react';
 import { motion } from 'motion/react';
 import { User as UserIcon, BookOpen, Award, Calendar, Settings, ChevronRight, LogOut, MessageSquare } from 'lucide-react';
 
 import { Language, AppView } from '../types';
 
 interface Props {
-  user: User | null;
+  user: any;
   totalWords: number;
   masteredCount: number;
   userPostCount: number;
@@ -27,6 +25,9 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, user
       year: 'numeric'
     }
   ) : t.guestSession;
+
+  const trialEndsAt = user?.trial_ends_at ? new Date(user.trial_ends_at) : null;
+  const isTrialExpired = trialEndsAt ? trialEndsAt.getTime() < Date.now() : false;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
@@ -51,6 +52,16 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, user
             <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-bold border border-indigo-100 dark:border-indigo-800">
               {user?.email || t.noAccount}
             </span>
+            {user && !user.is_pro && (
+              <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${isTrialExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                {isTrialExpired ? 'Trial Expired' : `Trial ends: ${trialEndsAt?.toLocaleDateString()}`}
+              </span>
+            )}
+            {user?.is_pro && (
+              <span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-sm font-bold border border-emerald-100">
+                Pro Member
+              </span>
+            )}
           </div>
         </div>
       </motion.div>

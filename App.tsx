@@ -24,11 +24,11 @@ import {
   Globe
 } from 'lucide-react';
 
-import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic } from './types';
+import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic, Profile as UserProfile } from './types';
 import { GeminiService } from './services/geminiService';
-import { supabase } from './services/supabase';
-import { User } from '@supabase/supabase-js';
 import { usePosts } from './PostContext';
+import { supabase } from './src/services/supabase';
+import { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 // Components
 import { Dashboard } from './components/Dashboard';
@@ -473,7 +473,8 @@ const TRANSLATIONS: Record<Language, any> = {
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [isGuest, setIsGuest] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
   const [hasKey, setHasKey] = useState(true);
 
   const gemini = React.useMemo(() => new GeminiService(), []);
@@ -563,54 +564,91 @@ export default function App() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(savedTheme as 'light' | 'dark');
-  }, []);
+    
+    // Initialize Supabase Auth
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+        await fetchUserWords(session.user.id);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
+    initAuth();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+      if (session?.user) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+        await fetchUserWords(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setSavedMnemonics([]);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetchSavedMnemonics();
-    }
-  }, [user]);
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-  const fetchSavedMnemonics = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from('user_words')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setSavedMnemonics(data.map(item => ({
+      if (error) throw error;
+      setProfile(data);
+
+      // Check trial
+      if (!data.is_pro) {
+        const trialEnd = new Date(data.trial_ends_at).getTime();
+        const now = Date.now();
+        if (now > trialEnd) {
+          setIsTrialExpired(true);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUserWords = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_words')
+        .select(`
+          *,
+          mnemonic:global_mnemonics(*)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formatted: SavedMnemonic[] = data.map((item: any) => ({
         id: item.id,
         word: item.word,
-        data: item.mnemonic_data,
-        imageUrl: item.image_url,
+        data: item.mnemonic.mnemonic_data,
+        imageUrl: item.mnemonic.image_url,
         timestamp: new Date(item.created_at).getTime(),
         language: item.language as Language,
-        isHard: item.mnemonic_data?.isHard || false,
+        isHard: item.is_hard,
         isMastered: item.status === 'mastered'
-      })));
+      }));
+
+      setSavedMnemonics(formatted);
+    } catch (err) {
+      console.error("Error fetching user words:", err);
     }
   };
 
@@ -618,41 +656,101 @@ export default function App() {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
 
+    // Check trial
+    if (isTrialExpired && !profile?.is_pro) {
+      setError("Your 7-day trial has expired. Please upgrade to Pro to continue learning.");
+      setState(AppState.ERROR);
+      return;
+    }
+
     setState(AppState.LOADING);
     setError(null);
     setMnemonic(null);
     setImageUrl('');
 
     try {
+      // 1. Spelling Check
       const correctedWord = await gemini.checkSpelling(searchQuery);
-      const res = await gemini.getMnemonic(correctedWord, language);
-      setMnemonic(res);
       
-      const img = await gemini.generateImage(res.imagePrompt);
-      setImageUrl(img);
-      
+      // 2. Check Global Cache
+      const { data: cachedMnemonic, error: cacheError } = await supabase
+        .from('global_mnemonics')
+        .select('*')
+        .eq('word', correctedWord)
+        .eq('language', language)
+        .single();
+
+      let finalMnemonic: MnemonicResponse;
+      let finalImageUrl: string;
+      let mnemonicId: string;
+
+      if (cachedMnemonic) {
+        // Cache Hit!
+        finalMnemonic = cachedMnemonic.mnemonic_data;
+        finalImageUrl = cachedMnemonic.image_url;
+        mnemonicId = cachedMnemonic.id;
+      } else {
+        // Cache Miss - Generate with AI
+        finalMnemonic = await gemini.getMnemonic(correctedWord, language);
+        finalImageUrl = await gemini.generateImage(finalMnemonic.imagePrompt);
+
+        // Save to Global Cache
+        const { data: newGlobal, error: globalError } = await supabase
+          .from('global_mnemonics')
+          .insert({
+            word: correctedWord,
+            language: language,
+            mnemonic_data: finalMnemonic,
+            image_url: finalImageUrl
+          })
+          .select()
+          .single();
+        
+        if (globalError) throw globalError;
+        mnemonicId = newGlobal.id;
+      }
+
+      setMnemonic(finalMnemonic);
+      setImageUrl(finalImageUrl);
       setState(AppState.RESULTS);
 
-      const newSavedMnemonic: SavedMnemonic = {
-        id: Math.random().toString(36).substr(2, 9),
-        word: res.word,
-        data: res,
-        imageUrl: img,
-        timestamp: Date.now(),
-        language: language,
-        isHard: false
-      };
-
-      setSavedMnemonics(prev => [newSavedMnemonic, ...prev]);
-
+      // 3. Save to User's Words (if logged in)
       if (user) {
-        await supabase.from('user_words').insert({
-          user_id: user.id,
-          word: res.word,
-          mnemonic_data: res,
-          image_url: img,
-          language: language
-        });
+        const { data: userWord, error: userWordError } = await supabase
+          .from('user_words')
+          .insert({
+            user_id: user.id,
+            word: correctedWord,
+            language: language,
+            mnemonic_id: mnemonicId
+          })
+          .select()
+          .single();
+
+        if (!userWordError) {
+          const newSaved: SavedMnemonic = {
+            id: userWord.id,
+            word: correctedWord,
+            data: finalMnemonic,
+            imageUrl: finalImageUrl,
+            timestamp: Date.now(),
+            language: language,
+            isHard: false
+          };
+          setSavedMnemonics(prev => [newSaved, ...prev]);
+        }
+      } else {
+        // Guest mode - just local state
+        const guestSaved: SavedMnemonic = {
+          id: Math.random().toString(36).substr(2, 9),
+          word: correctedWord,
+          data: finalMnemonic,
+          imageUrl: finalImageUrl,
+          timestamp: Date.now(),
+          language: language,
+          isHard: false
+        };
+        setSavedMnemonics(prev => [guestSaved, ...prev]);
       }
     } catch (err: any) {
       console.error(err);
@@ -668,38 +766,48 @@ export default function App() {
 
   const handleDelete = async (id: string) => {
     if (user) {
-      await supabase.from('user_words').delete().eq('id', id);
+      const { error } = await supabase
+        .from('user_words')
+        .delete()
+        .eq('id', id);
+      if (error) {
+        console.error("Error deleting word:", error);
+        return;
+      }
     }
     setSavedMnemonics(prev => prev.filter(m => m.id !== id));
   };
 
   const handleToggleHard = async (id: string, isHard: boolean) => {
+    if (user) {
+      const { error } = await supabase
+        .from('user_words')
+        .update({ is_hard: isHard })
+        .eq('id', id);
+      if (error) {
+        console.error("Error updating hard status:", error);
+        return;
+      }
+    }
+
     const word = savedMnemonics.find(m => m.id === id);
     if (!word) return;
 
     const updatedData = { ...word.data, isHard };
-    
-    if (user) {
-      await supabase
-        .from('user_words')
-        .update({ mnemonic_data: updatedData })
-        .eq('id', id);
-    }
-
     setSavedMnemonics(prev => prev.map(m => m.id === id ? { ...m, isHard, data: updatedData } : m));
   };
 
   const handleToggleMastered = async (id: string, isMastered: boolean) => {
-    const word = savedMnemonics.find(m => m.id === id);
-    if (!word) return;
-
     if (user) {
-      await supabase
+      const { error } = await supabase
         .from('user_words')
         .update({ status: isMastered ? 'mastered' : 'learning' })
         .eq('id', id);
+      if (error) {
+        console.error("Error updating mastered status:", error);
+        return;
+      }
     }
-
     setSavedMnemonics(prev => prev.map(m => m.id === id ? { ...m, isMastered } : m));
   };
 
@@ -711,14 +819,26 @@ export default function App() {
     );
   }
 
-  if (!user && !isGuest) {
-    return <Auth onSuccess={() => {}} onGuestMode={() => setIsGuest(true)} />;
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#020617] p-4">
+        <div className="w-full max-w-md">
+          <Auth onSuccess={() => {}} language={language} />
+        </div>
+      </div>
+    );
   }
 
   const masteredCount = savedMnemonics.filter(m => m.isMastered).length;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] transition-colors duration-500 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Trial Expiration Banner */}
+      {isTrialExpired && !profile?.is_pro && (
+        <div className="bg-red-600 text-white py-2 px-4 text-center text-sm font-bold animate-pulse">
+          Your 7-day trial has expired. Upgrade to Pro to continue learning!
+        </div>
+      )}
       {/* Navigation Bar */}
       <nav className="sticky top-0 z-50 px-4 py-4 sm:py-6 bg-transparent">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -1017,8 +1137,11 @@ export default function App() {
                 totalWords={savedMnemonics.length} 
                 masteredCount={masteredCount}
                 userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id).length}
-                onSignOut={() => { supabase.auth.signOut(); setIsGuest(false); }} 
-                onSignIn={() => setIsGuest(false)}
+                onSignOut={async () => { 
+                  await supabase.auth.signOut();
+                  setUser(null); 
+                }} 
+                onSignIn={() => {}}
                 onNavigate={navigateTo}
                 language={language}
                 t={t.profile}
