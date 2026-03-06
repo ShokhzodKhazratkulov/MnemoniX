@@ -22,14 +22,19 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        if (data.session) {
+          if (onClose) onClose();
+        } else {
+          setError('Success! Please check your email to confirm your account before signing in.');
+          setIsSignUp(false); // Switch to sign in so they can sign in after confirming
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (onClose) onClose();
       }
-      if (onClose) onClose();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -42,7 +47,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose }) => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/callback.html`,
           skipBrowserRedirect: true,
         }
       });

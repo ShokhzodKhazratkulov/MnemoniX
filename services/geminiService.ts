@@ -4,9 +4,9 @@ import { MnemonicResponse, Language } from "../types";
 
 export class GeminiService {
   private getAI() {
-    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("API Key not found. Please select an API key.");
+      throw new Error("Gemini API Key not found. Please set VITE_GEMINI_API_KEY in your environment.");
     }
     return new GoogleGenAI({ apiKey });
   }
@@ -180,8 +180,7 @@ CRITICAL RULES:
 
   async generateTTS(text: string, targetLanguage: Language): Promise<string> {
     return this.withRetry(async () => {
-      // New instance per call is safer for diverse environments
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = this.getAI();
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ 
