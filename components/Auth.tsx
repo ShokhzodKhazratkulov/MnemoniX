@@ -1,101 +1,35 @@
-import React, { useState } from 'react';
-import { supabase } from '../src/services/supabase';
-import { motion, AnimatePresence } from 'motion/react';
-import { Mail, Lock, Chrome, ArrowRight, Loader2, AlertCircle, User } from 'lucide-react';
-import { Language } from '../types';
 
-interface Props {
-  onSuccess: () => void;
-  language: Language;
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { Mail, Lock, Loader2, Github, Chrome } from 'lucide-react';
+import { supabase } from '../supabase';
+
+interface AuthProps {
+  onClose?: () => void;
 }
 
-export const Auth: React.FC<Props> = ({ onSuccess, language }) => {
-  const [isSignUp, setIsSignUp] = useState(false);
+export const Auth: React.FC<AuthProps> = ({ onClose }) => {
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const t = ({
-    [Language.UZBEK]: {
-      signIn: "Kirish",
-      signUp: "Ro'yxatdan o'tish",
-      email: "Email manzili",
-      password: "Parol",
-      fullName: "To'liq ism",
-      google: "Google orqali davom etish",
-      noAccount: "Hisobingiz yo'qmi?",
-      hasAccount: "Hisobingiz bormi?",
-      error: "Xatolik yuz berdi",
-      loading: "Yuklanmoqda...",
-      welcome: "Xush kelibsiz!",
-      subtitle: "MnemoniX bilan o'rganishni boshlang",
-      checkEmail: "Hisobingiz yaratildi. Iltimos, tizimga kirishdan oldin elektron pochtangizni tekshiring va tasdiqlang."
-    },
-    [Language.RUSSIAN]: {
-      signIn: "Войти",
-      signUp: "Регистрация",
-      email: "Email адрес",
-      password: "Пароль",
-      fullName: "Полное имя",
-      google: "Продолжить через Google",
-      noAccount: "Нет аккаунта?",
-      hasAccount: "Уже есть аккаунт?",
-      error: "Произошла ошибка",
-      loading: "Загрузка...",
-      welcome: "Добро пожаловать!",
-      subtitle: "Начните учиться с MnemoniX",
-      checkEmail: "Ваш аккаунт создан. Пожалуйста, проверьте почту и подтвердите адрес перед входом."
-    }
-  } as any)[language] || {
-    signIn: "Sign In",
-    signUp: "Sign Up",
-    email: "Email Address",
-    password: "Password",
-    fullName: "Full Name",
-    google: "Continue with Google",
-    noAccount: "Don't have an account?",
-    hasAccount: "Already have an account?",
-    error: "An error occurred",
-    loading: "Loading...",
-    welcome: "Welcome Back!",
-    subtitle: "Start learning with MnemoniX",
-    checkEmail: "Your account has been created. Please check your email and verify your address before logging in."
-  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccessMessage(null);
 
     try {
       if (isSignUp) {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName }
-          }
-        });
-        if (signUpError) throw signUpError;
-        
-        if (!data.session) {
-          setSuccessMessage(t.checkEmail);
-          setIsSignUp(false);
-          setPassword('');
-          return;
-        }
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        alert('Check your email for the confirmation link!');
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        if (signInError) throw signInError;
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
       }
-      onSuccess();
+      if (onClose) onClose();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -103,105 +37,89 @@ export const Auth: React.FC<Props> = ({ onSuccess, language }) => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleOAuth = async (provider: 'google' | 'github') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
         }
       });
       if (error) throw error;
+      
+      if (data?.url) {
+        // Open the OAuth provider's URL in a popup
+        const width = 600;
+        const height = 700;
+        const left = window.screenX + (window.outerWidth - width) / 2;
+        const top = window.screenY + (window.outerHeight - height) / 2;
+        
+        window.open(
+          data.url, 
+          'supabase_auth_popup', 
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,status=yes`
+        );
+      }
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-6">
+    <div className="max-w-md w-full mx-auto p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800">
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-xl shadow-indigo-500/20">
-          M
-        </div>
-        <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-          {isSignUp ? t.signUp : t.signIn}
+        <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
+          {isSignUp ? 'Create Account' : 'Welcome Back'}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 font-medium mt-2">
-          {t.subtitle}
+        <p className="text-gray-500 dark:text-gray-400">
+          {isSignUp ? 'Start your mnemonic journey today' : 'Continue mastering your vocabulary'}
         </p>
       </div>
 
       <form onSubmit={handleAuth} className="space-y-4">
-        {isSignUp && (
+        <div>
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
           <div className="relative">
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
-              type="text"
-              placeholder={t.fullName}
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white font-bold transition-all"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all"
+              placeholder="name@example.com"
               required
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl font-medium">
+            {error}
+          </div>
         )}
-
-        <div className="relative">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="email"
-            placeholder={t.email}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white font-bold transition-all"
-            required
-          />
-        </div>
-
-        <div className="relative">
-          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="password"
-            placeholder={t.password}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white font-bold transition-all"
-            required
-          />
-        </div>
-
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-sm font-bold"
-            >
-              <AlertCircle size={18} />
-              {error}
-            </motion.div>
-          )}
-          {successMessage && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex items-center gap-2 p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl text-sm font-bold"
-            >
-              <Sparkles size={18} />
-              {successMessage}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
         >
-          {loading ? <Loader2 className="animate-spin" /> : (isSignUp ? t.signUp : t.signIn)}
-          {!loading && <ArrowRight size={20} />}
+          {loading ? <Loader2 className="animate-spin" size={20} /> : (isSignUp ? 'Sign Up' : 'Sign In')}
         </button>
       </form>
 
@@ -210,29 +128,34 @@ export const Auth: React.FC<Props> = ({ onSuccess, language }) => {
           <div className="w-full border-t border-gray-100 dark:border-slate-800"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-[#f8fafc] dark:bg-[#020617] text-gray-400 font-bold uppercase tracking-widest">OR</span>
+          <span className="px-2 bg-white dark:bg-slate-900 text-gray-400 font-bold">Or continue with</span>
         </div>
       </div>
 
-      <button
-        onClick={handleGoogleSignIn}
-        className="w-full py-4 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 text-gray-900 dark:text-white rounded-2xl font-bold text-lg shadow-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-3"
-      >
-        <Chrome size={20} />
-        {t.google}
-      </button>
-
-      <p className="text-center mt-8 text-gray-500 dark:text-gray-400 font-bold">
-        {isSignUp ? t.hasAccount : t.noAccount}{' '}
+      <div className="grid grid-cols-2 gap-4">
         <button
-          onClick={() => {
-            setIsSignUp(!isSignUp);
-            setError(null);
-            setSuccessMessage(null);
-          }}
-          className="text-indigo-600 dark:text-indigo-400 hover:underline"
+          onClick={() => handleOAuth('google')}
+          className="flex items-center justify-center gap-2 py-3 border border-gray-100 dark:border-slate-800 rounded-xl font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
         >
-          {isSignUp ? t.signIn : t.signUp}
+          <Chrome size={18} />
+          Google
+        </button>
+        <button
+          onClick={() => handleOAuth('github')}
+          className="flex items-center justify-center gap-2 py-3 border border-gray-100 dark:border-slate-800 rounded-xl font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+        >
+          <Github size={18} />
+          GitHub
+        </button>
+      </div>
+
+      <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+        {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+        <button
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="text-indigo-600 dark:text-indigo-400 font-black hover:underline"
+        >
+          {isSignUp ? 'Sign In' : 'Sign Up'}
         </button>
       </p>
     </div>

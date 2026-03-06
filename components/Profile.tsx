@@ -37,8 +37,12 @@ export const Profile: React.FC<Props> = ({ user, totalWords, masteredCount, user
         animate={{ opacity: 1, y: 0 }}
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 sm:p-10 shadow-xl border border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-8"
       >
-        <div className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-200 dark:shadow-none">
-          <UserIcon size={48} className="sm:size-64" />
+        <div className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-200 dark:shadow-none overflow-hidden">
+          {user?.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <UserIcon size={48} className="sm:size-64" />
+          )}
         </div>
         <div className="text-center sm:text-left space-y-2">
           <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">

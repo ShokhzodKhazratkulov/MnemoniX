@@ -17,6 +17,7 @@ interface SearchPageProps {
   savedMnemonics: SavedMnemonic[];
   setState: (state: AppState) => void;
   t: any;
+  loadingMessage: string;
 }
 
 export const SearchPage: React.FC<SearchPageProps> = ({
@@ -30,7 +31,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   handleSearch,
   savedMnemonics,
   setState,
-  t
+  t,
+  loadingMessage
 }) => {
   const [showRecent, setShowRecent] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -192,11 +194,11 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
             <div className="text-center space-y-4">
               <p className="text-xl sm:text-3xl font-black text-gray-900 dark:text-white max-w-md mx-auto leading-tight">
-                {t.loadingStory}
+                {loadingMessage || t.loadingStory}
               </p>
               <div className="space-y-3">
                 <p className="text-indigo-600 dark:text-indigo-400 font-black tracking-[0.2em] text-xs sm:text-sm uppercase animate-pulse">
-                  {mnemonic ? t.creatingImage : t.checkingSpelling}
+                  {mnemonic ? t.creatingImage : (loadingMessage || t.checkingSpelling)}
                 </p>
                 <div className="flex justify-center gap-2">
                   <div className="w-2 h-2 sm:w-3 sm:h-3 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>

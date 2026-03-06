@@ -14,7 +14,7 @@ export class GeminiService {
   /**
    * Robust exponential backoff retry logic for handling transient API errors and rate limits.
    */
-  private async withRetry<T>(fn: () => Promise<T>, maxRetries = 4): Promise<T> {
+  private async withRetry<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
     let lastError: any;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -45,8 +45,8 @@ export class GeminiService {
 
         if (isQuotaError || isServerError || isNotFoundError) {
           if (attempt < maxRetries) {
-            // Increased delay: 3s, 7s, 15s, 31s... to better handle strict quotas
-            const delay = (Math.pow(2, attempt + 1) - 1) * 2000 + Math.random() * 1000;
+            // Reduced delay: 2s, 5s... to better handle strict quotas without long waits
+            const delay = (Math.pow(2, attempt + 1) - 1) * 1000 + Math.random() * 1000;
             console.warn(`Retrying after error ${status || 'unknown'} (Attempt ${attempt + 1}/${maxRetries}) in ${Math.round(delay)}ms. Message: ${message}`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;

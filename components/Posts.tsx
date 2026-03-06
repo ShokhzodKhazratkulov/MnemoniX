@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Language, Post, AppView } from '../types';
 import { usePosts } from '../PostContext';
+import { supabase } from '../supabase';
 
 interface Props {
   user: any;
@@ -65,16 +66,25 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
 
     setIsUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        // For local development, just use the base64 string
-        setNewPost(prev => ({ ...prev, image: base64 }));
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('post_assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('post_assets')
+        .getPublicUrl(filePath);
+
+      setNewPost(prev => ({ ...prev, image: publicUrl }));
     } catch (err) {
       console.error("Upload error:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
       setIsUploading(false);
     }
   };
@@ -363,7 +373,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
           </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} theme={theme} t={t} onUpdate={(updater) => updatePost(post.id, updater)} />
+            <PostCard key={post.id} post={post} user={user} theme={theme} t={t} />
           ))
         ) : (
           <div className="text-center py-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl">
@@ -376,60 +386,39 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
   );
 };
 
-const PostCard: React.FC<{ post: Post, theme: string, t: any, onUpdate: (updater: (post: Post) => Post) => void }> = ({ post, theme, t, onUpdate }) => {
+const PostCard: React.FC<{ post: Post, user: any, theme: string, t: any }> = ({ post, user, theme, t }) => {
+  const { toggleLike, toggleEmoji, deletePost, updatePost } = usePosts();
   const [isImageRevealed, setIsImageRevealed] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    english_word: post.mnemonic_data.english_word,
+    native_keyword: post.mnemonic_data.native_keyword,
+    story: post.mnemonic_data.story,
+    image_url: post.visuals.user_uploaded_image
+  });
+  const [showMenu, setShowMenu] = useState(false);
+
+  const isOwner = user && user.id === post.post_metadata.user_id;
 
   const handleLike = () => {
-    onUpdate(prev => ({
-      ...prev,
-      engagement: {
-        ...prev.engagement,
-        likes: prev.engagement.user_liked ? prev.engagement.likes - 1 : prev.engagement.likes + 1,
-        user_liked: !prev.engagement.user_liked,
-        // If liked, remove dislike
-        dislikes: prev.engagement.user_disliked ? prev.engagement.dislikes - 1 : prev.engagement.dislikes,
-        user_disliked: false
-      }
-    }));
-  };
-
-  const handleDislike = () => {
-    onUpdate(prev => ({
-      ...prev,
-      engagement: {
-        ...prev.engagement,
-        dislikes: prev.engagement.user_disliked ? prev.engagement.dislikes - 1 : prev.engagement.dislikes + 1,
-        user_disliked: !prev.engagement.user_disliked,
-        // If disliked, remove like
-        likes: prev.engagement.user_liked ? prev.engagement.likes - 1 : prev.engagement.likes,
-        user_liked: false
-      }
-    }));
+    if (!user) return alert(t.loginRequired);
+    toggleLike(post.id, user.id);
   };
 
   const handleEmoji = (emoji: string) => {
-    onUpdate(prev => {
-      const isSelected = prev.engagement.user_emoji === emoji;
-      const newEmojis = prev.engagement.impression_emojis.map(e => {
-        if (e.emoji === emoji) {
-          return { ...e, count: isSelected ? e.count - 1 : e.count + 1 };
-        }
-        // If another emoji was selected, decrement its count
-        if (e.emoji === prev.engagement.user_emoji) {
-          return { ...e, count: e.count - 1 };
-        }
-        return e;
-      });
+    if (!user) return alert(t.loginRequired);
+    toggleEmoji(post.id, user.id, emoji);
+  };
 
-      return {
-        ...prev,
-        engagement: {
-          ...prev.engagement,
-          impression_emojis: newEmojis,
-          user_emoji: isSelected ? undefined : emoji
-        }
-      };
-    });
+  const handleDelete = async () => {
+    if (window.confirm(t.confirmDelete || "Delete this post?")) {
+      await deletePost(post.id);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    await updatePost(post.id, editData);
+    setIsEditing(false);
   };
 
   return (
@@ -455,23 +444,95 @@ const PostCard: React.FC<{ post: Post, theme: string, t: any, onUpdate: (updater
               </div>
             </div>
           </div>
+
+          {isOwner && (
+            <div className="relative">
+              <button 
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <MoreHorizontal size={20} />
+              </button>
+              
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-xl z-10 overflow-hidden"
+                  >
+                    <button 
+                      onClick={() => { setIsEditing(true); setShowMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      {t.edit || "Edit"}
+                    </button>
+                    <button 
+                      onClick={() => { handleDelete(); setShowMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      {t.delete || "Delete"}
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* Mnemonic Content */}
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
-              {post.mnemonic_data.english_word}
-            </span>
-            <span className="text-lg sm:text-xl font-black text-gray-400 dark:text-slate-600 italic">
-              ≈ {post.mnemonic_data.native_keyword}
-            </span>
+        {isEditing ? (
+          <div className="space-y-3">
+            <input 
+              type="text"
+              value={editData.english_word}
+              onChange={(e) => setEditData({...editData, english_word: e.target.value})}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-lg font-black"
+            />
+            <input 
+              type="text"
+              value={editData.native_keyword}
+              onChange={(e) => setEditData({...editData, native_keyword: e.target.value})}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold"
+            />
+            <textarea 
+              value={editData.story}
+              onChange={(e) => setEditData({...editData, story: e.target.value})}
+              rows={3}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-slate-800 border-none rounded-xl text-sm font-medium resize-none"
+            />
+            <div className="flex gap-2">
+              <button 
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-black shadow-lg"
+              >
+                {t.save || "Save"}
+              </button>
+              <button 
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-lg text-xs font-black"
+              >
+                {t.cancel || "Cancel"}
+              </button>
+            </div>
           </div>
-          
-          <p className="text-gray-700 dark:text-gray-300 font-medium leading-relaxed text-sm sm:text-base">
-            {post.mnemonic_data.story}
-          </p>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+                {post.mnemonic_data.english_word}
+              </span>
+              <span className="text-lg sm:text-xl font-black text-gray-400 dark:text-slate-600 italic">
+                ≈ {post.mnemonic_data.native_keyword}
+              </span>
+            </div>
+            
+            <p className="text-gray-700 dark:text-gray-300 font-medium leading-relaxed text-sm sm:text-base">
+              {post.mnemonic_data.story}
+            </p>
+          </div>
+        )}
 
         {/* Emoji Impressions */}
         <div className="flex flex-wrap gap-2 pt-1">
@@ -530,13 +591,6 @@ const PostCard: React.FC<{ post: Post, theme: string, t: any, onUpdate: (updater
             >
               <Heart size={18} fill={post.engagement.user_liked ? "currentColor" : "none"} />
               {post.engagement.likes}
-            </button>
-            <button 
-              onClick={handleDislike}
-              className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${post.engagement.user_disliked ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-              <ThumbsDown size={18} fill={post.engagement.user_disliked ? "currentColor" : "none"} />
-              {post.engagement.dislikes}
             </button>
           </div>
         </div>

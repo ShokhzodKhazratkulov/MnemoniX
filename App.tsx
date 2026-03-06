@@ -24,11 +24,10 @@ import {
   Globe
 } from 'lucide-react';
 
-import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic, Profile as UserProfile } from './types';
+import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic } from './types';
 import { GeminiService } from './services/geminiService';
 import { usePosts } from './PostContext';
-import { supabase } from './src/services/supabase';
-import { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { supabase, getStorageUrl } from './supabase';
 
 // Components
 import { Dashboard } from './components/Dashboard';
@@ -472,9 +471,8 @@ const TRANSLATIONS: Record<Language, any> = {
 };
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isTrialExpired, setIsTrialExpired] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isGuest, setIsGuest] = useState(true);
   const [hasKey, setHasKey] = useState(true);
 
   const gemini = React.useMemo(() => new GeminiService(), []);
@@ -500,6 +498,17 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view]);
+  useEffect(() => {
+    // Check if we are in an OAuth popup
+    // Supabase Auth will have set the session in localStorage by the time this runs
+    // if the URL contains the access_token in the hash
+    if (window.opener && (window.location.hash.includes('access_token') || window.location.search.includes('code='))) {
+      // Notify the opener and close the popup
+      window.opener.postMessage({ type: 'SUPABASE_AUTH_SUCCESS' }, '*');
+      window.close();
+    }
+  }, []);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -565,192 +574,194 @@ export default function App() {
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(savedTheme as 'light' | 'dark');
     
-    // Initialize Supabase Auth
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
-        await fetchUserWords(session.user.id);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
-        await fetchUserWords(session.user.id);
-      } else {
-        setUser(null);
-        setProfile(null);
-        setSavedMnemonics([]);
-        setLoading(false);
-      }
+    // Auth state listener
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) setIsGuest(false);
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      setUser(session?.user ?? null);
+      if (session?.user) setIsGuest(false);
+    });
+
+    // Listen for auth success from popup
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'SUPABASE_AUTH_SUCCESS') {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          setUser(session?.user ?? null);
+          if (session?.user) setIsGuest(false);
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-
-      // Check trial
-      if (!data.is_pro) {
-        const trialEnd = new Date(data.trial_ends_at).getTime();
-        const now = Date.now();
-        if (now > trialEnd) {
-          setIsTrialExpired(true);
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-    } finally {
-      setLoading(false);
+  // Fetch user words when user changes
+  useEffect(() => {
+    if (user) {
+      fetchUserWords();
+    } else {
+      setSavedMnemonics([]);
     }
-  };
+  }, [user]);
 
-  const fetchUserWords = async (userId: string) => {
+  const fetchUserWords = async () => {
+    if (!user) return;
     try {
       const { data, error } = await supabase
         .from('user_words')
         .select(`
           *,
-          mnemonic:global_mnemonics(*)
+          mnemonics (*)
         `)
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const formatted: SavedMnemonic[] = data.map((item: any) => ({
-        id: item.id,
-        word: item.word,
-        data: item.mnemonic.mnemonic_data,
-        imageUrl: item.mnemonic.image_url,
-        timestamp: new Date(item.created_at).getTime(),
-        language: item.language as Language,
-        isHard: item.is_hard,
-        isMastered: item.status === 'mastered'
-      }));
-
-      setSavedMnemonics(formatted);
+      if (data) {
+        const formatted: SavedMnemonic[] = data.map((uw: any) => ({
+          id: uw.id,
+          word: uw.mnemonics.word,
+          data: uw.mnemonics.data,
+          imageUrl: uw.mnemonics.image_url,
+          timestamp: new Date(uw.created_at).getTime(),
+          language: language, // Assuming stored language or default
+          isHard: uw.is_hard,
+          isMastered: uw.is_mastered
+        }));
+        setSavedMnemonics(formatted);
+      }
     } catch (err) {
-      console.error("Error fetching user words:", err);
+      console.error('Error fetching user words:', err);
     }
   };
+
+  const [loadingMessage, setLoadingMessage] = useState('');
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    // Check trial
-    if (isTrialExpired && !profile?.is_pro) {
-      setError("Your 7-day trial has expired. Please upgrade to Pro to continue learning.");
-      setState(AppState.ERROR);
-      return;
-    }
-
     setState(AppState.LOADING);
+    setLoadingMessage(t.checkingSpelling);
     setError(null);
     setMnemonic(null);
     setImageUrl('');
 
     try {
-      // 1. Spelling Check
       const correctedWord = await gemini.checkSpelling(searchQuery);
       
-      // 2. Check Global Cache
-      const { data: cachedMnemonic, error: cacheError } = await supabase
-        .from('global_mnemonics')
+      // 1. Check if word exists in global mnemonics library
+      let mnemonicData: MnemonicResponse;
+      let img: string;
+      let audio: string | undefined;
+
+      const { data: existingMnemonic } = await supabase
+        .from('mnemonics')
         .select('*')
         .eq('word', correctedWord)
-        .eq('language', language)
         .single();
 
-      let finalMnemonic: MnemonicResponse;
-      let finalImageUrl: string;
-      let mnemonicId: string;
-
-      if (cachedMnemonic) {
-        // Cache Hit!
-        finalMnemonic = cachedMnemonic.mnemonic_data;
-        finalImageUrl = cachedMnemonic.image_url;
-        mnemonicId = cachedMnemonic.id;
+      if (existingMnemonic) {
+        mnemonicData = existingMnemonic.data as MnemonicResponse;
+        img = existingMnemonic.image_url;
+        audio = existingMnemonic.audio_url;
       } else {
-        // Cache Miss - Generate with AI
-        finalMnemonic = await gemini.getMnemonic(correctedWord, language);
-        finalImageUrl = await gemini.generateImage(finalMnemonic.imagePrompt);
-
-        // Save to Global Cache
-        const { data: newGlobal, error: globalError } = await supabase
-          .from('global_mnemonics')
-          .insert({
-            word: correctedWord,
-            language: language,
-            mnemonic_data: finalMnemonic,
-            image_url: finalImageUrl
-          })
-          .select()
-          .single();
+        // Generate new
+        setLoadingMessage(t.loadingMnemonic);
+        mnemonicData = await gemini.getMnemonic(correctedWord, language);
         
-        if (globalError) throw globalError;
-        mnemonicId = newGlobal.id;
+        setLoadingMessage(t.loadingImage);
+        const base64Image = await gemini.generateImage(mnemonicData.imagePrompt);
+        
+        // Upload image to storage
+        let storedImageUrl = '';
+        if (base64Image) {
+          const imageBlob = await (await fetch(base64Image)).blob();
+          const fileName = `${correctedWord}-${Date.now()}.png`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('mnemonic_assets')
+            .upload(`images/${fileName}`, imageBlob);
+          
+          if (!uploadError) {
+            storedImageUrl = getStorageUrl('mnemonic_assets', `images/${fileName}`);
+          }
+        }
+
+        // Generate and upload audio
+        let storedAudioUrl = '';
+        const ttsText = `${mnemonicData.word}. ${mnemonicData.meaning}. ${mnemonicData.imagination}. ${mnemonicData.connectorSentence}`;
+        const base64Audio = await gemini.generateTTS(ttsText, language);
+        
+        if (base64Audio) {
+          const audioBlob = new Blob([new Uint8Array(atob(base64Audio).split("").map(c => c.charCodeAt(0)))], { type: 'audio/wav' });
+          const audioFileName = `${correctedWord}-${Date.now()}.wav`;
+          const { data: audioUploadData, error: audioUploadError } = await supabase.storage
+            .from('mnemonic_assets')
+            .upload(`audio/${audioFileName}`, audioBlob);
+          
+          if (!audioUploadError) {
+            storedAudioUrl = getStorageUrl('mnemonic_assets', `audio/${audioFileName}`);
+          }
+        }
+
+        img = storedImageUrl || base64Image;
+        audio = storedAudioUrl;
+        mnemonicData.audioUrl = audio;
+
+        // Save to global library
+        await supabase.from('mnemonics').insert({
+          word: correctedWord,
+          data: mnemonicData,
+          image_url: img,
+          audio_url: audio
+        });
       }
 
-      setMnemonic(finalMnemonic);
-      setImageUrl(finalImageUrl);
+      setMnemonic(mnemonicData);
+      setImageUrl(img);
       setState(AppState.RESULTS);
+      setLoadingMessage('');
 
-      // 3. Save to User's Words (if logged in)
+      // 2. Save to user's personal list if logged in
       if (user) {
-        const { data: userWord, error: userWordError } = await supabase
-          .from('user_words')
-          .insert({
-            user_id: user.id,
-            word: correctedWord,
-            language: language,
-            mnemonic_id: mnemonicId
-          })
-          .select()
+        const { data: wordRecord } = await supabase
+          .from('mnemonics')
+          .select('id')
+          .eq('word', correctedWord)
           .single();
 
-        if (!userWordError) {
-          const newSaved: SavedMnemonic = {
-            id: userWord.id,
-            word: correctedWord,
-            data: finalMnemonic,
-            imageUrl: finalImageUrl,
-            timestamp: Date.now(),
-            language: language,
-            isHard: false
-          };
-          setSavedMnemonics(prev => [newSaved, ...prev]);
+        if (wordRecord) {
+          const { error: upsertError } = await supabase
+            .from('user_words')
+            .upsert({
+              user_id: user.id,
+              word_id: wordRecord.id,
+              last_reviewed_at: new Date().toISOString()
+            }, { onConflict: 'user_id,word_id' });
+          
+          if (!upsertError) fetchUserWords();
         }
       } else {
-        // Guest mode - just local state
-        const guestSaved: SavedMnemonic = {
+        // Guest mode - local state only
+        const newSavedMnemonic: SavedMnemonic = {
           id: Math.random().toString(36).substr(2, 9),
-          word: correctedWord,
-          data: finalMnemonic,
-          imageUrl: finalImageUrl,
+          word: mnemonicData.word,
+          data: mnemonicData,
+          imageUrl: img,
           timestamp: Date.now(),
           language: language,
           isHard: false
         };
-        setSavedMnemonics(prev => [guestSaved, ...prev]);
+        setSavedMnemonics(prev => [newSavedMnemonic, ...prev]);
       }
     } catch (err: any) {
       console.error(err);
@@ -766,50 +777,31 @@ export default function App() {
 
   const handleDelete = async (id: string) => {
     if (user) {
-      const { error } = await supabase
-        .from('user_words')
-        .delete()
-        .eq('id', id);
-      if (error) {
-        console.error("Error deleting word:", error);
-        return;
-      }
+      await supabase.from('user_words').delete().eq('id', id);
+      fetchUserWords();
+    } else {
+      setSavedMnemonics(prev => prev.filter(m => m.id !== id));
     }
-    setSavedMnemonics(prev => prev.filter(m => m.id !== id));
   };
 
   const handleToggleHard = async (id: string, isHard: boolean) => {
     if (user) {
-      const { error } = await supabase
-        .from('user_words')
-        .update({ is_hard: isHard })
-        .eq('id', id);
-      if (error) {
-        console.error("Error updating hard status:", error);
-        return;
-      }
+      await supabase.from('user_words').update({ is_hard: isHard }).eq('id', id);
+      fetchUserWords();
+    } else {
+      setSavedMnemonics(prev => prev.map(m => m.id === id ? { ...m, isHard } : m));
     }
-
-    const word = savedMnemonics.find(m => m.id === id);
-    if (!word) return;
-
-    const updatedData = { ...word.data, isHard };
-    setSavedMnemonics(prev => prev.map(m => m.id === id ? { ...m, isHard, data: updatedData } : m));
   };
 
   const handleToggleMastered = async (id: string, isMastered: boolean) => {
     if (user) {
-      const { error } = await supabase
-        .from('user_words')
-        .update({ status: isMastered ? 'mastered' : 'learning' })
-        .eq('id', id);
-      if (error) {
-        console.error("Error updating mastered status:", error);
-        return;
-      }
+      await supabase.from('user_words').update({ is_mastered: isMastered }).eq('id', id);
+      fetchUserWords();
+    } else {
+      setSavedMnemonics(prev => prev.map(m => m.id === id ? { ...m, isMastered } : m));
     }
-    setSavedMnemonics(prev => prev.map(m => m.id === id ? { ...m, isMastered } : m));
   };
+
 
   if (loading) {
     return (
@@ -819,11 +811,17 @@ export default function App() {
     );
   }
 
-  if (!user) {
+  if (!user && !isGuest) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] dark:bg-[#020617] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 p-4">
         <div className="w-full max-w-md">
-          <Auth onSuccess={() => {}} language={language} />
+          <Auth onClose={() => setIsGuest(true)} />
+          <button 
+            onClick={() => setIsGuest(true)} 
+            className="w-full mt-4 py-3 text-gray-500 font-bold hover:text-indigo-600 transition-all"
+          >
+            Continue as Guest
+          </button>
         </div>
       </div>
     );
@@ -833,12 +831,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617] transition-colors duration-500 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Trial Expiration Banner */}
-      {isTrialExpired && !profile?.is_pro && (
-        <div className="bg-red-600 text-white py-2 px-4 text-center text-sm font-bold animate-pulse">
-          Your 7-day trial has expired. Upgrade to Pro to continue learning!
-        </div>
-      )}
       {/* Navigation Bar */}
       <nav className="sticky top-0 z-50 px-4 py-4 sm:py-6 bg-transparent">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -1105,6 +1097,7 @@ export default function App() {
                 savedMnemonics={savedMnemonics}
                 setState={setState}
                 t={t}
+                loadingMessage={loadingMessage}
               />
             </motion.div>
           )}
@@ -1139,9 +1132,10 @@ export default function App() {
                 userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id).length}
                 onSignOut={async () => { 
                   await supabase.auth.signOut();
+                  setIsGuest(false); 
                   setUser(null); 
                 }} 
-                onSignIn={() => {}}
+                onSignIn={() => setIsGuest(false)}
                 onNavigate={navigateTo}
                 language={language}
                 t={t.profile}

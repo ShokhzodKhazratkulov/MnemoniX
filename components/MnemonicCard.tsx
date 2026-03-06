@@ -138,8 +138,34 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
     setAudioError(null);
     setIsAudioLoading(true);
     try {
+      let audioData: string | null = null;
+
+      // If we have a stored audio URL and we're playing the main story, use it
+      if (data.audioUrl && !text) {
+        const response = await fetch(data.audioUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        }
+        
+        const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContextRef.current.destination);
+        source.onended = () => {
+          if (isMounted.current) setIsPlaying(false);
+        };
+        
+        sourceRef.current = source;
+        source.start(0);
+        if (isMounted.current) setIsPlaying(true);
+        setIsAudioLoading(false);
+        return;
+      }
+
+      // Fallback to Gemini TTS
       const ttsText = text || `${safeData.word}. ${safeData.meaning}. ${safeData.imagination}. ${safeData.connectorSentence}`;
-      
       const base64Audio = await gemini.generateTTS(ttsText, language);
 
       if (!base64Audio) {
