@@ -472,7 +472,7 @@ const TRANSLATIONS: Record<Language, any> = {
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
-  const [isGuest, setIsGuest] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const [hasKey, setHasKey] = useState(true);
 
   const gemini = React.useMemo(() => new GeminiService(), []);
@@ -915,6 +915,22 @@ export default function App() {
 
             {/* Settings Icons */}
             <div className="flex items-center gap-2">
+              {!user && isGuest && (
+                <div className="hidden sm:flex items-center gap-2 mr-2">
+                  <button 
+                    onClick={() => setIsGuest(false)}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-400 font-bold text-sm hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                  >
+                    {t.profile.signIn.split('/')[0].trim()}
+                  </button>
+                  <button 
+                    onClick={() => setIsGuest(false)}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
               <button 
                 onClick={() => setView(AppView.PROFILE)}
                 className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 rounded-full text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm"
@@ -1003,6 +1019,19 @@ export default function App() {
                         {t.navProfile}
                       </button>
 
+                      {!user && isGuest && (
+                        <button
+                          onClick={() => {
+                            setIsGuest(false);
+                            setIsMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+                        >
+                          <LogOut size={18} className="rotate-180" />
+                          {t.profile.signIn}
+                        </button>
+                      )}
+
                       {/* Theme Toggle */}
                       <button
                         onClick={() => {
@@ -1069,9 +1098,18 @@ export default function App() {
                 </p>
 
                 <div className="grid grid-cols-2 sm:flex sm:flex-row justify-center gap-3 sm:gap-4 pt-4 sm:pt-6">
+                   {!user && isGuest && (
+                     <button 
+                      onClick={() => setIsGuest(false)}
+                      className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 px-4 py-4 sm:px-10 sm:py-5 bg-indigo-600 text-white rounded-2xl sm:rounded-[2rem] font-black text-sm sm:text-xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95 w-full sm:w-auto text-center"
+                     >
+                       <Sparkles size={20} className="sm:w-6 sm:h-6" />
+                       <span className="leading-tight">Get Started</span>
+                     </button>
+                   )}
                    <button 
                     onClick={() => setView(AppView.SEARCH)}
-                    className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 px-4 py-4 sm:px-10 sm:py-5 bg-indigo-600 text-white rounded-2xl sm:rounded-[2rem] font-black text-sm sm:text-xl shadow-2xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95 w-full sm:w-auto text-center"
+                    className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 px-4 py-4 sm:px-10 sm:py-5 ${!user && isGuest ? 'bg-white dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-800 text-gray-600 dark:text-gray-400' : 'bg-indigo-600 text-white shadow-2xl shadow-indigo-200 dark:shadow-none'} rounded-2xl sm:rounded-[2rem] font-black text-sm sm:text-xl hover:bg-opacity-90 transition-all active:scale-95 w-full sm:w-auto text-center`}
                    >
                      <Search size={20} className="sm:w-6 sm:h-6" />
                      <span className="leading-tight">{t.btnStartSearch}</span>
