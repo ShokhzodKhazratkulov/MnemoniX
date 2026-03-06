@@ -2,17 +2,14 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://eictllkckjlkqmejvqum.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpY3RsbGtja2psa3FtZWp2cXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMDgzMDAsImV4cCI6MjA4Nzc4NDMwMH0.QfMJqnu-ecSn3Yu-wX45dJ73MMK9lMKhKIZSk12OwiQ';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase credentials missing. Please check your .env file.');
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('Supabase credentials missing from environment. Using provided fallbacks.');
 }
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Helper to get public URL for storage
 export const getStorageUrl = (bucket: string, path: string) => {

@@ -573,7 +573,17 @@ export default function App() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(savedTheme as 'light' | 'dark');
-    
+  }, []);
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  useEffect(() => {
     // Auth state listener
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
