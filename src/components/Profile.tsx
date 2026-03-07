@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 import { Language, AppView, SavedMnemonic } from '../types';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabaseClient';
 
 interface Props {
   user: any;

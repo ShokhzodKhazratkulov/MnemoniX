@@ -27,7 +27,8 @@ import {
 import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic, Post } from './types';
 import { GeminiService } from './services/geminiService';
 import { usePosts } from './context/PostContext';
-import { supabase, getStorageUrl } from './services/supabase';
+import { supabase } from './supabaseClient';
+import { getStorageUrl } from './services/supabase';
 
 // Components
 import { Dashboard } from './components/Dashboard';
@@ -71,7 +72,7 @@ export default function App() {
 
   // Auth state listener
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       setUser(session?.user ?? null);
       if (session?.user) setIsGuest(false);
       setIsAuthReady(true);

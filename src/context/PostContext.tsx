@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Post, Language } from '../types';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabaseClient';
 
 interface PostContextType {
   posts: Post[];
@@ -242,7 +242,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('user_id', userId);
         
         if (otherEmojis) {
-          const emojiTypes = otherEmojis.map(r => r.reaction_type).filter(t => !['like', 'dislike'].includes(t));
+          const emojiTypes = otherEmojis.map((r: any) => r.reaction_type).filter((t: any) => !['like', 'dislike'].includes(t));
           if (emojiTypes.length > 0) {
             await supabase.from('reactions').delete().eq('post_id', postId).eq('user_id', userId).in('reaction_type', emojiTypes);
           }

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, Loader2, Github, Chrome, ArrowLeft } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabaseClient';
 
 interface AuthProps {
   onClose?: () => void;
