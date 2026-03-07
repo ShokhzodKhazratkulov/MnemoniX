@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MnemonicResponse, Language } from '../types';
 import { GeminiService } from '../services/geminiService';
 import { Sparkles, Volume2, Eye } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 
 interface Props {
   data: MnemonicResponse;
@@ -165,7 +166,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
       }
 
       // Fallback to Gemini TTS
-      const ttsText = text || `${safeData.word}. ${safeData.meaning}. ${safeData.imagination}. ${safeData.connectorSentence}`;
+      const ttsText = text || `${safeData.word}. ${safeData.meaning}. ${safeData.phoneticLink}. ${safeData.imagination}. ${safeData.connectorSentence}`;
       const base64Audio = await gemini.generateTTS(ttsText, language);
 
       if (!base64Audio) {

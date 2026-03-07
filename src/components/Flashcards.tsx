@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { SavedMnemonic, Language } from '../types';
-import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2 } from 'lucide-react';
+import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2, Sparkles } from 'lucide-react';
 import { MnemonicCard } from './MnemonicCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { GeminiService } from '../services/geminiService';
@@ -58,6 +58,8 @@ interface Props {
   onToggleMastered: (id: string, isMastered: boolean) => void;
   onDetailChange?: (isOpen: boolean) => void;
   onReviewChange?: (isReviewing: boolean) => void;
+  onPractice?: (word: string, meaning: string) => void;
+  onWordSelect?: (word: SavedMnemonic | null) => void;
   forceCloseDetail?: boolean;
   forceCloseReview?: boolean;
 }
@@ -71,7 +73,18 @@ const FLASH_T: Record<Language, any> = {
   [Language.TURKMEN]: { title: "Fleş-kartalar", range: "Döwri saýlaň", empty: "Heniz hiç zat öwrenilmedi", start: "Başlamak", next: "Indiki", prev: "Öňki", finish: "Tamamlamak", from: "Başlanýan senesi", to: "Gutarýan senesi", hint: "Kartany öwürmek üçin basyň", hardWords: "Kyn sözler" },
 };
 
-export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggleHard, onToggleMastered, onDetailChange, onReviewChange, forceCloseDetail, forceCloseReview }) => {
+export const Flashcards: React.FC<Props> = ({ 
+  savedMnemonics, 
+  language, 
+  onToggleHard, 
+  onToggleMastered, 
+  onDetailChange, 
+  onReviewChange, 
+  onPractice,
+  onWordSelect,
+  forceCloseDetail, 
+  forceCloseReview 
+}) => {
   const t = FLASH_T[language];
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -154,7 +167,8 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
 
   useEffect(() => {
     onDetailChange?.(!!selectedWord);
-  }, [selectedWord, onDetailChange]);
+    onWordSelect?.(selectedWord);
+  }, [selectedWord, onDetailChange, onWordSelect]);
 
   const filtered = useMemo(() => {
     return savedMnemonics.filter(m => {
@@ -213,21 +227,23 @@ export const Flashcards: React.FC<Props> = ({ savedMnemonics, language, onToggle
   if (!isStarted) {
     if (selectedWord) {
       return (
-        <div className="max-w-4xl mx-auto animate-fadeIn mt-4 px-2 sm:px-4 space-y-6">
-          <div className="bg-white dark:bg-slate-950 rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-900 relative">
-            {/* Desktop/Tablet Back Button */}
+        <div className="max-w-4xl mx-auto animate-fadeIn mt-4 px-2 sm:px-4 pb-24">
+          <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] p-4 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-900 relative">
+            {/* Back Button */}
             <button 
               onClick={() => setSelectedWord(null)}
-              className="hidden md:flex absolute top-8 left-8 w-12 h-12 items-center justify-center bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm z-10"
+              className="absolute top-6 left-6 sm:top-8 sm:left-8 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm z-10"
             >
               <ChevronLeft size={24} />
             </button>
             
-            <MnemonicCard 
-              data={selectedWord.data} 
-              imageUrl={selectedWord.imageUrl} 
-              language={language} 
-            />
+            <div className="pt-12 sm:pt-0">
+              <MnemonicCard 
+                data={selectedWord.data} 
+                imageUrl={selectedWord.imageUrl} 
+                language={language} 
+              />
+            </div>
           </div>
         </div>
       );

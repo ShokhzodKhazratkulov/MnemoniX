@@ -4,9 +4,9 @@ import { MnemonicResponse, Language } from "../types";
 
 export class GeminiService {
   private getAI() {
-    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("Gemini API Key not found. Please set VITE_GEMINI_API_KEY in your environment.");
+      throw new Error("Gemini API Key not found. Please ensure GEMINI_API_KEY is set.");
     }
     return new GoogleGenAI({ apiKey });
   }
@@ -180,7 +180,9 @@ CRITICAL RULES:
 
   async generateTTS(text: string, targetLanguage: Language): Promise<string> {
     return this.withRetry(async () => {
-      const ai = this.getAI();
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API Key not found.");
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ 
@@ -212,6 +214,38 @@ CRITICAL RULES:
       
       console.error("TTS Response missing audio parts:", response);
       return '';
+    });
+  }
+
+  async getPracticeResponse(word: string, meaning: string, targetLanguage: Language, history: any[]) {
+    return this.withRetry(async () => {
+      const ai = this.getAI();
+      
+      // If history is empty, we need an initial prompt to trigger the first greeting
+      const contents = history.length > 0 ? history : [{
+        role: 'user',
+        parts: [{ text: `Hi! I want to practice the word "${word}". Please start the session in ${targetLanguage}.` }]
+      }];
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents,
+        config: {
+          systemInstruction: `You are a helpful English Practice Partner. 
+          The user is learning the word "${word}" (meaning: ${meaning}).
+          Your goal is to help them practice using this word in context.
+          
+          Instructions:
+          1. Communicate EXCLUSIVELY in ${targetLanguage}. 
+          2. Give the user a specific scenario or question in ${targetLanguage} that requires them to use the English word "${word}".
+          3. The user MUST respond in English.
+          4. Evaluate their English sentence. If it's correct, praise them in ${targetLanguage} and give a new challenge.
+          5. If it's incorrect, gently correct them in ${targetLanguage} and explain why, then ask them to try again.
+          6. Keep your responses concise (max 2-3 sentences).
+          7. This is a 5-step practice session. After 5 successful English sentences, congratulate them warmly in ${targetLanguage} and tell them they have mastered the word!`,
+        },
+      });
+      return response.text;
     });
   }
 }

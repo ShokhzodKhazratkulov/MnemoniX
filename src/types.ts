@@ -51,7 +51,10 @@ export enum AppView {
   PROFILE = 'PROFILE',
   POSTS = 'POSTS',
   MY_POSTS = 'MY_POSTS',
-  CREATE_POST = 'CREATE_POST'
+  MY_REMIXES = 'MY_REMIXES',
+  CREATE_POST = 'CREATE_POST',
+  PRACTICE = 'PRACTICE',
+  AUTH = 'AUTH'
 }
 
 export interface Profile {
@@ -89,6 +92,10 @@ export interface Post {
     user_liked?: boolean;
     user_disliked?: boolean;
     user_emoji?: string;
+  };
+  remix_data?: {
+    parent_post_id: string;
+    parent_username: string;
   };
 }
 

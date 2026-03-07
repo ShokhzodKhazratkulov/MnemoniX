@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Mic, Loader2, AlertCircle, Sparkles, Brain, Clock, History } from 'lucide-react';
-import { AppState, Language, MnemonicResponse, SavedMnemonic } from '../types';
+import { AppState, Language, MnemonicResponse, SavedMnemonic, AppView } from '../types';
 import { MnemonicCard } from './MnemonicCard';
 
 interface SearchPageProps {
+  user: any;
   language: Language;
   state: AppState;
   mnemonic: MnemonicResponse | null;
@@ -16,11 +17,13 @@ interface SearchPageProps {
   handleSearch: (e?: React.FormEvent) => Promise<void>;
   savedMnemonics: SavedMnemonic[];
   setState: (state: AppState) => void;
+  onNavigate: (view: AppView) => void;
   t: any;
   loadingMessage: string;
 }
 
 export const SearchPage: React.FC<SearchPageProps> = ({
+  user,
   language,
   state,
   mnemonic,
@@ -31,6 +34,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   handleSearch,
   savedMnemonics,
   setState,
+  onNavigate,
   t,
   loadingMessage
 }) => {
@@ -176,6 +180,34 @@ export const SearchPage: React.FC<SearchPageProps> = ({
 
       {/* Content Area */}
       <div className="min-h-[400px]">
+        {!state && !mnemonic && !user && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 p-8 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-500/20 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+              <Brain size={120} />
+            </div>
+            <div className="relative z-10 space-y-6 max-w-lg">
+              <div className="space-y-2">
+                <h3 className="text-3xl font-black tracking-tight leading-tight">
+                  Save your progress & sync across devices
+                </h3>
+                <p className="text-indigo-100 font-medium text-lg">
+                  Create a free account to build your personal library and track your learning journey.
+                </p>
+              </div>
+              <button 
+                onClick={() => onNavigate(AppView.AUTH)}
+                className="px-8 py-3 bg-white text-indigo-600 rounded-2xl font-black shadow-xl hover:bg-indigo-50 transition-all active:scale-95"
+              >
+                {t.signIn || 'Sign In'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {state === AppState.LOADING && (
           <div className="flex flex-col items-center justify-center py-8 sm:py-12 space-y-6 sm:space-y-8">
             {/* Custom Loading Animation from Screenshot */}

@@ -1,0 +1,471 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  User as UserIcon, 
+  BookOpen, 
+  Award, 
+  Calendar, 
+  Settings, 
+  ChevronRight, 
+  LogOut, 
+  MessageSquare, 
+  X, 
+  Camera, 
+  Mail, 
+  Phone, 
+  Save,
+  Loader2,
+  Trash2
+} from 'lucide-react';
+
+import { Language, AppView, SavedMnemonic } from '../types';
+import { supabase } from '../services/supabase';
+
+interface Props {
+  user: any;
+  savedMnemonics: SavedMnemonic[];
+  totalWords: number;
+  masteredCount: number;
+  userPostCount: number;
+  userRemixCount: number;
+  onSignOut: () => void;
+  onSignIn: () => void;
+  onNavigate: (view: AppView) => void;
+  language: Language;
+  t: any;
+}
+
+export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, language, t }) => {
+  const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editForm, setEditForm] = useState({
+    username: '',
+    full_name: '',
+    avatar_url: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setEditForm({
+          username: data.username || '',
+          full_name: data.full_name || '',
+          avatar_url: data.avatar_url || ''
+        });
+      } else {
+        // Create profile if not exists
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ id: user.id, username: user.email.split('@')[0], full_name: user.user_metadata?.full_name || '' });
+        if (insertError) console.error('Error creating profile:', insertError);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      onSignIn();
+      return;
+    }
+    
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username: editForm.username,
+          full_name: editForm.full_name,
+          avatar_url: editForm.avatar_url,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      setActiveModal('none');
+      alert('Profil muvaffaqiyatli yangilandi!');
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      alert('Xatolik yuz berdi: ' + err.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUpdating(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('mnemonic_assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('mnemonic_assets')
+        .getPublicUrl(filePath);
+
+      setEditForm(prev => ({ ...prev, avatar_url: publicUrl }));
+    } catch (err: any) {
+      console.error('Error uploading avatar:', err);
+      alert('Rasm yuklashda xatolik: ' + err.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const joinDate = user ? new Date(user.created_at).toLocaleDateString(
+    language === Language.RUSSIAN ? 'ru-RU' : 
+    language === Language.UZBEK ? 'uz-UZ' : 'en-US', 
+    {
+      month: 'long',
+      year: 'numeric'
+    }
+  ) : t.guestSession;
+
+  const trialEndsAt = user?.trial_ends_at ? new Date(user.trial_ends_at) : null;
+  const isTrialExpired = trialEndsAt ? trialEndsAt.getTime() < Date.now() : false;
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      {/* Header Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 sm:p-10 shadow-xl border border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-8"
+      >
+        <div className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-200 dark:shadow-none overflow-hidden">
+          {user?.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <UserIcon size={48} className="sm:size-64" />
+          )}
+        </div>
+        <div className="text-center sm:text-left space-y-2">
+          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
+            {user?.user_metadata?.full_name || (user ? t.learner : t.guestLearner)}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center justify-center sm:justify-start gap-2">
+            <Calendar size={18} />
+            {user ? `${t.joined} ${joinDate}` : t.guestSession}
+          </p>
+          <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-4">
+            <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-bold border border-indigo-100 dark:border-indigo-800">
+              {user?.email || t.noAccount}
+            </span>
+            {user && !user.is_pro && (
+              <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${isTrialExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                {isTrialExpired ? 'Trial Expired' : `Trial ends: ${trialEndsAt?.toLocaleDateString()}`}
+              </span>
+            )}
+            {user?.is_pro && (
+              <span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-sm font-bold border border-emerald-100">
+                Pro Member
+              </span>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          onClick={() => setActiveModal('searched')}
+          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-indigo-500 transition-all group"
+        >
+          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <BookOpen size={32} />
+          </div>
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.wordsSearched}</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{totalWords}</p>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          onClick={() => setActiveModal('mastered')}
+          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-amber-500 transition-all group"
+        >
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Award size={32} />
+          </div>
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.mastered}</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{masteredCount}</p>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => onNavigate(AppView.MY_POSTS)}
+          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-indigo-500 transition-colors group"
+        >
+          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <MessageSquare size={32} />
+          </div>
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.yourPosts}</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{userPostCount}</p>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          onClick={() => onNavigate(AppView.MY_REMIXES)}
+          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-purple-500 transition-colors group"
+        >
+          <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Award size={32} />
+          </div>
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.myRemixes || 'My Remixes'}</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{userRemixCount}</p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Settings List */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 overflow-hidden"
+      >
+        <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center gap-3">
+          <Settings className="text-gray-400" />
+          <h3 className="font-black text-gray-900 dark:text-white uppercase tracking-wider text-sm">{t.accountSettings}</h3>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-slate-800">
+          <button 
+            onClick={() => setActiveModal('edit')}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-gray-500">
+                <UserIcon size={20} />
+              </div>
+              <span className="font-bold text-gray-700 dark:text-gray-300">{t.editProfile}</span>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+          </button>
+
+          {user && (
+            <>
+              <button 
+                onClick={() => onNavigate(AppView.MY_POSTS)}
+                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
+                    <MessageSquare size={20} />
+                  </div>
+                  <span className="font-bold text-gray-700 dark:text-gray-300">{t.yourPosts}</span>
+                </div>
+                <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button 
+                onClick={() => onNavigate(AppView.MY_REMIXES)}
+                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600">
+                    <Award size={20} />
+                  </div>
+                  <span className="font-bold text-gray-700 dark:text-gray-300">{t.myRemixes || 'My Remixes'}</span>
+                </div>
+                <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </>
+          )}
+          
+          {user ? (
+            <button 
+              onClick={onSignOut}
+              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-500">
+                  <LogOut size={20} />
+                </div>
+                <span className="font-bold text-red-600 dark:text-red-400">{t.signOut}</span>
+              </div>
+              <ChevronRight className="text-red-200 group-hover:translate-x-1 transition-transform" />
+            </button>
+          ) : (
+            <button 
+              onClick={onSignIn}
+              className="w-full p-6 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
+                  <LogOut size={20} />
+                </div>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">{t.signIn}</span>
+              </div>
+              <ChevronRight className="text-indigo-200 group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {activeModal !== 'none' && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveModal('none')}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <h3 className="text-xl font-black text-gray-900 dark:text-white">
+                  {activeModal === 'searched' ? t.wordsSearched : 
+                   activeModal === 'mastered' ? t.mastered : 
+                   t.editProfile}
+                </h3>
+                <button 
+                  onClick={() => setActiveModal('none')}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                >
+                  <X size={24} className="text-gray-500" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto flex-1">
+                {(activeModal === 'searched' || activeModal === 'mastered') && (
+                  <div className="space-y-4">
+                    {(activeModal === 'searched' ? savedMnemonics : savedMnemonics.filter(m => m.isMastered)).length === 0 ? (
+                      <div className="text-center py-12">
+                        <p className="text-gray-500 font-bold">{t.empty}</p>
+                      </div>
+                    ) : (
+                      (activeModal === 'searched' ? savedMnemonics : savedMnemonics.filter(m => m.isMastered)).map((m) => (
+                        <div key={m.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-transparent hover:border-indigo-500 transition-all group">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                              <img src={m.imageUrl} alt={m.word} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <h4 className="font-black text-gray-900 dark:text-white">{m.word}</h4>
+                              <p className="text-xs text-gray-500 font-bold italic">{m.data.meaning}</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={20} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {activeModal === 'edit' && (
+                  <form onSubmit={handleUpdateProfile} className="space-y-6">
+                    {/* Avatar Upload */}
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="relative group">
+                        <div className="w-24 h-24 rounded-3xl overflow-hidden bg-indigo-600 flex items-center justify-center text-white shadow-xl">
+                          {editForm.avatar_url ? (
+                            <img src={editForm.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            <UserIcon size={40} />
+                          )}
+                        </div>
+                        <label className="absolute -bottom-2 -right-2 p-2 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 cursor-pointer hover:scale-110 transition-transform">
+                          <Camera size={18} className="text-indigo-600" />
+                          <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                        </label>
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Profil rasmini o'zgartirish</p>
+                    </div>
+
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Username</label>
+                          <div className="relative">
+                            <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input 
+                              type="text" 
+                              value={editForm.username}
+                              onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                              className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
+                              placeholder="Username"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">To'liq ism</label>
+                          <div className="relative">
+                            <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input 
+                              type="text" 
+                              value={editForm.full_name}
+                              onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
+                              className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
+                              placeholder="Ismingizni kiriting"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                    <button 
+                      type="submit"
+                      disabled={isUpdating}
+                      className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                    >
+                      {isUpdating ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                      Saqlash
+                    </button>
+                  </form>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};

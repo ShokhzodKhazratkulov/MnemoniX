@@ -97,8 +97,8 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         </div>
 
         {/* Word Level */}
-        <div className="bg-white dark:bg-slate-900/50 p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-2 transform hover:scale-105 transition-transform duration-300">
-          <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-indigo-500 dark:text-indigo-400 tracking-tight">{stats.level}</span>
+        <div className="bg-white dark:bg-slate-900/50 p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-2 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
+          <span className="text-lg sm:text-xl lg:text-2xl font-black text-indigo-500 dark:text-indigo-400 tracking-tight whitespace-nowrap">{stats.level}</span>
           <span className="text-gray-400 dark:text-gray-500 font-black text-[10px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase leading-tight">{t.level}</span>
         </div>
       </div>
