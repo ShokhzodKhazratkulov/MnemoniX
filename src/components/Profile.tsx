@@ -176,6 +176,11 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-bold border border-indigo-100 dark:border-indigo-800">
               {user?.email || t.noAccount}
             </span>
+            {!user && window.location.hostname === 'mnemonix.io' && (
+              <p className="w-full text-center sm:text-left text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-2">
+                Note: Limited features in Guest Mode. Sign in to sync your data.
+              </p>
+            )}
             {user && !user.is_pro && (
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${isTrialExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                 {isTrialExpired ? 'Trial Expired' : `Trial ends: ${trialEndsAt?.toLocaleDateString()}`}
@@ -271,7 +276,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         <div className="divide-y divide-gray-100 dark:divide-slate-800">
           <button 
             onClick={() => setActiveModal('edit')}
-            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-gray-500">
@@ -286,7 +291,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             <>
               <button 
                 onClick={() => onNavigate(AppView.MY_POSTS)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
@@ -298,7 +303,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
               </button>
               <button 
                 onClick={() => onNavigate(AppView.MY_REMIXES)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600">
@@ -314,7 +319,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           {user ? (
             <button 
               onClick={onSignOut}
-              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group"
+              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-500">
@@ -327,7 +332,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           ) : (
             <button 
               onClick={onSignIn}
-              className="w-full p-6 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors group"
+              className="w-full p-6 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors group cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">

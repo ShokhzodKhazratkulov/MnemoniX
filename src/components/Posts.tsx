@@ -46,7 +46,7 @@ interface Props {
 }
 
 export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, remixSource }) => {
-  const { posts, addPost, updatePost, deletePost, hidePost, hiddenPosts, isLoading: contextLoading } = usePosts();
+  const { posts, addPost, updatePost, deletePost, hidePost, hiddenPosts, isLoading: contextLoading, fetchPosts } = usePosts();
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);

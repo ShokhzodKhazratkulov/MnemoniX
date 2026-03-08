@@ -231,9 +231,17 @@ export default function App() {
         AppView.PRACTICE
       ];
 
-      if (privateViews.includes(newView)) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+      if (privateViews.includes(newView) && !user) {
+        // Try one last time to see if we have a session if user state is null
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            setView(AppView.AUTH);
+            return;
+          }
+          setUser(session.user);
+          setIsGuest(false);
+        } catch (err) {
           setView(AppView.AUTH);
           return;
         }
@@ -244,6 +252,7 @@ export default function App() {
       }
       setViewHistory(prev => [...prev, view]);
       setView(newView);
+      setIsMenuOpen(false); // Close mobile menu on navigation
     }
   };
 
@@ -774,10 +783,10 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => navigateTo(item.id)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap cursor-pointer active:scale-95 ${
                     view === item.id 
                       ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   {item.label}
@@ -878,7 +887,7 @@ export default function App() {
                           setView(AppView.PROFILE);
                           setIsMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
                       >
                         <UserIcon size={18} />
                         {t.navProfile}
@@ -890,7 +899,7 @@ export default function App() {
                           toggleTheme();
                           setIsMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
                       >
                         {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                         {theme === 'light' ? t.darkMode : t.lightMode}
@@ -908,7 +917,7 @@ export default function App() {
                               setLanguage(l);
                               setIsMenuOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                            className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                               language === l 
                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -1038,9 +1047,15 @@ export default function App() {
                 userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id).length}
                 userRemixCount={posts.filter(p => p.post_metadata.user_id === user?.id && !!p.remix_data).length}
                 onSignOut={async () => { 
-                  await supabase.auth.signOut();
-                  setIsGuest(false); 
-                  setUser(null); 
+                  try {
+                    await supabase.auth.signOut();
+                  } catch (err) {
+                    console.error("Sign out error:", err);
+                  } finally {
+                    setIsGuest(true); 
+                    setUser(null); 
+                    setView(AppView.HOME);
+                  }
                 }} 
                 onSignIn={() => navigateTo(AppView.AUTH)}
                 onNavigate={navigateTo}
@@ -1165,7 +1180,7 @@ export default function App() {
             <button
               key={item.id}
               onClick={() => navigateTo(item.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
+              className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer active:scale-90 ${
                 view === item.id 
                   ? 'text-indigo-600 dark:text-indigo-400' 
                   : 'text-gray-400 dark:text-gray-500'
