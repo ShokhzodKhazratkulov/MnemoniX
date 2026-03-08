@@ -537,6 +537,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
               user={user} 
               theme={theme} 
               t={t} 
+              language={language}
               onDelete={() => {
                 if (window.confirm(t.confirmDelete)) {
                   deletePost(post.id);
@@ -564,12 +565,13 @@ const PostCard: React.FC<{
   user: any, 
   theme: string, 
   t: any,
+  language: Language,
   onDelete?: () => void,
   onEdit?: () => void,
   onHide?: () => void,
   onSaveToLibrary?: (post: Post) => void,
   onRemix?: (post: Post) => void
-}> = ({ post, user, theme, t, onDelete, onEdit, onHide, onSaveToLibrary, onRemix }) => {
+}> = ({ post, user, theme, t, language, onDelete, onEdit, onHide, onSaveToLibrary, onRemix }) => {
   const { toggleLike, toggleDislike, toggleEmoji } = usePosts();
   const [isImageRevealed, setIsImageRevealed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
