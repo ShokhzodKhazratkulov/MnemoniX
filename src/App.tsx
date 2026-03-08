@@ -73,15 +73,41 @@ export default function App() {
 
   // Auth state listener
   useEffect(() => {
+    let timeoutId: any;
+
     const initAuth = async () => {
+      console.log("Starting auth initialization...");
+      // Set a timeout to prevent infinite loading
+      timeoutId = setTimeout(() => {
+        setInitError(prev => {
+          if (!prev) {
+            console.error("Auth initialization timed out after 8s");
+            return "Connection timed out. Please check your internet connection or Supabase configuration.";
+          }
+          return prev;
+        });
+        setIsAuthReady(true);
+        setLoading(false);
+      }, 8000); // 8 seconds timeout
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Fetching Supabase session...");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Supabase session error:", sessionError);
+          throw sessionError;
+        }
+
+        console.log("Session fetched successfully:", session ? "User logged in" : "No active session");
         setUser(session?.user ?? null);
         if (session?.user) setIsGuest(false);
       } catch (err: any) {
         console.error("Auth session error:", err);
         setInitError(err.message || String(err));
       } finally {
+        console.log("Auth initialization complete.");
+        clearTimeout(timeoutId);
         setIsAuthReady(true);
         setLoading(false);
       }
@@ -650,6 +676,21 @@ export default function App() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4 text-center">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
         <p className="text-gray-500 dark:text-gray-400 font-medium">Initializing Mnemonix...</p>
+        <p className="text-[8px] text-gray-300 dark:text-gray-600 mt-1 uppercase tracking-widest">v1.2.1-stable</p>
+        
+        {!initError && (
+          <>
+            <p className="mt-4 text-xs text-gray-400 animate-pulse">
+              Connecting to secure servers...
+            </p>
+            <button 
+              onClick={() => { setIsAuthReady(true); setLoading(false); }}
+              className="mt-8 text-[10px] text-gray-400 hover:text-indigo-500 transition-colors uppercase tracking-[0.2em] font-bold"
+            >
+              Skip to Guest Mode
+            </button>
+          </>
+        )}
         
         {initError && (
           <div className="mt-8 p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-red-100 dark:border-red-900/30 shadow-xl max-w-sm">
