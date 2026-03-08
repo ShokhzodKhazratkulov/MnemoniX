@@ -128,14 +128,14 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <button
               onClick={() => handleOAuth('google')}
-              className="flex items-center justify-center gap-3 py-4 border-2 border-gray-100 dark:border-slate-800 rounded-2xl font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-900 transition-all"
+              className="flex items-center justify-center gap-3 py-4 border-2 border-gray-100 dark:border-slate-800 rounded-2xl font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-900 transition-all shadow-sm"
             >
-              <Chrome size={20} />
+              <Chrome size={20} className="text-indigo-600" />
               Google
             </button>
             <button
               onClick={() => handleOAuth('github')}
-              className="flex items-center justify-center gap-3 py-4 border-2 border-gray-100 dark:border-slate-800 rounded-2xl font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-900 transition-all"
+              className="flex items-center justify-center gap-3 py-4 border-2 border-gray-100 dark:border-slate-800 rounded-2xl font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-900 transition-all shadow-sm"
             >
               <Github size={20} />
               GitHub

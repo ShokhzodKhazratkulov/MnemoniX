@@ -81,7 +81,11 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
-      if (session?.user) setIsGuest(false);
+      if (session?.user) {
+        setIsGuest(false);
+        // If we are on the AUTH view, navigate home after successful OAuth redirect
+        setView(prev => prev === AppView.AUTH ? AppView.HOME : prev);
+      }
     });
 
     return () => subscription.unsubscribe();
