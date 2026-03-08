@@ -278,7 +278,8 @@ export default function App() {
     setImageUrl('');
 
     try {
-      const correctedWord = await gemini.checkSpelling(searchQuery);
+      let correctedWord = await gemini.checkSpelling(searchQuery);
+      correctedWord = correctedWord.toLowerCase().trim();
       
       // 1. Check if word exists in global mnemonics library
       let mnemonicData: MnemonicResponse;
@@ -364,8 +365,8 @@ export default function App() {
 
         if (insertError) {
           console.error('Error inserting mnemonic:', insertError);
-          // If insert fails (likely RLS or schema), we should still try to proceed with local state
-          // but we won't be able to create a post or save to user_words properly
+          // Throw error so user can see what's wrong with their Supabase setup
+          throw new Error(`Supabase Mnemonic Insert Error: ${insertError.message} (${insertError.code})`);
         }
 
         // 2. Automatically create a post if user is logged in
@@ -377,6 +378,7 @@ export default function App() {
           });
           if (postError) {
             console.error('Error creating automatic post:', postError);
+            throw new Error(`Supabase Post Insert Error: ${postError.message} (${postError.code})`);
           } else {
             fetchPosts(); // Refresh feed
           }
@@ -390,11 +392,16 @@ export default function App() {
 
       // 2. Save to user's personal list if logged in
       if (user) {
-        const { data: wordRecord } = await supabase
+        const { data: wordRecord, error: fetchError } = await supabase
           .from('mnemonics')
           .select('id')
           .eq('word', correctedWord)
           .single();
+
+        if (fetchError) {
+          console.error('Error fetching word record:', fetchError);
+          throw new Error(`Supabase Fetch Error: ${fetchError.message}`);
+        }
 
         if (wordRecord) {
           const { error: upsertError } = await supabase
@@ -406,7 +413,11 @@ export default function App() {
               is_mastered: false
             }, { onConflict: 'user_id,word_id' });
           
-          if (!upsertError) fetchUserWords();
+          if (upsertError) {
+            console.error('Error upserting user word:', upsertError);
+            throw new Error(`Supabase UserWord Upsert Error: ${upsertError.message}`);
+          }
+          fetchUserWords();
         }
       } else {
         // Guest mode - local state only
@@ -428,7 +439,7 @@ export default function App() {
       if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
         setError(t.errorQuota);
       } else {
-        setError(t.errorGeneral);
+        setError(msg || t.errorGeneral);
       }
       setState(AppState.ERROR);
     }
