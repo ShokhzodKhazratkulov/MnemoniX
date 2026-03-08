@@ -79,10 +79,26 @@ export default function App() {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setIsGuest(false);
+        
+        // Ensure profile exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (!profile) {
+          await supabase.from('profiles').insert({
+            id: session.user.id,
+            username: session.user.email?.split('@')[0] || 'user',
+            full_name: session.user.user_metadata?.full_name || ''
+          });
+        }
+
         // If we are on the AUTH view, navigate home after successful OAuth redirect
         setView(prev => prev === AppView.AUTH ? AppView.HOME : prev);
       }
@@ -295,6 +311,25 @@ export default function App() {
         mnemonicData = existingMnemonic.data as MnemonicResponse;
         img = existingMnemonic.image_url;
         audio = existingMnemonic.audio_url;
+        
+        // Check if a post exists for this mnemonic, if not create one
+        if (user) {
+          const { data: existingPost } = await supabase
+            .from('posts')
+            .select('id')
+            .eq('mnemonic_id', existingMnemonic.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (!existingPost) {
+            await supabase.from('posts').insert({
+              user_id: user.id,
+              mnemonic_id: existingMnemonic.id,
+              language: language
+            });
+            fetchPosts();
+          }
+        }
       } else {
         // Generate new
         setLoadingMessage(t.loadingMnemonic);
@@ -306,14 +341,20 @@ export default function App() {
         // Upload image to storage
         let storedImageUrl = '';
         if (base64Image) {
-          const imageBlob = await (await fetch(base64Image)).blob();
-          const fileName = `${correctedWord}-${Date.now()}.png`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('mnemonic_assets')
-            .upload(`images/${fileName}`, imageBlob);
-          
-          if (!uploadError) {
-            storedImageUrl = getStorageUrl('mnemonic_assets', `images/${fileName}`);
+          try {
+            const imageBlob = await (await fetch(base64Image)).blob();
+            const fileName = `${correctedWord}-${Date.now()}.png`;
+            const { error: uploadError } = await supabase.storage
+              .from('mnemonic_assets')
+              .upload(`images/${fileName}`, imageBlob, { upsert: true });
+            
+            if (!uploadError) {
+              storedImageUrl = getStorageUrl('mnemonic_assets', `images/${fileName}`);
+            } else {
+              console.error('Image upload error:', uploadError);
+            }
+          } catch (imgErr) {
+            console.error('Error processing image for upload:', imgErr);
           }
         }
 
@@ -323,14 +364,26 @@ export default function App() {
         const base64Audio = await gemini.generateTTS(ttsText, language);
         
         if (base64Audio) {
-          const audioBlob = new Blob([new Uint8Array(atob(base64Audio).split("").map(c => c.charCodeAt(0)))], { type: 'audio/wav' });
-          const audioFileName = `${correctedWord}-${Date.now()}.wav`;
-          const { data: audioUploadData, error: audioUploadError } = await supabase.storage
-            .from('mnemonic_assets')
-            .upload(`audio/${audioFileName}`, audioBlob);
-          
-          if (!audioUploadError) {
-            storedAudioUrl = getStorageUrl('mnemonic_assets', `audio/${audioFileName}`);
+          try {
+            const audioResponse = await fetch(`data:audio/wav;base64,${base64Audio}`);
+            const audioBlob = await audioResponse.blob();
+            const audioFileName = `${correctedWord}-${Date.now()}.wav`;
+            const { error: audioUploadError } = await supabase.storage
+              .from('mnemonic_assets')
+              .upload(`audio/${audioFileName}`, audioBlob, { upsert: true });
+            
+            if (!audioUploadError) {
+              storedAudioUrl = getStorageUrl('mnemonic_assets', `audio/${audioFileName}`);
+              console.log('Audio uploaded successfully:', storedAudioUrl);
+            } else {
+              console.error('Audio upload error:', audioUploadError);
+              // If bucket missing error, inform user
+              if (audioUploadError.message.includes('bucket not found')) {
+                console.error('CRITICAL: Storage bucket "mnemonic_assets" not found. Please create it in Supabase dashboard.');
+              }
+            }
+          } catch (audioErr) {
+            console.error('Error processing audio for upload:', audioErr);
           }
         }
 
@@ -339,12 +392,28 @@ export default function App() {
         mnemonicData.audioUrl = audio;
 
         // Save to global library
-        await supabase.from('mnemonics').insert({
+        const { data: newMnemonic, error: insertError } = await supabase.from('mnemonics').insert({
           word: correctedWord,
           data: mnemonicData,
           image_url: img,
-          audio_url: audio
-        });
+          audio_url: audio,
+          language: language
+        }).select().single();
+
+        if (insertError) {
+          console.error('Error inserting mnemonic:', insertError);
+        }
+
+        // 2. Automatically create a post if user is logged in
+        if (user && newMnemonic) {
+          const { error: postError } = await supabase.from('posts').insert({
+            user_id: user.id,
+            mnemonic_id: newMnemonic.id,
+            language: language
+          });
+          if (postError) console.error('Error creating automatic post:', postError);
+          else fetchPosts(); // Refresh feed
+        }
       }
 
       setMnemonic(mnemonicData);
@@ -395,6 +464,57 @@ export default function App() {
         setError(t.errorGeneral);
       }
       setState(AppState.ERROR);
+    }
+  };
+
+  const handleShareMnemonic = async (data: MnemonicResponse, img: string) => {
+    if (!user) {
+      setView(AppView.AUTH);
+      return;
+    }
+    
+    try {
+      // 1. Ensure mnemonic exists in DB
+      let mnemonicId;
+      const { data: existing } = await supabase
+        .from('mnemonics')
+        .select('id')
+        .eq('word', data.word)
+        .maybeSingle();
+        
+      if (existing) {
+        mnemonicId = existing.id;
+      } else {
+        const { data: newM, error: mErr } = await supabase
+          .from('mnemonics')
+          .insert({
+            word: data.word,
+            data: data,
+            image_url: img,
+            audio_url: data.audioUrl,
+            language: language
+          })
+          .select()
+          .single();
+        if (mErr) throw mErr;
+        mnemonicId = newM.id;
+      }
+
+      // 2. Create post
+      const { error: pErr } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          mnemonic_id: mnemonicId,
+          language: language
+        });
+      
+      if (pErr) throw pErr;
+      
+      fetchPosts();
+      setView(AppView.POSTS);
+    } catch (err) {
+      console.error('Error sharing mnemonic:', err);
     }
   };
 
@@ -793,6 +913,7 @@ export default function App() {
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 handleSearch={handleSearch}
+                handleShare={handleShareMnemonic}
                 savedMnemonics={savedMnemonics}
                 setState={setState}
                 onNavigate={navigateTo}

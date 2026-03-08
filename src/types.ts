@@ -82,6 +82,7 @@ export interface Post {
   };
   visuals: {
     user_uploaded_image: string | null;
+    audio_url?: string | null;
     ui_style: 'light' | 'dark';
   };
   language: Language;

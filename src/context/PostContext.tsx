@@ -39,9 +39,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (postsError) throw postsError;
 
       const mappedPosts: Post[] = postsData.map((p: any) => {
-        const likes = p.reactions.filter((r: any) => r.reaction_type === 'like');
-        const dislikes = p.reactions.filter((r: any) => r.reaction_type === 'dislike');
-        const emojis = p.reactions.filter((r: any) => !['like', 'dislike'].includes(r.reaction_type));
+        if (!p.mnemonics) return null;
+
+        const likes = p.reactions?.filter((r: any) => r.reaction_type === 'like') || [];
+        const dislikes = p.reactions?.filter((r: any) => r.reaction_type === 'dislike') || [];
+        const emojis = p.reactions?.filter((r: any) => !['like', 'dislike'].includes(r.reaction_type)) || [];
 
         // Group emojis
         const emojiCounts: Record<string, number> = {};
@@ -56,9 +58,6 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           { emoji: "💡", count: emojiCounts["💡"] || 0 }
         ];
 
-        const user = supabase.auth.getUser(); // This is async, but we can check session
-        // For simplicity, we'll handle user-specific flags in the UI or by passing current user ID
-        
         return {
           id: p.id,
           post_metadata: {
@@ -68,11 +67,12 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
           mnemonic_data: {
             english_word: p.mnemonics.word,
-            native_keyword: p.mnemonics.keyword,
-            story: p.mnemonics.story
+            native_keyword: p.mnemonics.data?.meaning || p.mnemonics.keyword || '',
+            story: p.mnemonics.data?.imagination || p.mnemonics.story || ''
           },
           visuals: {
             user_uploaded_image: p.mnemonics.image_url,
+            audio_url: p.mnemonics.audio_url,
             ui_style: 'light'
           },
           language: p.language as Language,
@@ -83,10 +83,10 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
           remix_data: p.parent_post_id ? {
             parent_post_id: p.parent_post_id,
-            parent_username: 'Original' // We'd need another join to get this properly
+            parent_username: 'Original'
           } : undefined
         };
-      });
+      }).filter(Boolean) as Post[];
 
       setPosts(mappedPosts);
     } catch (err) {
@@ -125,12 +125,25 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (existingMnemonic) {
         mnemonicId = existingMnemonic.id;
       } else {
+        const mnemonicData = {
+          word: postData.mnemonic_data?.english_word || '',
+          transcription: '',
+          meaning: postData.mnemonic_data?.native_keyword || '',
+          morphology: '',
+          imagination: postData.mnemonic_data?.story || '',
+          phoneticLink: postData.mnemonic_data?.native_keyword || '',
+          connectorSentence: '',
+          examples: [],
+          synonyms: [],
+          imagePrompt: '',
+          level: 'Intermediate'
+        };
+
         const { data: newMnemonic, error: mError } = await supabase
           .from('mnemonics')
           .insert({
             word: postData.mnemonic_data?.english_word,
-            keyword: postData.mnemonic_data?.native_keyword,
-            story: postData.mnemonic_data?.story,
+            data: mnemonicData,
             image_url: postData.visuals?.user_uploaded_image,
             language: postData.language
           })
