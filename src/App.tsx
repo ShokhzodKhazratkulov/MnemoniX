@@ -357,11 +357,15 @@ export default function App() {
           data: mnemonicData,
           image_url: img,
           audio_url: audio,
-          language: language
+          language: language,
+          keyword: mnemonicData.phoneticLink,
+          story: mnemonicData.imagination
         }).select().single();
 
         if (insertError) {
           console.error('Error inserting mnemonic:', insertError);
+          // If insert fails (likely RLS or schema), we should still try to proceed with local state
+          // but we won't be able to create a post or save to user_words properly
         }
 
         // 2. Automatically create a post if user is logged in
@@ -371,8 +375,11 @@ export default function App() {
             mnemonic_id: newMnemonic.id,
             language: language
           });
-          if (postError) console.error('Error creating automatic post:', postError);
-          else fetchPosts(); // Refresh feed
+          if (postError) {
+            console.error('Error creating automatic post:', postError);
+          } else {
+            fetchPosts(); // Refresh feed
+          }
         }
       }
 

@@ -24,10 +24,15 @@ import {
   Mic,
   Eye,
   GitBranch,
-  Award
+  Award,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { Language, Post, AppView } from '../types';
 import { usePosts } from '../context/PostContext';
+import { GeminiService } from '../services/geminiService';
+
+const gemini = new GeminiService();
 
 interface Props {
   user: any;
@@ -41,7 +46,7 @@ interface Props {
 }
 
 export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, remixSource }) => {
-  const { posts, addPost, updatePost, deletePost, hidePost, hiddenPosts, isLoading: contextLoading } = usePosts();
+  const { posts, addPost, updatePost, deletePost, hidePost, hiddenPosts, isLoading: contextLoading, fetchPosts } = usePosts();
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -515,6 +520,12 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-gray-500 font-bold animate-pulse">Loading feed...</p>
+            <button 
+              onClick={() => fetchPosts()}
+              className="text-xs font-bold text-indigo-600 underline hover:text-indigo-700 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => (
@@ -559,6 +570,74 @@ const PostCard: React.FC<{
 }> = ({ post, user, theme, t, onDelete, onEdit, onHide, onSaveToLibrary, onRemix }) => {
   const { toggleLike, toggleDislike, toggleEmoji } = usePosts();
   const [isImageRevealed, setIsImageRevealed] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const audioContextRef = React.useRef<AudioContext | null>(null);
+  const sourceRef = React.useRef<AudioBufferSourceNode | null>(null);
+
+  const handlePlayAudio = async () => {
+    if (isPlaying) {
+      if (sourceRef.current) {
+        try { sourceRef.current.stop(); } catch (e) {}
+      }
+      setIsPlaying(false);
+      return;
+    }
+
+    setIsAudioLoading(true);
+    try {
+      if (post.visuals.audio_url) {
+        const response = await fetch(post.visuals.audio_url);
+        const arrayBuffer = await response.arrayBuffer();
+        
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        }
+        
+        const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContextRef.current.destination);
+        source.onended = () => setIsPlaying(false);
+        
+        sourceRef.current = source;
+        source.start(0);
+        setIsPlaying(true);
+      } else {
+        // Fallback to TTS
+        const ttsText = `${post.mnemonic_data.english_word}. ${post.mnemonic_data.native_keyword}. ${post.mnemonic_data.story}`;
+        const base64Audio = await gemini.generateTTS(ttsText, post.language);
+        
+        if (base64Audio) {
+          if (!audioContextRef.current) {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+          }
+          
+          // Simple base64 to arraybuffer
+          const binaryString = window.atob(base64Audio);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          
+          const audioBuffer = await audioContextRef.current.decodeAudioData(bytes.buffer);
+          const source = audioContextRef.current.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioContextRef.current.destination);
+          source.onended = () => setIsPlaying(false);
+          
+          sourceRef.current = source;
+          source.start(0);
+          setIsPlaying(true);
+        }
+      }
+    } catch (error) {
+      console.error("Audio Playback Error:", error);
+    } finally {
+      setIsAudioLoading(false);
+    }
+  };
   const [showMenu, setShowMenu] = useState(false);
 
   const handleLike = () => {
@@ -672,13 +751,33 @@ const PostCard: React.FC<{
 
         {/* Mnemonic Content */}
         <div className="space-y-3">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
-              {post.mnemonic_data.english_word}
-            </span>
-            <span className="text-lg sm:text-xl font-black text-gray-400 dark:text-slate-600 italic">
-              ≈ {post.mnemonic_data.native_keyword}
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+                {post.mnemonic_data.english_word}
+              </span>
+              <span className="text-lg sm:text-xl font-black text-gray-400 dark:text-slate-600 italic">
+                ≈ {post.mnemonic_data.native_keyword}
+              </span>
+            </div>
+            
+            <button
+              onClick={handlePlayAudio}
+              disabled={isAudioLoading}
+              className={`p-2 rounded-full transition-all ${
+                isPlaying 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                  : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+              }`}
+            >
+              {isAudioLoading ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : isPlaying ? (
+                <VolumeX size={18} />
+              ) : (
+                <Volume2 size={18} />
+              )}
+            </button>
           </div>
           
           <p className="text-gray-700 dark:text-gray-300 font-medium leading-relaxed text-sm sm:text-base">

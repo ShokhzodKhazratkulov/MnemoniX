@@ -38,6 +38,7 @@ interface Props {
 export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, language, t }) => {
   const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [editForm, setEditForm] = useState({
     username: '',
     full_name: '',
@@ -49,6 +50,15 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
       fetchProfile();
     }
   }, [user]);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await onSignOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -68,10 +78,26 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         });
       } else {
         // Create profile if not exists
+        console.log("Creating profile for user:", user.id);
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert({ id: user.id, username: user.email.split('@')[0], full_name: user.user_metadata?.full_name || '' });
-        if (insertError) console.error('Error creating profile:', insertError);
+          .insert({ 
+            id: user.id, 
+            username: user.email.split('@')[0], 
+            full_name: user.user_metadata?.full_name || '',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
+          });
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          if (insertError.code === '23505') {
+            console.log("Profile already exists (race condition), fetching again...");
+            fetchProfile();
+          }
+        } else {
+          console.log("Profile created successfully");
+          fetchProfile();
+        }
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -176,6 +202,11 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             <span className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-bold border border-indigo-100 dark:border-indigo-800">
               {user?.email || t.noAccount}
             </span>
+            {!user && window.location.hostname === 'mnemonix.io' && (
+              <p className="w-full text-center sm:text-left text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-2">
+                Note: Limited features in Guest Mode. Sign in to sync your data.
+              </p>
+            )}
             {user && !user.is_pro && (
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${isTrialExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                 {isTrialExpired ? 'Trial Expired' : `Trial ends: ${trialEndsAt?.toLocaleDateString()}`}
@@ -271,7 +302,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         <div className="divide-y divide-gray-100 dark:divide-slate-800">
           <button 
             onClick={() => setActiveModal('edit')}
-            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-gray-500">
@@ -286,7 +317,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             <>
               <button 
                 onClick={() => onNavigate(AppView.MY_POSTS)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
@@ -298,7 +329,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
               </button>
               <button 
                 onClick={() => onNavigate(AppView.MY_REMIXES)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600">
@@ -313,12 +344,13 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           
           {user ? (
             <button 
-              onClick={onSignOut}
-              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group cursor-pointer disabled:opacity-50"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-500">
-                  <LogOut size={20} />
+                  {isSigningOut ? <Loader2 size={20} className="animate-spin" /> : <LogOut size={20} />}
                 </div>
                 <span className="font-bold text-red-600 dark:text-red-400">{t.signOut}</span>
               </div>
@@ -327,7 +359,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           ) : (
             <button 
               onClick={onSignIn}
-              className="w-full p-6 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors group"
+              className="w-full p-6 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors group cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
