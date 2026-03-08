@@ -54,28 +54,11 @@ export default function App() {
   const gemini = React.useMemo(() => new GeminiService(), []);
 
   const [loading, setLoading] = useState(true);
-  const [initError, setInitError] = useState<string | null>(null);
   const [view, setView] = useState<AppView>(AppView.HOME);
   const [viewHistory, setViewHistory] = useState<AppView[]>([]);
   const [state, setState] = useState<AppState>(AppState.IDLE);
   const [isFlashcardDetailOpen, setIsFlashcardDetailOpen] = useState(false);
   const [isFlashcardReviewOpen, setIsFlashcardReviewOpen] = useState(false);
-  const [isUsingFallbackSupabase, setIsUsingFallbackSupabase] = useState(false);
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
-
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  useEffect(() => {
-    // Detect if using fallback Supabase on custom domain
-    const isCustom = window.location.hostname === 'mnemonix.io';
-    const isFallback = !import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL === 'undefined';
-    if (isCustom && isFallback) {
-      setIsUsingFallbackSupabase(true);
-    }
-  }, []);
   const [forceCloseFlashcardDetail, setForceCloseFlashcardDetail] = useState(false);
   const [forceCloseFlashcardReview, setForceCloseFlashcardReview] = useState(false);
   const [language, setLanguage] = useState<Language>(Language.UZBEK);
@@ -89,72 +72,17 @@ export default function App() {
 
   // Auth state listener
   useEffect(() => {
-    let timeoutId: any;
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
+      setUser(session?.user ?? null);
+      if (session?.user) setIsGuest(false);
+      setIsAuthReady(true);
+      setLoading(false);
+    });
 
-    const initAuth = async () => {
-      console.log("Starting auth initialization...");
-      // Set a timeout to prevent infinite loading
-      timeoutId = setTimeout(() => {
-        setInitError(prev => {
-          if (!prev) {
-            console.error("Auth initialization timed out after 8s");
-            return "Connection timed out. Please check your internet connection or Supabase configuration.";
-          }
-          return prev;
-        });
-        setIsAuthReady(true);
-        setLoading(false);
-      }, 8000); // 8 seconds timeout
-
-      try {
-        console.log("Fetching Supabase session...");
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Supabase session error:", sessionError);
-          throw sessionError;
-        }
-
-        console.log("Session fetched successfully:", session ? "User logged in" : "No active session");
-        setUser(session?.user ?? null);
-        if (session?.user) setIsGuest(false);
-      } catch (err: any) {
-        console.error("Auth session error:", err);
-        setInitError(err.message || String(err));
-      } finally {
-        console.log("Auth initialization complete.");
-        clearTimeout(timeoutId);
-        setIsAuthReady(true);
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setIsGuest(false);
-        
-        try {
-          // Ensure profile exists
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', session.user.id)
-            .maybeSingle();
-          
-          if (!profile) {
-            await supabase.from('profiles').insert({
-              id: session.user.id,
-              username: session.user.email?.split('@')[0] || 'user',
-              full_name: session.user.user_metadata?.full_name || ''
-            });
-          }
-        } catch (err) {
-          console.error("Error ensuring profile exists:", err);
-        }
-
         // If we are on the AUTH view, navigate home after successful OAuth redirect
         setView(prev => prev === AppView.AUTH ? AppView.HOME : prev);
       }
@@ -247,17 +175,9 @@ export default function App() {
         AppView.PRACTICE
       ];
 
-      if (privateViews.includes(newView) && !user) {
-        // Try one last time to see if we have a session if user state is null
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            setView(AppView.AUTH);
-            return;
-          }
-          setUser(session.user);
-          setIsGuest(false);
-        } catch (err) {
+      if (privateViews.includes(newView)) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
           setView(AppView.AUTH);
           return;
         }
@@ -268,7 +188,6 @@ export default function App() {
       }
       setViewHistory(prev => [...prev, view]);
       setView(newView);
-      setIsMenuOpen(false); // Close mobile menu on navigation
     }
   };
 
@@ -358,65 +277,24 @@ export default function App() {
     setMnemonic(null);
     setImageUrl('');
 
-    // Global timeout for the entire search process
-    const searchTimeout = setTimeout(() => {
-      if (state === AppState.LOADING) {
-        console.error("Search timed out");
-        setError("Search timed out. Please try again.");
-        setState(AppState.ERROR);
-      }
-    }, 45000); // 45 seconds total timeout
-
     try {
-      console.log("Checking spelling for:", searchQuery);
-      const correctedWord = await Promise.race([
-        gemini.checkSpelling(searchQuery),
-        new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Spelling check timed out")), 15000))
-      ]);
-      
-      console.log("Corrected word:", correctedWord);
+      const correctedWord = await gemini.checkSpelling(searchQuery);
       
       // 1. Check if word exists in global mnemonics library
       let mnemonicData: MnemonicResponse;
       let img: string;
       let audio: string | undefined;
 
-      console.log("Checking Supabase for existing mnemonic...");
-      const { data: existingMnemonic, error: fetchError } = await supabase
+      const { data: existingMnemonic } = await supabase
         .from('mnemonics')
         .select('*')
         .eq('word', correctedWord)
-        .maybeSingle();
-
-      if (fetchError) {
-        console.error("Supabase fetch error:", fetchError);
-        // Don't throw, try to generate new anyway
-      }
+        .single();
 
       if (existingMnemonic) {
-        console.log("Found existing mnemonic:", existingMnemonic.id);
         mnemonicData = existingMnemonic.data as MnemonicResponse;
         img = existingMnemonic.image_url;
         audio = existingMnemonic.audio_url;
-        
-        // Check if a post exists for this mnemonic, if not create one
-        if (user) {
-          const { data: existingPost } = await supabase
-            .from('posts')
-            .select('id')
-            .eq('mnemonic_id', existingMnemonic.id)
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (!existingPost) {
-            await supabase.from('posts').insert({
-              user_id: user.id,
-              mnemonic_id: existingMnemonic.id,
-              language: language
-            });
-            fetchPosts();
-          }
-        }
       } else {
         // Generate new
         setLoadingMessage(t.loadingMnemonic);
@@ -461,13 +339,8 @@ export default function App() {
             
             if (!audioUploadError) {
               storedAudioUrl = getStorageUrl('mnemonic_assets', `audio/${audioFileName}`);
-              console.log('Audio uploaded successfully:', storedAudioUrl);
             } else {
               console.error('Audio upload error:', audioUploadError);
-              // If bucket missing error, inform user
-              if (audioUploadError.message.includes('bucket not found')) {
-                console.error('CRITICAL: Storage bucket "mnemonic_assets" not found. Please create it in Supabase dashboard.');
-              }
             }
           } catch (audioErr) {
             console.error('Error processing audio for upload:', audioErr);
@@ -507,7 +380,6 @@ export default function App() {
       setImageUrl(img);
       setState(AppState.RESULTS);
       setLoadingMessage('');
-      showToast("Mnemonic found/generated!");
 
       // 2. Save to user's personal list if logged in
       if (user) {
@@ -544,18 +416,14 @@ export default function App() {
         setSavedMnemonics(prev => [newSavedMnemonic, ...prev]);
       }
     } catch (err: any) {
-      console.error("Search error:", err);
+      console.error(err);
       const msg = err?.message || '';
       if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
         setError(t.errorQuota);
-      } else if (msg.includes('timeout')) {
-        setError("Connection timed out. Please try again.");
       } else {
         setError(t.errorGeneral);
       }
       setState(AppState.ERROR);
-    } finally {
-      clearTimeout(searchTimeout);
     }
   };
 
@@ -723,49 +591,10 @@ export default function App() {
   };
 
 
-  if (loading || !isAuthReady) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4 text-center">
-        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <p className="text-gray-500 dark:text-gray-400 font-medium">Initializing Mnemonix...</p>
-        <p className="text-[8px] text-gray-300 dark:text-gray-600 mt-1 uppercase tracking-widest">v1.2.1-stable</p>
-        
-        {!initError && (
-          <>
-            <p className="mt-4 text-xs text-gray-400 animate-pulse">
-              Connecting to secure servers...
-            </p>
-            <button 
-              onClick={() => { setIsAuthReady(true); setLoading(false); }}
-              className="mt-8 text-[10px] text-gray-400 hover:text-indigo-500 transition-colors uppercase tracking-[0.2em] font-bold"
-            >
-              Skip to Guest Mode
-            </button>
-          </>
-        )}
-        
-        {initError && (
-          <div className="mt-8 p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-red-100 dark:border-red-900/30 shadow-xl max-w-sm">
-            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={24} />
-            </div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">Connection Error</h3>
-            <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-4">
-              {initError}
-            </p>
-            {initError.includes('Failed to fetch') && window.location.hostname === 'mnemonix.io' && (
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4 leading-relaxed">
-                Tip: Ensure "https://mnemonix.io" is added to your Supabase project's CORS and Redirect URLs.
-              </p>
-            )}
-            <button 
-              onClick={() => window.location.reload()}
-              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
-            >
-              Retry Connection
-            </button>
-          </div>
-        )}
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
       </div>
     );
   }
@@ -826,10 +655,10 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => navigateTo(item.id)}
-                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap cursor-pointer active:scale-95 ${
+                  className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
                     view === item.id 
                       ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -930,7 +759,7 @@ export default function App() {
                           setView(AppView.PROFILE);
                           setIsMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
                       >
                         <UserIcon size={18} />
                         {t.navProfile}
@@ -942,7 +771,7 @@ export default function App() {
                           toggleTheme();
                           setIsMenuOpen(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
                       >
                         {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                         {theme === 'light' ? t.darkMode : t.lightMode}
@@ -960,7 +789,7 @@ export default function App() {
                               setLanguage(l);
                               setIsMenuOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                            className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                               language === l 
                                 ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -979,24 +808,7 @@ export default function App() {
         </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-8 pb-24 md:pb-12">
-        {/* Toast Notification */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl font-bold text-sm flex items-center gap-3 ${
-              toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-            }`}
-          >
-            {toast.type === 'success' ? <Sparkles size={18} /> : <X size={18} />}
-            {toast.message}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
           {view === AppView.AUTH && (
             <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Auth onClose={() => goBack()} onSuccess={() => { setIsGuest(false); setView(AppView.HOME); }} />
@@ -1023,12 +835,6 @@ export default function App() {
                 <p className="text-lg sm:text-2xl text-gray-500 dark:text-gray-400 font-medium leading-relaxed max-w-2xl mx-auto">
                   {t.heroSubtitle}
                 </p>
-
-                {isUsingFallbackSupabase && (
-                  <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-700 dark:text-amber-400 text-xs font-bold">
-                    ⚠️ WARNING: Custom domain detected but Supabase URL is missing. Using fallback database which may have connection limits. Please set VITE_SUPABASE_URL in your dashboard.
-                  </div>
-                )}
 
                 <div className="grid grid-cols-2 sm:flex sm:flex-row justify-center gap-3 sm:gap-4 pt-4 sm:pt-6">
                    <button 
@@ -1113,17 +919,9 @@ export default function App() {
                 userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id).length}
                 userRemixCount={posts.filter(p => p.post_metadata.user_id === user?.id && !!p.remix_data).length}
                 onSignOut={async () => { 
-                  try {
-                    await supabase.auth.signOut();
-                    showToast("Signed out successfully");
-                  } catch (err) {
-                    console.error("Sign out error:", err);
-                    showToast("Error signing out, but session cleared", "error");
-                  } finally {
-                    setIsGuest(true); 
-                    setUser(null); 
-                    setView(AppView.HOME);
-                  }
+                  await supabase.auth.signOut();
+                  setIsGuest(false); 
+                  setUser(null); 
                 }} 
                 onSignIn={() => navigateTo(AppView.AUTH)}
                 onNavigate={navigateTo}
@@ -1248,7 +1046,7 @@ export default function App() {
             <button
               key={item.id}
               onClick={() => navigateTo(item.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer active:scale-90 ${
+              className={`flex-1 flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
                 view === item.id 
                   ? 'text-indigo-600 dark:text-indigo-400' 
                   : 'text-gray-400 dark:text-gray-500'
