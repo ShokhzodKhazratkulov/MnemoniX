@@ -30,13 +30,16 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username),
+          profiles:user_id (username, full_name),
           mnemonics:mnemonic_id (*),
           reactions (*)
         `)
         .order('created_at', { ascending: false });
 
-      if (postsError) throw postsError;
+      if (postsError) {
+        console.error('Detailed Supabase Fetch Error:', postsError);
+        throw postsError;
+      }
 
       const mappedPosts: Post[] = postsData.map((p: any) => {
         const likes = p.reactions.filter((r: any) => r.reaction_type === 'like');
@@ -184,7 +187,18 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
 
-      if (pError) throw pError;
+      if (pError) {
+        console.error('Detailed Supabase Insert Error:', pError);
+        console.log('Data attempted to insert:', {
+          user_id: user.id,
+          mnemonic_id: mnemonicId,
+          language: postData.language,
+          mnemonic_data: postData.mnemonic_data,
+          visuals: postData.visuals,
+          engagement: postData.engagement
+        });
+        throw pError;
+      }
       
       await fetchPosts();
     } catch (err) {
