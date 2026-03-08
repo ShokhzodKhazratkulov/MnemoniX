@@ -660,6 +660,11 @@ export default function App() {
             <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-4">
               {initError}
             </p>
+            {initError.includes('Failed to fetch') && window.location.hostname === 'mnemonix.io' && (
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4 leading-relaxed">
+                Tip: Ensure "https://mnemonix.io" is added to your Supabase project's CORS and Redirect URLs.
+              </p>
+            )}
             <button 
               onClick={() => window.location.reload()}
               className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
