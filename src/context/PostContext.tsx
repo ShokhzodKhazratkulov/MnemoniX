@@ -13,7 +13,7 @@ interface PostContextType {
   toggleEmoji: (postId: string, userId: string, emoji: string) => Promise<void>;
   isLoading: boolean;
   hiddenPosts: string[];
-  fetchPosts: () => Promise<void>;
+  fetchPosts: (silent?: boolean) => Promise<void>;
 }
 
 const PostContext = createContext<PostContextType | undefined>(undefined);
@@ -23,8 +23,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchPosts = async () => {
-    setIsLoading(true);
+  const fetchPosts = async (silent: boolean = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
@@ -77,13 +77,13 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user_id: p.user_id
           },
           mnemonic_data: {
-            english_word: p.mnemonics.word,
-            native_keyword: p.mnemonics.keyword || p.mnemonics.data?.phoneticLink || '',
-            story: p.mnemonics.story || p.mnemonics.data?.imagination || ''
+            english_word: p.mnemonic_data?.english_word || p.mnemonics?.word || '',
+            native_keyword: p.mnemonic_data?.native_keyword || p.mnemonics?.keyword || p.mnemonics?.data?.phoneticLink || '',
+            story: p.mnemonic_data?.story || p.mnemonics?.story || p.mnemonics?.data?.imagination || ''
           },
           visuals: {
-            user_uploaded_image: p.mnemonics.image_url,
-            ui_style: 'light'
+            user_uploaded_image: p.visuals?.user_uploaded_image || p.mnemonics?.image_url || '',
+            ui_style: p.visuals?.ui_style || 'light'
           },
           language: p.language as Language,
           engagement: {
@@ -200,18 +200,10 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (pError) {
         console.error('Detailed Supabase Insert Error:', pError);
-        console.log('Data attempted to insert:', {
-          user_id: user.id,
-          mnemonic_id: mnemonicId,
-          language: postData.language,
-          mnemonic_data: postData.mnemonic_data,
-          visuals: postData.visuals,
-          engagement: postData.engagement
-        });
         throw pError;
       }
       
-      await fetchPosts();
+      await fetchPosts(true);
     } catch (err) {
       console.error('Error adding post:', err);
     }
@@ -255,7 +247,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase.from('reactions').delete().eq('post_id', postId).eq('user_id', userId).eq('reaction_type', 'dislike');
         await supabase.from('reactions').insert({ post_id: postId, user_id: userId, reaction_type: 'like' });
       }
-      await fetchPosts();
+      await fetchPosts(true);
     } catch (err) {
       console.error('Error toggling like:', err);
     }
@@ -281,7 +273,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase.from('reactions').delete().eq('post_id', postId).eq('user_id', userId).eq('reaction_type', 'like');
         await supabase.from('reactions').insert({ post_id: postId, user_id: userId, reaction_type: 'dislike' });
       }
-      await fetchPosts();
+      await fetchPosts(true);
     } catch (err) {
       console.error('Error toggling dislike:', err);
     }
@@ -320,7 +312,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         await supabase.from('reactions').insert({ post_id: postId, user_id: userId, reaction_type: emoji });
       }
-      await fetchPosts();
+      await fetchPosts(true);
     } catch (err) {
       console.error('Error toggling emoji:', err);
     }
@@ -333,6 +325,9 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const updatedPost = updater(post);
       
+      // Optimistic update
+      setPosts(prev => prev.map(p => p.id === postId ? { ...updatedPost, is_updated: true } : p));
+      
       const { error } = await supabase
         .from('posts')
         .update({
@@ -343,9 +338,13 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         .eq('id', postId);
 
-      if (error) throw error;
+      if (error) {
+        // Rollback on error
+        await fetchPosts(true);
+        throw error;
+      }
       
-      await fetchPosts();
+      await fetchPosts(true);
     } catch (err) {
       console.error('Error updating post:', err);
       throw err;
