@@ -185,6 +185,7 @@ export default function App() {
 
       if (newView !== AppView.CREATE_POST) {
         setRemixSource(null);
+        setEditingPost(null);
       }
       setViewHistory(prev => [...prev, view]);
       setView(newView);
@@ -602,6 +603,7 @@ export default function App() {
   const [practiceWord, setPracticeWord] = useState<{word: string, meaning: string} | null>(null);
   const [selectedFlashcardWord, setSelectedFlashcardWord] = useState<SavedMnemonic | null>(null);
   const [remixSource, setRemixSource] = useState<Post | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   const startPractice = (word: string, meaning: string) => {
     setPracticeWord({ word, meaning });
@@ -977,6 +979,10 @@ export default function App() {
                 onNavigate={navigateTo}
                 onSaveToLibrary={handleSavePostToLibrary}
                 onRemix={handleRemixPost}
+                onEditPost={(post) => {
+                  setEditingPost(post);
+                  setView(AppView.CREATE_POST);
+                }}
               />
             </motion.div>
           )}
@@ -991,6 +997,10 @@ export default function App() {
                 onNavigate={navigateTo}
                 onSaveToLibrary={handleSavePostToLibrary}
                 onRemix={handleRemixPost}
+                onEditPost={(post) => {
+                  setEditingPost(post);
+                  setView(AppView.CREATE_POST);
+                }}
               />
             </motion.div>
           )}
@@ -1005,6 +1015,10 @@ export default function App() {
                 onNavigate={navigateTo}
                 onSaveToLibrary={handleSavePostToLibrary}
                 onRemix={handleRemixPost}
+                onEditPost={(post) => {
+                  setEditingPost(post);
+                  setView(AppView.CREATE_POST);
+                }}
               />
             </motion.div>
           )}
@@ -1020,6 +1034,7 @@ export default function App() {
                 onSaveToLibrary={handleSavePostToLibrary}
                 onRemix={handleRemixPost}
                 remixSource={remixSource}
+                editingPost={editingPost}
               />
             </motion.div>
           )}

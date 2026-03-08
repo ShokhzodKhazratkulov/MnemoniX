@@ -38,20 +38,43 @@ interface Props {
   onNavigate?: (view: AppView) => void;
   onSaveToLibrary?: (post: Post) => void;
   onRemix?: (post: Post) => void;
+  onEditPost?: (post: Post) => void;
   remixSource?: Post | null;
+  editingPost?: Post | null;
 }
 
-export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, remixSource }) => {
+export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, onEditPost, remixSource, editingPost }) => {
   const { posts, addPost, updatePost, deletePost, hidePost, hiddenPosts, isLoading: contextLoading } = usePosts();
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editingPostId, setEditingPostId] = useState<string | null>(editingPost?.id || null);
   const [newPost, setNewPost] = useState({
-    english_word: remixSource?.mnemonic_data.english_word || '',
-    native_keyword: remixSource?.mnemonic_data.native_keyword || '',
-    story: remixSource?.mnemonic_data.story || '',
-    image: remixSource?.visuals.user_uploaded_image || null as string | null
+    english_word: editingPost?.mnemonic_data.english_word || remixSource?.mnemonic_data.english_word || '',
+    native_keyword: editingPost?.mnemonic_data.native_keyword || remixSource?.mnemonic_data.native_keyword || '',
+    story: editingPost?.mnemonic_data.story || remixSource?.mnemonic_data.story || '',
+    image: editingPost?.visuals.user_uploaded_image || remixSource?.visuals.user_uploaded_image || null as string | null
   });
+
+  // Update state when editingPost or remixSource changes
+  useEffect(() => {
+    if (editingPost) {
+      setEditingPostId(editingPost.id);
+      setNewPost({
+        english_word: editingPost.mnemonic_data.english_word,
+        native_keyword: editingPost.mnemonic_data.native_keyword,
+        story: editingPost.mnemonic_data.story,
+        image: editingPost.visuals.user_uploaded_image
+      });
+    } else if (remixSource) {
+      setEditingPostId(null);
+      setNewPost({
+        english_word: remixSource.mnemonic_data.english_word,
+        native_keyword: remixSource.mnemonic_data.native_keyword,
+        story: remixSource.mnemonic_data.story,
+        image: remixSource.visuals.user_uploaded_image
+      });
+    }
+  }, [editingPost, remixSource]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Filter posts based on viewMode, search, and language
@@ -366,14 +389,18 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
   };
 
   const handleEditPost = (post: Post) => {
-    setEditingPostId(post.id);
-    setNewPost({
-      english_word: post.mnemonic_data.english_word,
-      native_keyword: post.mnemonic_data.native_keyword,
-      story: post.mnemonic_data.story,
-      image: post.visuals.user_uploaded_image
-    });
-    if (onNavigate) onNavigate(AppView.CREATE_POST);
+    if (onEditPost) {
+      onEditPost(post);
+    } else {
+      setEditingPostId(post.id);
+      setNewPost({
+        english_word: post.mnemonic_data.english_word,
+        native_keyword: post.mnemonic_data.native_keyword,
+        story: post.mnemonic_data.story,
+        image: post.visuals.user_uploaded_image
+      });
+      if (onNavigate) onNavigate(AppView.CREATE_POST);
+    }
   };
 
   if (viewMode === 'create') {
@@ -409,7 +436,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
             <ChevronLeft size={24} className="text-gray-600 dark:text-gray-400" />
           </button>
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-            {t.create}
+            {editingPostId ? t.edit : t.create}
           </h2>
         </div>
 
@@ -478,7 +505,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
                 disabled={!newPost.english_word || !newPost.native_keyword || !newPost.story}
                 className="px-12 py-3 bg-indigo-600 text-white rounded-full font-bold text-base shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95"
               >
-                {t.post}
+                {editingPostId ? (language === Language.UZBEK ? 'Saqlash' : 'Save') : t.post}
               </button>
             </div>
           </div>
