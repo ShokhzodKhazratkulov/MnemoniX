@@ -7,7 +7,7 @@ interface PostContextType {
   addPost: (post: Partial<Post>) => Promise<void>;
   deletePost: (postId: string) => Promise<void>;
   hidePost: (postId: string) => void;
-  updatePost: (postId: string, updater: (post: Post) => Post) => void;
+  updatePost: (postId: string, updater: (post: Post) => Post) => Promise<void>;
   toggleLike: (postId: string, userId: string) => Promise<void>;
   toggleDislike: (postId: string, userId: string) => Promise<void>;
   toggleEmoji: (postId: string, userId: string, emoji: string) => Promise<void>;
@@ -32,7 +32,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           *,
           profiles!user_id (username, full_name),
           mnemonics:mnemonic_id (*),
-          reactions (*)
+          reactions (*),
+          parent:parent_post_id (
+            user_id,
+            profiles:user_id (username, full_name)
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -40,6 +44,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Detailed Supabase Fetch Error:', postsError);
         throw postsError;
       }
+
+      const { data: { user } } = await supabase.auth.getUser();
 
       const mappedPosts: Post[] = postsData.map((p: any) => {
         const likes = p.reactions.filter((r: any) => r.reaction_type === 'like');
@@ -59,8 +65,9 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           { emoji: "💡", count: emojiCounts["💡"] || 0 }
         ];
 
-        const user = supabase.auth.getUser(); // This is async, but we can check session
-        // For simplicity, we'll handle user-specific flags in the UI or by passing current user ID
+        const user_liked = user ? likes.some((r: any) => r.user_id === user.id) : false;
+        const user_disliked = user ? dislikes.some((r: any) => r.user_id === user.id) : false;
+        const user_emoji_reaction = user ? emojis.find((r: any) => r.user_id === user.id) : null;
         
         return {
           id: p.id,
@@ -82,13 +89,17 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           engagement: {
             likes: likes.length,
             dislikes: dislikes.length,
-            impression_emojis: impression_emojis
+            impression_emojis: impression_emojis,
+            user_liked,
+            user_disliked,
+            user_emoji: user_emoji_reaction?.reaction_type
           },
           remix_data: p.parent_post_id ? {
             parent_post_id: p.parent_post_id,
-            parent_username: 'Original' // We'd need another join to get this properly
-          } : undefined
-        };
+            parent_username: p.parent?.profiles?.username || p.parent?.profiles?.full_name || 'Original'
+          } : undefined,
+          is_updated: p.is_updated
+        } as any;
       });
 
       setPosts(mappedPosts);
@@ -223,6 +234,10 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleLike = async (postId: string, userId: string) => {
+    if (!userId || userId === 'guest') {
+      alert("Iltimos, reaksiya bildirish uchun tizimga kiring.");
+      return;
+    }
     try {
       // Check if reaction exists
       const { data: existing } = await supabase
@@ -231,7 +246,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('post_id', postId)
         .eq('user_id', userId)
         .eq('reaction_type', 'like')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         await supabase.from('reactions').delete().eq('id', existing.id);
@@ -247,6 +262,10 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleDislike = async (postId: string, userId: string) => {
+    if (!userId || userId === 'guest') {
+      alert("Iltimos, reaksiya bildirish uchun tizimga kiring.");
+      return;
+    }
     try {
       const { data: existing } = await supabase
         .from('reactions')
@@ -254,7 +273,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('post_id', postId)
         .eq('user_id', userId)
         .eq('reaction_type', 'dislike')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         await supabase.from('reactions').delete().eq('id', existing.id);
@@ -269,6 +288,10 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleEmoji = async (postId: string, userId: string, emoji: string) => {
+    if (!userId || userId === 'guest') {
+      alert("Iltimos, reaksiya bildirish uchun tizimga kiring.");
+      return;
+    }
     try {
       const { data: existing } = await supabase
         .from('reactions')
@@ -276,13 +299,12 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('post_id', postId)
         .eq('user_id', userId)
         .eq('reaction_type', emoji)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         await supabase.from('reactions').delete().eq('id', existing.id);
       } else {
-        // Users can only have one emoji reaction at a time? 
-        // Let's remove other emojis first
+        // Remove other emojis first
         const { data: otherEmojis } = await supabase
           .from('reactions')
           .select('reaction_type')
@@ -304,9 +326,30 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updatePost = (postId: string, updater: (post: Post) => Post) => {
-    // This is harder with Supabase, usually we'd just refetch
-    setPosts(prev => prev.map(p => p.id === postId ? updater(p) : p));
+  const updatePost = async (postId: string, updater: (post: Post) => Post) => {
+    try {
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
+      
+      const updatedPost = updater(post);
+      
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          mnemonic_data: updatedPost.mnemonic_data,
+          visuals: updatedPost.visuals,
+          is_updated: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', postId);
+
+      if (error) throw error;
+      
+      await fetchPosts();
+    } catch (err) {
+      console.error('Error updating post:', err);
+      throw err;
+    }
   };
 
   return (

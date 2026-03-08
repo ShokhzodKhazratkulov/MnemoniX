@@ -24,7 +24,8 @@ import {
   Mic,
   Eye,
   GitBranch,
-  Award
+  Award,
+  RefreshCw
 } from 'lucide-react';
 import { Language, Post, AppView } from '../types';
 import { usePosts } from '../context/PostContext';
@@ -66,7 +67,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
     const matchesLanguage = post.language === language;
 
     if (viewMode === 'mine') {
-      return post.post_metadata.user_id === user?.id && matchesSearch && matchesLanguage;
+      return post.post_metadata.user_id === user?.id && !post.remix_data && matchesSearch && matchesLanguage;
     }
     if (viewMode === 'remixes') {
       return post.post_metadata.user_id === user?.id && !!post.remix_data && matchesSearch && matchesLanguage;
@@ -124,7 +125,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       researchNote: "Tadqiqot siri: Raugh va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
       searchPlaceholder: "So'zlarni yoki kalit so'zlarni qidirish...",
       yourPosts: "Mening Postlarim",
-      revealImage: "Şekili görkez",
+      revealImage: "Tasvirni ko'rish",
       hide: "Yashirish",
       delete: "O'chirish",
       edit: "Tahrirlash",
@@ -299,19 +300,26 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
     if (!newPost.english_word || !newPost.native_keyword || !newPost.story) return;
 
     if (editingPostId) {
-      updatePost(editingPostId, (prev) => ({
-        ...prev,
-        mnemonic_data: {
-          english_word: newPost.english_word,
-          native_keyword: newPost.native_keyword,
-          story: newPost.story
-        },
-        visuals: {
-          ...prev.visuals,
-          user_uploaded_image: newPost.image
-        }
-      }));
-      setEditingPostId(null);
+      try {
+        await updatePost(editingPostId, (prev) => ({
+          ...prev,
+          mnemonic_data: {
+            english_word: newPost.english_word,
+            native_keyword: newPost.native_keyword,
+            story: newPost.story
+          },
+          visuals: {
+            ...prev.visuals,
+            user_uploaded_image: newPost.image
+          }
+        }));
+        setEditingPostId(null);
+        setNewPost({ english_word: '', native_keyword: '', story: '', image: null });
+        if (onNavigate) onNavigate(AppView.POSTS);
+      } catch (err: any) {
+        console.error("Error updating post:", err);
+        alert(err.message || "Xatolik yuz berdi. Iltimos qayta urining.");
+      }
     } else {
       const post: Post = {
         id: Date.now().toString(),
@@ -597,11 +605,20 @@ const PostCard: React.FC<{
               <div className="flex items-center gap-2">
                 <h4 className="font-black text-gray-900 dark:text-white text-sm leading-none">
                   {post.post_metadata.username}
+                  {(post as any).is_updated && (
+                    <span className="ml-2 text-[10px] font-normal text-slate-400 uppercase tracking-wider">
+                      {language === Language.UZBEK ? "Yangilandi" : "Updated"}
+                    </span>
+                  )}
                 </h4>
                 {post.remix_data && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black border border-indigo-100 dark:border-indigo-800/50 animate-pulse">
-                    <GitBranch size={8} />
-                    <span>{t.remixedFrom} @{post.remix_data.parent_username}</span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black border border-indigo-100 dark:border-indigo-800/50">
+                    <RefreshCw size={8} />
+                    <span>
+                      {language === Language.UZBEK 
+                        ? `@${post.remix_data.parent_username} dan remiks qilindi` 
+                        : `remix from @${post.remix_data.parent_username}`}
+                    </span>
                   </div>
                 )}
               </div>
