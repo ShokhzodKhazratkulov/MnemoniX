@@ -162,7 +162,16 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           user_id: user.id,
           mnemonic_id: mnemonicId,
           language: postData.language,
-          parent_post_id: postData.remix_data?.parent_post_id
+          parent_post_id: postData.remix_data?.parent_post_id,
+          mnemonic_data: {
+            english_word: postData.mnemonic_data?.english_word,
+            native_keyword: postData.mnemonic_data?.native_keyword,
+            story: postData.mnemonic_data?.story
+          },
+          visuals: {
+            user_uploaded_image: postData.visuals?.user_uploaded_image,
+            ui_style: 'light'
+          }
         });
 
       if (pError) throw pError;

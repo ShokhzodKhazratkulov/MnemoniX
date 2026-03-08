@@ -373,7 +373,16 @@ export default function App() {
           const { error: postError } = await supabase.from('posts').insert({
             user_id: user.id,
             mnemonic_id: newMnemonic.id,
-            language: language
+            language: language,
+            mnemonic_data: {
+              english_word: mnemonicData.word,
+              native_keyword: mnemonicData.phoneticLink,
+              story: mnemonicData.imagination
+            },
+            visuals: {
+              user_uploaded_image: img,
+              ui_style: theme
+            }
           });
           if (postError) {
             console.error('Error creating automatic post:', postError);
