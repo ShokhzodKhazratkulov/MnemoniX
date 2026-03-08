@@ -139,46 +139,32 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
     setAudioError(null);
     setIsAudioLoading(true);
     try {
-      let audioData: string | null = null;
+      let audioBuffer: AudioBuffer | null = null;
+      
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
 
       // If we have a stored audio URL and we're playing the main story, use it
       if (data.audioUrl && !text) {
         const response = await fetch(data.audioUrl);
         const arrayBuffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
         
-        if (!audioContextRef.current) {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        // Use custom PCM decoder because we store raw PCM bytes in Supabase
+        audioBuffer = await decodeAudioData(uint8Array, audioContextRef.current, 24000, 1);
+      } else {
+        // Fallback to Gemini TTS
+        const ttsText = text || `${safeData.word}. ${safeData.meaning}. ${safeData.phoneticLink}. ${safeData.imagination}. ${safeData.connectorSentence}`;
+        const base64Audio = await gemini.generateTTS(ttsText, language);
+
+        if (!base64Audio) {
+          throw new Error("No audio data received from API");
         }
-        
-        const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
-        const source = audioContextRef.current.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContextRef.current.destination);
-        source.onended = () => {
-          if (isMounted.current) setIsPlaying(false);
-        };
-        
-        sourceRef.current = source;
-        source.start(0);
-        if (isMounted.current) setIsPlaying(true);
-        setIsAudioLoading(false);
-        return;
+
+        const decodedData = decode(base64Audio);
+        audioBuffer = await decodeAudioData(decodedData, audioContextRef.current, 24000, 1);
       }
-
-      // Fallback to Gemini TTS
-      const ttsText = text || `${safeData.word}. ${safeData.meaning}. ${safeData.phoneticLink}. ${safeData.imagination}. ${safeData.connectorSentence}`;
-      const base64Audio = await gemini.generateTTS(ttsText, language);
-
-      if (!base64Audio) {
-        throw new Error("No audio data received from API");
-      }
-
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      }
-
-      const decodedData = decode(base64Audio);
-      const audioBuffer = await decodeAudioData(decodedData, audioContextRef.current, 24000, 1);
 
       if (!audioBuffer) {
         throw new Error("Failed to decode audio buffer");

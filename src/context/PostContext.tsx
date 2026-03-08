@@ -111,7 +111,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addPost = async (postData: Partial<Post>) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) throw new Error("Iltimos, post yaratish uchun tizimga kiring.");
 
     try {
       // 1. Ensure mnemonic exists or create it
@@ -171,6 +171,16 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           visuals: {
             user_uploaded_image: postData.visuals?.user_uploaded_image,
             ui_style: 'light'
+          },
+          engagement: {
+            likes: 0,
+            dislikes: 0,
+            impression_emojis: [
+              { emoji: "🧠", count: 0 },
+              { emoji: "🔥", count: 0 },
+              { emoji: "🌸", count: 0 },
+              { emoji: "💡", count: 0 }
+            ]
           }
         });
 

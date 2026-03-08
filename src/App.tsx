@@ -382,6 +382,16 @@ export default function App() {
             visuals: {
               user_uploaded_image: img,
               ui_style: theme
+            },
+            engagement: {
+              likes: 0,
+              dislikes: 0,
+              impression_emojis: [
+                { emoji: "🧠", count: 0 },
+                { emoji: "🔥", count: 0 },
+                { emoji: "🌸", count: 0 },
+                { emoji: "💡", count: 0 }
+              ]
             }
           });
           if (postError) {
