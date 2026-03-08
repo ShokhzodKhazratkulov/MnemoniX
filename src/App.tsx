@@ -954,7 +954,7 @@ export default function App() {
                 savedMnemonics={savedMnemonics}
                 totalWords={savedMnemonics.length} 
                 masteredCount={masteredCount}
-                userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id).length}
+                userPostCount={posts.filter(p => p.post_metadata.user_id === user?.id && !p.remix_data).length}
                 userRemixCount={posts.filter(p => p.post_metadata.user_id === user?.id && !!p.remix_data).length}
                 onSignOut={async () => { 
                   await supabase.auth.signOut();
