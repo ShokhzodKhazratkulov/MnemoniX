@@ -68,8 +68,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
           mnemonic_data: {
             english_word: p.mnemonics.word,
-            native_keyword: p.mnemonics.data?.phoneticLink || '',
-            story: p.mnemonics.data?.imagination || ''
+            native_keyword: p.mnemonics.keyword || p.mnemonics.data?.phoneticLink || '',
+            story: p.mnemonics.story || p.mnemonics.data?.imagination || ''
           },
           visuals: {
             user_uploaded_image: p.mnemonics.image_url,
@@ -145,7 +145,9 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             word: postData.mnemonic_data?.english_word,
             data: mnemonicData,
             image_url: postData.visuals?.user_uploaded_image,
-            language: postData.language
+            language: postData.language,
+            keyword: postData.mnemonic_data?.native_keyword,
+            story: postData.mnemonic_data?.story
           })
           .select()
           .single();

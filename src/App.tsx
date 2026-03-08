@@ -358,7 +358,9 @@ export default function App() {
           data: mnemonicData,
           image_url: img,
           audio_url: audio,
-          language: language
+          language: language,
+          keyword: mnemonicData.phoneticLink,
+          story: mnemonicData.imagination
         }).select().single();
 
         if (insertError) {
