@@ -30,7 +30,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('posts')
         .select(`
           *,
-          profiles (username, full_name),
+          profiles!user_id (username, full_name),
           mnemonics:mnemonic_id (*),
           reactions (*)
         `)
