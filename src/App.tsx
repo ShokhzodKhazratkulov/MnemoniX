@@ -129,6 +129,24 @@ export default function App() {
     }
   }, [user, isAuthReady]);
 
+  // Protect private views on auth change
+  useEffect(() => {
+    if (isAuthReady && !user) {
+      const privateViews = [
+        AppView.DASHBOARD,
+        AppView.FLASHCARDS,
+        AppView.PROFILE,
+        AppView.MY_POSTS,
+        AppView.MY_REMIXES,
+        AppView.CREATE_POST,
+        AppView.PRACTICE
+      ];
+      if (privateViews.includes(view)) {
+        setView(AppView.AUTH);
+      }
+    }
+  }, [user, view, isAuthReady]);
+
   // Scroll to top on view change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -140,8 +158,27 @@ export default function App() {
 
   const t = TRANSLATIONS[language];
 
-  const navigateTo = (newView: AppView) => {
+  const navigateTo = async (newView: AppView) => {
     if (newView !== view) {
+      // Protect private views
+      const privateViews = [
+        AppView.DASHBOARD,
+        AppView.FLASHCARDS,
+        AppView.PROFILE,
+        AppView.MY_POSTS,
+        AppView.MY_REMIXES,
+        AppView.CREATE_POST,
+        AppView.PRACTICE
+      ];
+
+      if (privateViews.includes(newView)) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setView(AppView.AUTH);
+          return;
+        }
+      }
+
       if (newView !== AppView.CREATE_POST) {
         setRemixSource(null);
       }

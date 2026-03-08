@@ -16,20 +16,29 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [message, setMessage] = useState<string | null>(null);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        
+        if (!data.session) {
+          setMessage('Check your email and confirm your account before logging in.');
+          return;
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!data.session) throw new Error('Failed to create session');
       }
+      
       if (onSuccess) onSuccess();
       if (onClose) onClose();
     } catch (err: any) {
@@ -171,6 +180,17 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
               </div>
             </div>
 
+            {message && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm rounded-2xl font-bold flex items-center gap-2"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                {message}
+              </motion.div>
+            )}
+
             {error && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
@@ -194,7 +214,11 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
           <p className="mt-12 text-center text-gray-500 dark:text-gray-400 font-bold">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+                setMessage(null);
+              }}
               className="text-indigo-600 dark:text-indigo-400 font-black hover:underline ml-1"
             >
               {isSignUp ? 'Sign In' : 'Join Mnemonix'}
