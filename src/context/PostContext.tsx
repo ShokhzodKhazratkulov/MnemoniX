@@ -30,7 +30,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('posts')
         .select(`
           *,
-          profiles:user_id (username, full_name),
+          profiles (username, full_name),
           mnemonics:mnemonic_id (*),
           reactions (*)
         `)
@@ -65,7 +65,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return {
           id: p.id,
           post_metadata: {
-            username: p.profiles?.username || 'Unknown',
+            username: p.profiles?.username || p.profiles?.full_name || 'Unknown',
             timestamp: new Date(p.created_at).getTime(),
             user_id: p.user_id
           },
