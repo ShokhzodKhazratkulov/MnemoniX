@@ -30,7 +30,9 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
         if (error) throw error;
         
         if (!data.session) {
-          setMessage('Check your email and confirm your account before logging in.');
+          setMessage('Your account has been created. Please check your email and verify your address before logging in.');
+          setIsSignUp(false); // Switch to Sign In view
+          setPassword(''); // Clear password for security
           return;
         }
       } else {
