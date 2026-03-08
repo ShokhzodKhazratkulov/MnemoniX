@@ -520,6 +520,12 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-gray-500 font-bold animate-pulse">Loading feed...</p>
+            <button 
+              onClick={() => fetchPosts()}
+              className="text-xs font-bold text-indigo-600 underline hover:text-indigo-700 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => (

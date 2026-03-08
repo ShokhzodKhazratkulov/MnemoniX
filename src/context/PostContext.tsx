@@ -23,7 +23,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (retryCount = 0) => {
     setIsLoading(true);
     try {
       const { data: postsData, error: postsError } = await supabase
@@ -37,6 +37,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
+
+      if (!postsData) {
+        setPosts([]);
+        return;
+      }
 
       const mappedPosts: Post[] = postsData.map((p: any) => {
         if (!p.mnemonics) return null;
@@ -89,8 +94,12 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }).filter(Boolean) as Post[];
 
       setPosts(mappedPosts);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching posts:', err);
+      // Retry once on network failure
+      if ((err.message === 'Failed to fetch' || err.message?.includes('fetch')) && retryCount < 1) {
+        setTimeout(() => fetchPosts(retryCount + 1), 2000);
+      }
     } finally {
       setIsLoading(false);
     }

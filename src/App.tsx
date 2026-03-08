@@ -54,6 +54,7 @@ export default function App() {
   const gemini = React.useMemo(() => new GeminiService(), []);
 
   const [loading, setLoading] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
   const [view, setView] = useState<AppView>(AppView.HOME);
   const [viewHistory, setViewHistory] = useState<AppView[]>([]);
   const [state, setState] = useState<AppState>(AppState.IDLE);
@@ -72,31 +73,44 @@ export default function App() {
 
   // Auth state listener
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }: any) => {
-      setUser(session?.user ?? null);
-      if (session?.user) setIsGuest(false);
-      setIsAuthReady(true);
-      setLoading(false);
-    });
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        if (session?.user) setIsGuest(false);
+      } catch (err: any) {
+        console.error("Auth session error:", err);
+        setInitError(err.message || String(err));
+      } finally {
+        setIsAuthReady(true);
+        setLoading(false);
+      }
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setIsGuest(false);
         
-        // Ensure profile exists
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (!profile) {
-          await supabase.from('profiles').insert({
-            id: session.user.id,
-            username: session.user.email?.split('@')[0] || 'user',
-            full_name: session.user.user_metadata?.full_name || ''
-          });
+        try {
+          // Ensure profile exists
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (!profile) {
+            await supabase.from('profiles').insert({
+              id: session.user.id,
+              username: session.user.email?.split('@')[0] || 'user',
+              full_name: session.user.user_metadata?.full_name || ''
+            });
+          }
+        } catch (err) {
+          console.error("Error ensuring profile exists:", err);
         }
 
         // If we are on the AUTH view, navigate home after successful OAuth redirect
@@ -631,10 +645,29 @@ export default function App() {
   };
 
 
-  if (loading) {
+  if (loading || !isAuthReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4 text-center">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+        <p className="text-gray-500 dark:text-gray-400 font-medium">Initializing Mnemonix...</p>
+        
+        {initError && (
+          <div className="mt-8 p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-red-100 dark:border-red-900/30 shadow-xl max-w-sm">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">Connection Error</h3>
+            <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-4">
+              {initError}
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
+            >
+              Retry Connection
+            </button>
+          </div>
+        )}
       </div>
     );
   }
