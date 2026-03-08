@@ -358,14 +358,11 @@ export default function App() {
           data: mnemonicData,
           image_url: img,
           audio_url: audio,
-          language: language,
-          keyword: mnemonicData.phoneticLink,
-          story: mnemonicData.imagination
+          language: language
         }).select().single();
 
         if (insertError) {
           console.error('Error inserting mnemonic:', insertError);
-          // Throw error so user can see what's wrong with their Supabase setup
           throw new Error(`Supabase Mnemonic Insert Error: ${insertError.message} (${insertError.code})`);
         }
 
