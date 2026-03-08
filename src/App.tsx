@@ -60,6 +60,22 @@ export default function App() {
   const [state, setState] = useState<AppState>(AppState.IDLE);
   const [isFlashcardDetailOpen, setIsFlashcardDetailOpen] = useState(false);
   const [isFlashcardReviewOpen, setIsFlashcardReviewOpen] = useState(false);
+  const [isUsingFallbackSupabase, setIsUsingFallbackSupabase] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  useEffect(() => {
+    // Detect if using fallback Supabase on custom domain
+    const isCustom = window.location.hostname === 'mnemonix.io';
+    const isFallback = !import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL === 'undefined';
+    if (isCustom && isFallback) {
+      setIsUsingFallbackSupabase(true);
+    }
+  }, []);
   const [forceCloseFlashcardDetail, setForceCloseFlashcardDetail] = useState(false);
   const [forceCloseFlashcardReview, setForceCloseFlashcardReview] = useState(false);
   const [language, setLanguage] = useState<Language>(Language.UZBEK);
@@ -342,21 +358,43 @@ export default function App() {
     setMnemonic(null);
     setImageUrl('');
 
+    // Global timeout for the entire search process
+    const searchTimeout = setTimeout(() => {
+      if (state === AppState.LOADING) {
+        console.error("Search timed out");
+        setError("Search timed out. Please try again.");
+        setState(AppState.ERROR);
+      }
+    }, 45000); // 45 seconds total timeout
+
     try {
-      const correctedWord = await gemini.checkSpelling(searchQuery);
+      console.log("Checking spelling for:", searchQuery);
+      const correctedWord = await Promise.race([
+        gemini.checkSpelling(searchQuery),
+        new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Spelling check timed out")), 15000))
+      ]);
+      
+      console.log("Corrected word:", correctedWord);
       
       // 1. Check if word exists in global mnemonics library
       let mnemonicData: MnemonicResponse;
       let img: string;
       let audio: string | undefined;
 
-      const { data: existingMnemonic } = await supabase
+      console.log("Checking Supabase for existing mnemonic...");
+      const { data: existingMnemonic, error: fetchError } = await supabase
         .from('mnemonics')
         .select('*')
         .eq('word', correctedWord)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Supabase fetch error:", fetchError);
+        // Don't throw, try to generate new anyway
+      }
 
       if (existingMnemonic) {
+        console.log("Found existing mnemonic:", existingMnemonic.id);
         mnemonicData = existingMnemonic.data as MnemonicResponse;
         img = existingMnemonic.image_url;
         audio = existingMnemonic.audio_url;
@@ -469,6 +507,7 @@ export default function App() {
       setImageUrl(img);
       setState(AppState.RESULTS);
       setLoadingMessage('');
+      showToast("Mnemonic found/generated!");
 
       // 2. Save to user's personal list if logged in
       if (user) {
@@ -505,14 +544,18 @@ export default function App() {
         setSavedMnemonics(prev => [newSavedMnemonic, ...prev]);
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Search error:", err);
       const msg = err?.message || '';
       if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
         setError(t.errorQuota);
+      } else if (msg.includes('timeout')) {
+        setError("Connection timed out. Please try again.");
       } else {
         setError(t.errorGeneral);
       }
       setState(AppState.ERROR);
+    } finally {
+      clearTimeout(searchTimeout);
     }
   };
 
@@ -936,7 +979,24 @@ export default function App() {
         </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-8 pb-24 md:pb-12">
-        <AnimatePresence mode="wait">
+        {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl font-bold text-sm flex items-center gap-3 ${
+              toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+            }`}
+          >
+            {toast.type === 'success' ? <Sparkles size={18} /> : <X size={18} />}
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
           {view === AppView.AUTH && (
             <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Auth onClose={() => goBack()} onSuccess={() => { setIsGuest(false); setView(AppView.HOME); }} />
@@ -963,6 +1023,12 @@ export default function App() {
                 <p className="text-lg sm:text-2xl text-gray-500 dark:text-gray-400 font-medium leading-relaxed max-w-2xl mx-auto">
                   {t.heroSubtitle}
                 </p>
+
+                {isUsingFallbackSupabase && (
+                  <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-700 dark:text-amber-400 text-xs font-bold">
+                    ⚠️ WARNING: Custom domain detected but Supabase URL is missing. Using fallback database which may have connection limits. Please set VITE_SUPABASE_URL in your dashboard.
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 sm:flex sm:flex-row justify-center gap-3 sm:gap-4 pt-4 sm:pt-6">
                    <button 
@@ -1049,8 +1115,10 @@ export default function App() {
                 onSignOut={async () => { 
                   try {
                     await supabase.auth.signOut();
+                    showToast("Signed out successfully");
                   } catch (err) {
                     console.error("Sign out error:", err);
+                    showToast("Error signing out, but session cleared", "error");
                   } finally {
                     setIsGuest(true); 
                     setUser(null); 

@@ -38,6 +38,7 @@ interface Props {
 export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, language, t }) => {
   const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [editForm, setEditForm] = useState({
     username: '',
     full_name: '',
@@ -49,6 +50,15 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
       fetchProfile();
     }
   }, [user]);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await onSignOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -68,10 +78,26 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         });
       } else {
         // Create profile if not exists
+        console.log("Creating profile for user:", user.id);
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert({ id: user.id, username: user.email.split('@')[0], full_name: user.user_metadata?.full_name || '' });
-        if (insertError) console.error('Error creating profile:', insertError);
+          .insert({ 
+            id: user.id, 
+            username: user.email.split('@')[0], 
+            full_name: user.user_metadata?.full_name || '',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
+          });
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          if (insertError.code === '23505') {
+            console.log("Profile already exists (race condition), fetching again...");
+            fetchProfile();
+          }
+        } else {
+          console.log("Profile created successfully");
+          fetchProfile();
+        }
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -318,12 +344,13 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           
           {user ? (
             <button 
-              onClick={onSignOut}
-              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group cursor-pointer"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="w-full p-6 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group cursor-pointer disabled:opacity-50"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-500">
-                  <LogOut size={20} />
+                  {isSigningOut ? <Loader2 size={20} className="animate-spin" /> : <LogOut size={20} />}
                 </div>
                 <span className="font-bold text-red-600 dark:text-red-400">{t.signOut}</span>
               </div>

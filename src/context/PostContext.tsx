@@ -119,21 +119,30 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const addPost = async (postData: Partial<Post>) => {
+    console.log("Adding post:", postData);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.warn("Cannot add post: No user logged in");
+      return;
+    }
 
     try {
       // 1. Ensure mnemonic exists or create it
       let mnemonicId;
-      const { data: existingMnemonic } = await supabase
+      console.log("Checking if mnemonic exists for word:", postData.mnemonic_data?.english_word);
+      const { data: existingMnemonic, error: mFetchError } = await supabase
         .from('mnemonics')
         .select('id')
         .eq('word', postData.mnemonic_data?.english_word)
-        .single();
+        .maybeSingle();
+
+      if (mFetchError) console.error("Error fetching mnemonic:", mFetchError);
 
       if (existingMnemonic) {
+        console.log("Using existing mnemonic ID:", existingMnemonic.id);
         mnemonicId = existingMnemonic.id;
       } else {
+        console.log("Creating new mnemonic for post...");
         const mnemonicData = {
           word: postData.mnemonic_data?.english_word || '',
           transcription: '',
@@ -160,9 +169,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
         if (mError) throw mError;
         mnemonicId = newMnemonic.id;
+        console.log("New mnemonic created with ID:", mnemonicId);
       }
 
       // 2. Create post
+      console.log("Inserting post into Supabase...");
       const { error: pError } = await supabase
         .from('posts')
         .insert({
@@ -173,10 +184,12 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
       if (pError) throw pError;
+      console.log("Post created successfully!");
       
       await fetchPosts();
     } catch (err) {
       console.error('Error adding post:', err);
+      alert("Failed to save post. Please check your connection.");
     }
   };
 
@@ -278,9 +291,41 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updatePost = (postId: string, updater: (post: Post) => Post) => {
-    // This is harder with Supabase, usually we'd just refetch
-    setPosts(prev => prev.map(p => p.id === postId ? updater(p) : p));
+  const updatePost = async (postId: string, updater: (post: Post) => Post) => {
+    const currentPost = posts.find(p => p.id === postId);
+    if (!currentPost) return;
+
+    const updatedPost = updater(currentPost);
+    
+    // Update local state immediately
+    setPosts(prev => prev.map(p => p.id === postId ? updatedPost : p));
+
+    try {
+      // Find the mnemonic ID for this post
+      const { data: postRecord } = await supabase
+        .from('posts')
+        .select('mnemonic_id')
+        .eq('id', postId)
+        .single();
+
+      if (postRecord) {
+        // Update the mnemonic data
+        await supabase
+          .from('mnemonics')
+          .update({
+            word: updatedPost.mnemonic_data.english_word,
+            image_url: updatedPost.visuals.user_uploaded_image,
+            data: {
+              ...updatedPost.mnemonic_data,
+              imagination: updatedPost.mnemonic_data.story,
+              meaning: updatedPost.mnemonic_data.native_keyword
+            }
+          })
+          .eq('id', postRecord.mnemonic_id);
+      }
+    } catch (err) {
+      console.error('Error updating post in Supabase:', err);
+    }
   };
 
   return (
