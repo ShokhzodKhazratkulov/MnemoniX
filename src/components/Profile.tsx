@@ -221,72 +221,82 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          onClick={() => setActiveModal('searched')}
-          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-indigo-500 transition-all group"
-        >
-          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <BookOpen size={32} />
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.wordsSearched}</p>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{totalWords}</p>
-          </div>
-        </motion.div>
+      {/* Stats List */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 overflow-hidden"
+      >
+        <div className="divide-y divide-gray-100 dark:divide-slate-800">
+          {/* Words Searched */}
+          <button 
+            onClick={() => setActiveModal('searched')}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BookOpen size={28} />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.wordsSearched}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white">{totalWords}</p>
+              </div>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+          </button>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          onClick={() => setActiveModal('mastered')}
-          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-amber-500 transition-all group"
-        >
-          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Award size={32} />
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.mastered}</p>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{masteredCount}</p>
-          </div>
-        </motion.div>
+          {/* Mastered */}
+          <button 
+            onClick={() => setActiveModal('mastered')}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Award size={28} />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.mastered}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white">{masteredCount}</p>
+              </div>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+          </button>
 
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          onClick={() => onNavigate(AppView.MY_POSTS)}
-          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-indigo-500 transition-colors group"
-        >
-          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <MessageSquare size={32} />
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.yourPosts}</p>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{userPostCount}</p>
-          </div>
-        </motion.div>
+          {/* Your Posts */}
+          <button 
+            onClick={() => onNavigate(AppView.MY_POSTS)}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <MessageSquare size={28} />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.yourPosts}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white">{userPostCount}</p>
+              </div>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+          </button>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          onClick={() => onNavigate(AppView.MY_REMIXES)}
-          className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center gap-6 cursor-pointer hover:border-purple-500 transition-colors group"
-        >
-          <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Award size={32} />
-          </div>
-          <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">{t.myRemixes || 'My Remixes'}</p>
-            <p className="text-3xl font-black text-gray-900 dark:text-white">{userRemixCount}</p>
-          </div>
-        </motion.div>
-      </div>
+          {/* My Remixes */}
+          <button 
+            onClick={() => onNavigate(AppView.MY_REMIXES)}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Award size={28} />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.myRemixes || 'My Remixes'}</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white">{userRemixCount}</p>
+              </div>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </div>
+      </motion.div>
 
       {/* Settings List */}
       <motion.div 
