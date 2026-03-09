@@ -625,27 +625,22 @@ const PostCard: React.FC<{
     >
       <div className="p-4 sm:p-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm">
               {post.post_metadata.username[0].toUpperCase()}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="font-black text-gray-900 dark:text-white text-sm leading-none">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h4 className="font-black text-gray-900 dark:text-white text-sm leading-none truncate max-w-[120px] sm:max-w-none">
                   {post.post_metadata.username}
-                  {(post as any).is_updated && (
-                    <span className="ml-2 text-[10px] font-normal text-slate-400 uppercase tracking-wider">
-                      {language === Language.UZBEK ? "Yangilandi" : "Updated"}
-                    </span>
-                  )}
                 </h4>
                 {post.remix_data && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black border border-indigo-100 dark:border-indigo-800/50">
-                    <RefreshCw size={8} />
-                    <span>
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black border border-indigo-100 dark:border-indigo-800/50 min-w-0">
+                    <RefreshCw size={8} className="shrink-0" />
+                    <span className="truncate">
                       {language === Language.UZBEK 
-                        ? `@${post.remix_data.parent_username} dan remiks qilindi` 
+                        ? `@${post.remix_data.parent_username} dan remiks` 
                         : `remix from @${post.remix_data.parent_username}`}
                     </span>
                   </div>
@@ -658,7 +653,7 @@ const PostCard: React.FC<{
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative shrink-0">
             <button 
               onClick={() => setShowMenu(!showMenu)}
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -813,6 +808,13 @@ const PostCard: React.FC<{
               </button>
             )}
           </div>
+
+          {(post as any).is_updated && (
+            <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800">
+              <Edit2 size={10} />
+              <span>{language === Language.UZBEK ? "Yangilandi" : "Edited"}</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
