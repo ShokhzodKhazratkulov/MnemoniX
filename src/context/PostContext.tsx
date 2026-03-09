@@ -82,7 +82,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             story: p.mnemonic_data?.story || p.mnemonics?.story || p.mnemonics?.data?.imagination || ''
           },
           visuals: {
-            user_uploaded_image: p.visuals?.user_uploaded_image || p.mnemonics?.image_url || '',
+            user_uploaded_image: p.visuals?.user_uploaded_image !== undefined ? p.visuals.user_uploaded_image : (p.mnemonics?.image_url || null),
             ui_style: p.visuals?.ui_style || 'light'
           },
           language: p.language as Language,
@@ -230,6 +230,24 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alert("Iltimos, reaksiya bildirish uchun tizimga kiring.");
       return;
     }
+
+    // Optimistic Update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const wasLiked = p.engagement.user_liked;
+      const wasDisliked = p.engagement.user_disliked;
+      return {
+        ...p,
+        engagement: {
+          ...p.engagement,
+          likes: wasLiked ? p.engagement.likes - 1 : p.engagement.likes + 1,
+          dislikes: wasDisliked ? p.engagement.dislikes - 1 : p.engagement.dislikes,
+          user_liked: !wasLiked,
+          user_disliked: false
+        }
+      };
+    }));
+
     try {
       // Check if reaction exists
       const { data: existing } = await supabase
@@ -247,9 +265,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase.from('reactions').delete().eq('post_id', postId).eq('user_id', userId).eq('reaction_type', 'dislike');
         await supabase.from('reactions').insert({ post_id: postId, user_id: userId, reaction_type: 'like' });
       }
+      // Silent refresh to ensure sync
       await fetchPosts(true);
     } catch (err) {
       console.error('Error toggling like:', err);
+      await fetchPosts(true); // Rollback/Sync
     }
   };
 
@@ -258,6 +278,24 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alert("Iltimos, reaksiya bildirish uchun tizimga kiring.");
       return;
     }
+
+    // Optimistic Update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const wasDisliked = p.engagement.user_disliked;
+      const wasLiked = p.engagement.user_liked;
+      return {
+        ...p,
+        engagement: {
+          ...p.engagement,
+          dislikes: wasDisliked ? p.engagement.dislikes - 1 : p.engagement.dislikes + 1,
+          likes: wasLiked ? p.engagement.likes - 1 : p.engagement.likes,
+          user_disliked: !wasDisliked,
+          user_liked: false
+        }
+      };
+    }));
+
     try {
       const { data: existing } = await supabase
         .from('reactions')
@@ -276,6 +314,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await fetchPosts(true);
     } catch (err) {
       console.error('Error toggling dislike:', err);
+      await fetchPosts(true);
     }
   };
 
@@ -284,6 +323,31 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alert("Iltimos, reaksiya bildirish uchun tizimga kiring.");
       return;
     }
+
+    // Optimistic Update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const wasSelected = p.engagement.user_emoji === emoji;
+      const prevEmoji = p.engagement.user_emoji;
+      
+      return {
+        ...p,
+        engagement: {
+          ...p.engagement,
+          impression_emojis: p.engagement.impression_emojis.map(e => {
+            if (e.emoji === emoji) {
+              return { ...e, count: wasSelected ? e.count - 1 : e.count + 1 };
+            }
+            if (e.emoji === prevEmoji) {
+              return { ...e, count: e.count - 1 };
+            }
+            return e;
+          }),
+          user_emoji: wasSelected ? undefined : emoji
+        }
+      };
+    }));
+
     try {
       const { data: existing } = await supabase
         .from('reactions')
@@ -315,6 +379,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await fetchPosts(true);
     } catch (err) {
       console.error('Error toggling emoji:', err);
+      await fetchPosts(true);
     }
   };
 

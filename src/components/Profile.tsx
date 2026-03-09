@@ -289,7 +289,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                 <Award size={28} />
               </div>
               <div className="text-left">
-                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.myRemixes || 'My Remixes'}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.myRemixes}</p>
                 <p className="text-2xl font-black text-gray-900 dark:text-white">{userRemixCount}</p>
               </div>
             </div>
@@ -322,35 +322,6 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             </div>
             <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
           </button>
-
-          {user && (
-            <>
-              <button 
-                onClick={() => onNavigate(AppView.MY_POSTS)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600">
-                    <MessageSquare size={20} />
-                  </div>
-                  <span className="font-bold text-gray-700 dark:text-gray-300">{t.yourPosts}</span>
-                </div>
-                <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button 
-                onClick={() => onNavigate(AppView.MY_REMIXES)}
-                className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600">
-                    <Award size={20} />
-                  </div>
-                  <span className="font-bold text-gray-700 dark:text-gray-300">{t.myRemixes || 'My Remixes'}</span>
-                </div>
-                <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </>
-          )}
           
           {user ? (
             <button 

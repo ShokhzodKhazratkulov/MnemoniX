@@ -70,7 +70,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signOut: "Chiqish",
       signIn: "Kirish / Hisob yaratish",
       hardWords: "Qiyin so'zlar",
-      yourPosts: "Mening Postlarim"
+      yourPosts: "Mening Postlarim",
+      myRemixes: "Mening Remikslarim"
     }
   },
   [Language.RUSSIAN]: {
@@ -141,7 +142,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signOut: "Выйти",
       signIn: "Войти / Создать аккаунт",
       hardWords: "Трудные слова",
-      yourPosts: "Мои Посты"
+      yourPosts: "Мои Посты",
+      myRemixes: "Мои Ремиксы"
     }
   },
   [Language.KAZAKH]: {
@@ -212,7 +214,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signOut: "Шығу",
       signIn: "Кіру / Тіркелгі жасау",
       hardWords: "Қиын сөздер",
-      yourPosts: "Менің Посттарым"
+      yourPosts: "Менің Посттарым",
+      myRemixes: "Менің Ремикстерім"
     }
   },
   [Language.TAJIK]: {
@@ -283,7 +286,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signOut: "Баромадан",
       signIn: "Даромадан / Сохтани ҳисоб",
       hardWords: "Калимаҳои душвор",
-      yourPosts: "Постҳои Ман"
+      yourPosts: "Постҳои Ман",
+      myRemixes: "Ремиксҳои Ман"
     }
   },
   [Language.KYRGYZ]: {
@@ -354,7 +358,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signOut: "Чыгуу",
       signIn: "Кирүү / Аккаунт түзүү",
       hardWords: "Кыйын сөздөр",
-      yourPosts: "Менин Постторум"
+      yourPosts: "Менин Постторум",
+      myRemixes: "Менин Ремикстерим"
     }
   },
   [Language.TURKMEN]: {
@@ -425,7 +430,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signOut: "Çykmak",
       signIn: "Girmek / Hasap döretmek",
       hardWords: "Kyn sözler",
-      yourPosts: "Meniň Postlarym"
+      yourPosts: "Meniň Postlarym",
+      myRemixes: "Meniň Remikslerim"
     }
   },
 };
