@@ -18,7 +18,6 @@ interface SearchPageProps {
   savedMnemonics: SavedMnemonic[];
   setState: (state: AppState) => void;
   onNavigate: (view: AppView) => void;
-  handleShare: (data: MnemonicResponse, img: string) => Promise<void>;
   t: any;
   loadingMessage: string;
 }
@@ -36,7 +35,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   savedMnemonics,
   setState,
   onNavigate,
-  handleShare,
   t,
   loadingMessage
 }) => {
@@ -251,16 +249,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({
             className="space-y-8"
           >
             <MnemonicCard data={mnemonic} imageUrl={imageUrl} language={language} />
-            
-            <div className="flex justify-center pt-4">
-              <button 
-                onClick={() => handleShare(mnemonic, imageUrl)}
-                className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95 group"
-              >
-                <Sparkles size={20} className="group-hover:rotate-12 transition-transform" />
-                <span>{t.shareToCommunity || 'Share to Community'}</span>
-              </button>
-            </div>
           </motion.div>
         )}
 

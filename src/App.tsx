@@ -291,7 +291,8 @@ export default function App() {
         .from('mnemonics')
         .select('*')
         .eq('word', correctedWord)
-        .single();
+        .eq('language', language)
+        .maybeSingle();
 
       if (existingMnemonic) {
         mnemonicData = existingMnemonic.data as MnemonicResponse;
@@ -367,40 +368,6 @@ export default function App() {
         if (insertError) {
           console.error('Error inserting mnemonic:', insertError);
           throw new Error(`Supabase Mnemonic Insert Error: ${insertError.message} (${insertError.code})`);
-        }
-
-        // 2. Automatically create a post if user is logged in
-        if (user && newMnemonic) {
-          const { error: postError } = await supabase.from('posts').insert({
-            user_id: user.id,
-            mnemonic_id: newMnemonic.id,
-            language: language,
-            mnemonic_data: {
-              english_word: mnemonicData.word,
-              native_keyword: mnemonicData.phoneticLink,
-              story: mnemonicData.imagination
-            },
-            visuals: {
-              user_uploaded_image: img,
-              ui_style: theme
-            },
-            engagement: {
-              likes: 0,
-              dislikes: 0,
-              impression_emojis: [
-                { emoji: "🧠", count: 0 },
-                { emoji: "🔥", count: 0 },
-                { emoji: "🌸", count: 0 },
-                { emoji: "💡", count: 0 }
-              ]
-            }
-          });
-          if (postError) {
-            console.error('Error creating automatic post:', postError);
-            throw new Error(`Supabase Post Insert Error: ${postError.message} (${postError.code})`);
-          } else {
-            fetchPosts(); // Refresh feed
-          }
         }
       }
 
@@ -911,7 +878,6 @@ export default function App() {
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 handleSearch={handleSearch}
-                handleShare={handleShareMnemonic}
                 savedMnemonics={savedMnemonics}
                 setState={setState}
                 onNavigate={navigateTo}
