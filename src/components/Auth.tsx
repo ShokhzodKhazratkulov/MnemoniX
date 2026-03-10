@@ -223,7 +223,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
               }}
               className="text-indigo-600 dark:text-indigo-400 font-black hover:underline ml-1"
             >
-              {isSignUp ? 'Sign In' : 'Join Mnemonix'}
+              {isSignUp ? 'Sign In' : 'Join MnemoniX'}
             </button>
           </p>
         </div>

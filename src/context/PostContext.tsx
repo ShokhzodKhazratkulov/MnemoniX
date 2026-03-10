@@ -30,12 +30,12 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('posts')
         .select(`
           *,
-          profiles!user_id (username, full_name),
+          profiles!user_id (username, full_name, avatar_url),
           mnemonics:mnemonic_id (*),
           reactions (*),
           parent:parent_post_id (
             user_id,
-            profiles:user_id (username, full_name)
+            profiles:user_id (username, full_name, avatar_url)
           )
         `)
         .order('created_at', { ascending: false });
@@ -73,6 +73,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: p.id,
           post_metadata: {
             username: p.profiles?.username || p.profiles?.full_name || 'Unknown',
+            avatar_url: p.profiles?.avatar_url,
             timestamp: new Date(p.created_at).getTime(),
             user_id: p.user_id
           },

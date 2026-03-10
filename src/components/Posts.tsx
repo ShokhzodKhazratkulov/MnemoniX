@@ -627,8 +627,12 @@ const PostCard: React.FC<{
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm">
-              {post.post_metadata.username[0].toUpperCase()}
+            <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm overflow-hidden">
+              {post.post_metadata.avatar_url ? (
+                <img src={post.post_metadata.avatar_url} alt={post.post_metadata.username} className="w-full h-full object-cover" />
+              ) : (
+                post.post_metadata.username[0].toUpperCase()
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

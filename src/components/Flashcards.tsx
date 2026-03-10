@@ -91,6 +91,7 @@ export const Flashcards: React.FC<Props> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isStarted, setIsStarted] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  const backSideRef = React.useRef<HTMLDivElement>(null);
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [selectedWord, setSelectedWord] = useState<SavedMnemonic | null>(null);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -206,6 +207,13 @@ export const Flashcards: React.FC<Props> = ({
   useEffect(() => {
     setIsFlipped(false);
   }, [currentIndex]);
+
+  // Scroll back side to top when flipped
+  useEffect(() => {
+    if (isFlipped && backSideRef.current) {
+      backSideRef.current.scrollTop = 0;
+    }
+  }, [isFlipped]);
 
   if (savedMnemonics.length === 0) {
     return (
@@ -352,7 +360,10 @@ export const Flashcards: React.FC<Props> = ({
           </div>
 
           {/* Back Side */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 flex flex-col justify-start text-center shadow-2xl border-4 border-indigo-500 overflow-y-auto custom-scrollbar">
+          <div 
+            ref={backSideRef}
+            className="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 flex flex-col justify-start text-center shadow-2xl border-4 border-indigo-500 overflow-y-auto custom-scrollbar"
+          >
             {/* Decorative Top Bar (White Line) */}
             <div className="w-20 h-2 bg-white/30 rounded-full mx-auto mb-8 flex-shrink-0" />
             

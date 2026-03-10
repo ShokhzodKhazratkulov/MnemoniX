@@ -72,6 +72,7 @@ export interface Post {
   id: string;
   post_metadata: {
     username: string;
+    avatar_url?: string | null;
     timestamp: number;
     user_id: string;
   };

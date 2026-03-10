@@ -620,7 +620,7 @@ export default function App() {
               M
             </div>
             <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tight hidden lg:block">
-              Mnemonix
+              MnemoniX
             </span>
           </div>
 
@@ -642,7 +642,7 @@ export default function App() {
               M
             </div>
             <span className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
-              Mnemonix
+              MnemoniX
             </span>
           </div>
 
@@ -654,8 +654,8 @@ export default function App() {
                 { id: AppView.HOME, label: t.navHome },
                 { id: AppView.SEARCH, label: t.navSearch },
                 { id: AppView.POSTS, label: t.navPosts },
-                { id: AppView.DASHBOARD, label: t.navDash },
-                { id: AppView.FLASHCARDS, label: t.navFlash }
+                { id: AppView.FLASHCARDS, label: t.navFlash },
+                { id: AppView.DASHBOARD, label: t.navDash }
               ].map((item) => (
                 <button
                   key={item.id}
@@ -1057,8 +1057,8 @@ export default function App() {
             { id: AppView.HOME, icon: <Home size={22} />, label: t.navHome },
             { id: AppView.SEARCH, icon: <Search size={22} />, label: t.navSearch },
             { id: AppView.POSTS, icon: <MessageSquare size={22} />, label: t.navPosts },
-            { id: AppView.DASHBOARD, icon: <LayoutDashboard size={22} />, label: t.navDash },
-            { id: AppView.FLASHCARDS, icon: <Layers size={22} />, label: t.navFlash }
+            { id: AppView.FLASHCARDS, icon: <Layers size={22} />, label: t.navFlash },
+            { id: AppView.DASHBOARD, icon: <LayoutDashboard size={22} />, label: t.navDash }
           ].map((item) => (
             <button
               key={item.id}
