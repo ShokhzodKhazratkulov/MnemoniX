@@ -219,13 +219,30 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             image_url: postData.visuals?.user_uploaded_image,
             language: postData.language,
             keyword: postData.mnemonic_data?.native_keyword,
-            story: postData.mnemonic_data?.story,
-            user_id: user.id
+            story: postData.mnemonic_data?.story
           })
           .select()
           .single();
-        if (mError) throw mError;
-        mnemonicId = newMnemonic.id;
+
+        if (mError) {
+          if (mError.code === '23505') {
+            const { data: existing } = await supabase
+              .from('mnemonics')
+              .select('id')
+              .eq('word', postData.mnemonic_data?.english_word)
+              .eq('language', postData.language)
+              .single();
+            if (existing) {
+              mnemonicId = existing.id;
+            } else {
+              throw mError;
+            }
+          } else {
+            throw mError;
+          }
+        } else {
+          mnemonicId = newMnemonic.id;
+        }
       }
 
       // 2. Create post

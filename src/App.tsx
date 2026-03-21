@@ -381,21 +381,34 @@ export default function App() {
         audio = storedAudioUrl;
         mnemonicData.audioUrl = audio;
 
-        // Save to global library using a composite conflict key (word + language)
-        const { data: newMnemonic, error: insertError } = await supabase.from('mnemonics').upsert({
+        // Save to global library
+        const { data: newMnemonic, error: insertError } = await supabase.from('mnemonics').insert({
           word: correctedWord,
           data: mnemonicData,
           image_url: img,
           audio_url: audio,
           language: language,
           keyword: mnemonicData.phoneticLink,
-          story: mnemonicData.imagination,
-          user_id: user?.id || null
-        }, { onConflict: 'word,language' }).select().single();
+          story: mnemonicData.imagination
+        }).select().single();
 
         if (insertError) {
-          console.error('Error inserting/updating mnemonic:', insertError);
-          throw new Error(`Supabase Mnemonic Save Error: ${insertError.message} (${insertError.code})`);
+          // If it already exists (race condition), just fetch it
+          if (insertError.code === '23505') {
+            const { data: existing } = await supabase
+              .from('mnemonics')
+              .select('*')
+              .eq('word', correctedWord)
+              .eq('language', language)
+              .single();
+            if (existing) {
+              mnemonicData = existing.data as MnemonicResponse;
+              img = existing.image_url;
+            }
+          } else {
+            console.error('Error inserting mnemonic:', insertError);
+            throw new Error(`Supabase Mnemonic Save Error: ${insertError.message} (${insertError.code})`);
+          }
         }
       }
 
@@ -554,8 +567,7 @@ export default function App() {
           word: post.mnemonic_data.english_word,
           data: mnemonicData,
           image_url: post.visuals.user_uploaded_image,
-          language: post.language,
-          user_id: user?.id || null
+          language: post.language
         });
       }
 
@@ -1063,6 +1075,22 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {/* Floating Suggestions Button */}
+      <AnimatePresence>
+        {view === AppView.HOME && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0, x: -50 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0, x: -50 }}
+            onClick={() => setShowFeedback(true)}
+            className="fixed left-6 bottom-24 md:bottom-8 z-[60] flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-full font-black shadow-xl shadow-emerald-200 dark:shadow-none hover:bg-emerald-700 hover:scale-110 transition-all active:scale-95 group"
+          >
+            <MessageSquare size={18} />
+            <span className="hidden sm:inline">{t.suggestions}</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* Floating Practice Button */}
       <AnimatePresence>
         {((view === AppView.SEARCH && mnemonic) || (view === AppView.FLASHCARDS && selectedFlashcardWord)) && (
@@ -1124,7 +1152,7 @@ export default function App() {
           <FeedbackModal 
             onClose={() => setShowFeedback(false)} 
             language={language} 
-            receiverEmail="khazratkulovusa@gmail.com" 
+            receiverEmail="khazratkulovshokhzod@gmail.com" 
           />
         )}
       </AnimatePresence>
