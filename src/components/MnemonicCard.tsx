@@ -240,7 +240,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
               [{safeData.transcription}]
             </p>
             <button 
-              onClick={() => handlePlayAudio(safeData.word)}
+              onClick={() => handlePlayAudio(`${safeData.word}. ${safeData.phoneticLink}`)}
               disabled={isAudioLoading}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                 isPlaying ? 'text-red-500' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800'
@@ -299,17 +299,17 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
         </div>
 
         <div className="space-y-6 max-w-2xl mx-auto w-full">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.01]">
-            <h3 className="text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
-              {language === Language.UZBEK ? "Tasavvur (Vizual)" : (language === Language.RUSSIAN ? "Воображение (Визуал)" : "Imagination (Visual)")}
-            </h3>
-            <p className="text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{safeData.imagination}</p>
-          </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-orange-400 transition-transform hover:scale-[1.02]">
             <h3 className="text-orange-600 dark:text-orange-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
               {language === Language.UZBEK ? "Fonetik bog'liqlik (Ovoz)" : (language === Language.RUSSIAN ? "Фонетическая связь (Звук)" : "Phonetic Link (Sound)")}
             </h3>
             <p className="text-gray-800 dark:text-gray-200 text-lg font-medium italic">{safeData.phoneticLink}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.01]">
+            <h3 className="text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
+              {language === Language.UZBEK ? "Tasavvur (Vizual)" : (language === Language.RUSSIAN ? "Воображение (Визуал)" : "Imagination (Visual)")}
+            </h3>
+            <p className="text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{safeData.imagination}</p>
           </div>
           <div className="bg-indigo-600 p-6 rounded-2xl shadow-xl text-white transition-transform hover:scale-[1.02]">
              <h3 className="text-indigo-200 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-80">

@@ -302,14 +302,14 @@ export const Flashcards: React.FC<Props> = ({
         </div>
 
         {/* Hard Words Container */}
-        {savedMnemonics.filter(m => m.isHard).length > 0 && (
+        {filtered.filter(m => m.isHard).length > 0 && (
           <div className="bg-white dark:bg-[#0f172a] p-6 sm:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-slate-800 space-y-6">
             <div className="flex items-center gap-2 text-gray-400 px-2">
               <Flag size={14} className="text-red-500" />
               <span className="text-[10px] font-black uppercase tracking-widest">{t.hardWords}</span>
             </div>
             <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-              {savedMnemonics
+              {filtered
                 .filter(m => m.isHard)
                 .map(m => (
                   <button 
@@ -375,7 +375,7 @@ export const Flashcards: React.FC<Props> = ({
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      handlePlayAudio(current.word);
+                      handlePlayAudio(`${current.word}. ${current.data.phoneticLink}`);
                     }}
                     disabled={isAudioLoading}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
@@ -396,14 +396,14 @@ export const Flashcards: React.FC<Props> = ({
                 <p className="text-white font-black text-2xl sm:text-3xl px-2">{current.data.meaning}</p>
               </div>
 
-              <div className="space-y-3 sm:space-y-4 bg-white/10 rounded-3xl p-6 sm:p-10 backdrop-blur-md border border-white/10">
-                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Tasavvur" : (language === Language.RUSSIAN ? "Воображение" : "Imagination")}</span>
-                <p className="text-white/90 text-base sm:text-lg italic leading-relaxed">{current.data.imagination}</p>
-              </div>
-
               <div className="space-y-1 sm:space-y-2">
                  <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Mnemonik bog'liqlik" : (language === Language.RUSSIAN ? "Мнемоническая связь" : "Mnemonic Link")}</span>
                  <p className="text-indigo-100 font-bold text-sm sm:text-base px-2">{current.data.phoneticLink}</p>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4 bg-white/10 rounded-3xl p-6 sm:p-10 backdrop-blur-md border border-white/10">
+                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Tasavvur" : (language === Language.RUSSIAN ? "Воображение" : "Imagination")}</span>
+                <p className="text-white/90 text-base sm:text-lg italic leading-relaxed">{current.data.imagination}</p>
               </div>
 
               {current.data.synonyms && current.data.synonyms.length > 0 && (
