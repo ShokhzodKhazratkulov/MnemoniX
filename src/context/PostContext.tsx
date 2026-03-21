@@ -219,7 +219,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             image_url: postData.visuals?.user_uploaded_image,
             language: postData.language,
             keyword: postData.mnemonic_data?.native_keyword,
-            story: postData.mnemonic_data?.story
+            story: postData.mnemonic_data?.story,
+            user_id: user.id
           })
           .select()
           .single();

@@ -389,7 +389,8 @@ export default function App() {
           audio_url: audio,
           language: language,
           keyword: mnemonicData.phoneticLink,
-          story: mnemonicData.imagination
+          story: mnemonicData.imagination,
+          user_id: user?.id || null
         }, { onConflict: 'word,language' }).select().single();
 
         if (insertError) {
@@ -553,7 +554,8 @@ export default function App() {
           word: post.mnemonic_data.english_word,
           data: mnemonicData,
           image_url: post.visuals.user_uploaded_image,
-          language: post.language
+          language: post.language,
+          user_id: user?.id || null
         });
       }
 
