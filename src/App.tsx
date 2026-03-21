@@ -385,6 +385,7 @@ export default function App() {
           .from('mnemonics')
           .select('id')
           .eq('word', correctedWord)
+          .eq('language', language)
           .single();
 
         if (fetchError) {

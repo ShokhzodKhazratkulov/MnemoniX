@@ -135,7 +135,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('mnemonics')
         .select('id')
         .eq('word', postData.mnemonic_data?.english_word)
-        .single();
+        .eq('language', postData.language)
+        .maybeSingle();
 
       if (existingMnemonic) {
         mnemonicId = existingMnemonic.id;
