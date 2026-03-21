@@ -267,13 +267,37 @@ export default function App() {
   }, []);
 
   const [loadingMessage, setLoadingMessage] = useState('');
+  const searchCache = React.useRef<Record<string, { mnemonic: MnemonicResponse, imageUrl: string }>>({});
+
+  // Debounced search
+  useEffect(() => {
+    if (view !== AppView.SEARCH || !searchQuery || searchQuery.length < 3 || state === AppState.LOADING) return;
+
+    const timer = setTimeout(() => {
+      // Only auto-search if we are in IDLE state or already showing results for a different word
+      if (state === AppState.IDLE || (state === AppState.RESULTS && mnemonic?.word !== searchQuery)) {
+        handleSearch();
+      }
+    }, 1500); // 1.5s delay for auto-search to be less intrusive
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, view]);
 
   const handleSearch = async (e?: React.FormEvent, word?: string) => {
     if (e) e.preventDefault();
-    const query = word || searchQuery;
-    if (!query.trim()) return;
+    const query = (word || searchQuery).toLowerCase().trim();
+    if (!query) return;
 
     if (word) setSearchQuery(word);
+
+    // Check cache
+    const cacheKey = `${query}-${language}`;
+    if (searchCache.current[cacheKey]) {
+      setMnemonic(searchCache.current[cacheKey].mnemonic);
+      setImageUrl(searchCache.current[cacheKey].imageUrl);
+      setState(AppState.RESULTS);
+      return;
+    }
 
     setState(AppState.LOADING);
     setLoadingMessage(t.checkingSpelling);
@@ -331,7 +355,7 @@ export default function App() {
 
         // Generate and upload audio
         let storedAudioUrl = '';
-        const ttsText = `${mnemonicData.word}. ${mnemonicData.meaning}. ${mnemonicData.imagination}. ${mnemonicData.connectorSentence}`;
+        const ttsText = `${mnemonicData.word}. ${mnemonicData.meaning}. ${mnemonicData.phoneticLink}. ${mnemonicData.imagination}. ${mnemonicData.connectorSentence}`;
         const base64Audio = await gemini.generateTTS(ttsText, language);
         
         if (base64Audio) {
@@ -378,6 +402,9 @@ export default function App() {
       setImageUrl(img);
       setState(AppState.RESULTS);
       setLoadingMessage('');
+
+      // Update cache
+      searchCache.current[cacheKey] = { mnemonic: mnemonicData, imageUrl: img };
 
       // 2. Save to user's personal list if logged in
       if (user) {

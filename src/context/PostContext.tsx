@@ -15,13 +15,13 @@ interface PostContextType {
   isFetchingMore: boolean;
   hasMore: boolean;
   hiddenPosts: string[];
-  fetchPosts: (silent?: boolean, reset?: boolean) => Promise<void>;
+  fetchPosts: (silent?: boolean, reset?: boolean, viewMode?: string, language?: Language) => Promise<void>;
   loadMore: () => Promise<void>;
 }
 
 const PostContext = createContext<PostContextType | undefined>(undefined);
 
-const POSTS_PER_PAGE = 10;
+const POSTS_PER_PAGE = 20;
 
 export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -30,11 +30,25 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const [lastViewMode, setLastViewMode] = useState('all');
+  const [lastLanguage, setLastLanguage] = useState(Language.UZBEK);
+  const cache = React.useRef<Record<string, { posts: Post[], hasMore: boolean, page: number }>>({});
 
-  const fetchPosts = async (silent: boolean = false, reset: boolean = false) => {
+  const fetchPosts = async (silent: boolean = false, reset: boolean = false, viewMode: string = 'all', language: Language = Language.UZBEK) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const cacheKey = `${viewMode}-${language}-${user?.id || 'guest'}`;
+
     if (reset) {
       setPage(0);
       setHasMore(true);
+      setLastViewMode(viewMode);
+      setLastLanguage(language);
+    } else if (cache.current[cacheKey] && page === 0 && !silent) {
+      setPosts(cache.current[cacheKey].posts);
+      setHasMore(cache.current[cacheKey].hasMore);
+      setPage(cache.current[cacheKey].page);
+      setIsLoading(false);
+      return;
     }
     
     const currentPage = reset ? 0 : page;
@@ -63,8 +77,6 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Detailed Supabase Fetch Error:', postsError);
         throw postsError;
       }
-
-      const { data: { user } } = await supabase.auth.getUser();
 
       const mappedPosts: Post[] = postsData.map((p: any) => {
         const likes = p.reactions.filter((r: any) => r.reaction_type === 'like');
@@ -121,13 +133,16 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } as any;
       });
 
-      if (reset || currentPage === 0) {
-        setPosts(mappedPosts);
-      } else {
-        setPosts(prev => [...prev, ...mappedPosts]);
-      }
-
+      const newPosts = (reset || currentPage === 0) ? mappedPosts : [...posts, ...mappedPosts];
+      setPosts(newPosts);
       setHasMore(mappedPosts.length === POSTS_PER_PAGE);
+
+      // Update cache
+      cache.current[cacheKey] = {
+        posts: newPosts,
+        hasMore: mappedPosts.length === POSTS_PER_PAGE,
+        page: currentPage
+      };
     } catch (err) {
       console.error('Error fetching posts:', err);
     } finally {
@@ -148,7 +163,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Handle page changes for loading more
   useEffect(() => {
     if (page > 0) {
-      fetchPosts(true, false);
+      fetchPosts(true, false, lastViewMode, lastLanguage);
     }
   }, [page]);
 

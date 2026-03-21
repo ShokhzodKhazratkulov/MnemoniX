@@ -60,7 +60,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
 
   // Reset and refetch when viewMode or language changes
   useEffect(() => {
-    fetchPosts(false, true);
+    fetchPosts(false, true, viewMode, language);
   }, [viewMode, language]);
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
