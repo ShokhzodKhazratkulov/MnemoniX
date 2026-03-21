@@ -268,9 +268,12 @@ export default function App() {
 
   const [loadingMessage, setLoadingMessage] = useState('');
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = async (e?: React.FormEvent, word?: string) => {
     if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const query = word || searchQuery;
+    if (!query.trim()) return;
+
+    if (word) setSearchQuery(word);
 
     setState(AppState.LOADING);
     setLoadingMessage(t.checkingSpelling);
@@ -282,7 +285,7 @@ export default function App() {
       let correctedWord = await gemini.checkSpelling(searchQuery);
       correctedWord = correctedWord.toLowerCase().trim();
       
-      // 1. Check if word exists in global mnemonics library
+      // 1. Check if word exists in global mnemonics library for the SPECIFIC language
       let mnemonicData: MnemonicResponse;
       let img: string;
       let audio: string | undefined;
@@ -299,7 +302,7 @@ export default function App() {
         img = existingMnemonic.image_url;
         audio = existingMnemonic.audio_url;
       } else {
-        // Generate new
+        // Generate new for this specific language
         setLoadingMessage(t.loadingMnemonic);
         mnemonicData = await gemini.getMnemonic(correctedWord, language);
         
@@ -311,7 +314,7 @@ export default function App() {
         if (base64Image) {
           try {
             const imageBlob = await (await fetch(base64Image)).blob();
-            const fileName = `${correctedWord}-${Date.now()}.png`;
+            const fileName = `${correctedWord}-${language}-${Date.now()}.png`;
             const { error: uploadError } = await supabase.storage
               .from('mnemonic_assets')
               .upload(`images/${fileName}`, imageBlob, { upsert: true });
@@ -335,7 +338,7 @@ export default function App() {
           try {
             const audioResponse = await fetch(`data:audio/wav;base64,${base64Audio}`);
             const audioBlob = await audioResponse.blob();
-            const audioFileName = `${correctedWord}-${Date.now()}.wav`;
+            const audioFileName = `${correctedWord}-${language}-${Date.now()}.wav`;
             const { error: audioUploadError } = await supabase.storage
               .from('mnemonic_assets')
               .upload(`audio/${audioFileName}`, audioBlob, { upsert: true });
@@ -354,8 +357,8 @@ export default function App() {
         audio = storedAudioUrl;
         mnemonicData.audioUrl = audio;
 
-        // Save to global library
-        const { data: newMnemonic, error: insertError } = await supabase.from('mnemonics').insert({
+        // Save to global library using a composite conflict key (word + language)
+        const { data: newMnemonic, error: insertError } = await supabase.from('mnemonics').upsert({
           word: correctedWord,
           data: mnemonicData,
           image_url: img,
@@ -363,11 +366,11 @@ export default function App() {
           language: language,
           keyword: mnemonicData.phoneticLink,
           story: mnemonicData.imagination
-        }).select().single();
+        }, { onConflict: 'word,language' }).select().single();
 
         if (insertError) {
-          console.error('Error inserting mnemonic:', insertError);
-          throw new Error(`Supabase Mnemonic Insert Error: ${insertError.message} (${insertError.code})`);
+          console.error('Error inserting/updating mnemonic:', insertError);
+          throw new Error(`Supabase Mnemonic Save Error: ${insertError.message} (${insertError.code})`);
         }
       }
 
@@ -444,6 +447,7 @@ export default function App() {
         .from('mnemonics')
         .select('id')
         .eq('word', data.word)
+        .eq('language', language)
         .maybeSingle();
         
       if (existing) {
@@ -513,13 +517,15 @@ export default function App() {
         .from('mnemonics')
         .select('id')
         .eq('word', post.mnemonic_data.english_word)
+        .eq('language', post.language)
         .maybeSingle();
 
       if (!existing) {
         await supabase.from('mnemonics').insert({
           word: post.mnemonic_data.english_word,
           data: mnemonicData,
-          image_url: post.visuals.user_uploaded_image
+          image_url: post.visuals.user_uploaded_image,
+          language: post.language
         });
       }
 
@@ -529,6 +535,7 @@ export default function App() {
           .from('mnemonics')
           .select('id')
           .eq('word', post.mnemonic_data.english_word)
+          .eq('language', post.language)
           .maybeSingle();
 
         if (wordRecord) {

@@ -14,7 +14,7 @@ interface SearchPageProps {
   error: string | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  handleSearch: (e?: React.FormEvent) => Promise<void>;
+  handleSearch: (e?: React.FormEvent, word?: string) => Promise<void>;
   savedMnemonics: SavedMnemonic[];
   setState: (state: AppState) => void;
   onNavigate: (view: AppView) => void;
@@ -248,7 +248,12 @@ export const SearchPage: React.FC<SearchPageProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="space-y-8"
           >
-            <MnemonicCard data={mnemonic} imageUrl={imageUrl} language={language} />
+            <MnemonicCard 
+              data={mnemonic} 
+              imageUrl={imageUrl} 
+              language={language} 
+              onSearch={(word) => handleSearch(undefined, word)}
+            />
           </motion.div>
         )}
 

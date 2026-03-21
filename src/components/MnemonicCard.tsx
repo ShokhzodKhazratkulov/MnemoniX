@@ -9,6 +9,7 @@ interface Props {
   data: MnemonicResponse;
   imageUrl: string;
   language: Language;
+  onSearch?: (word: string) => void;
 }
 
 const gemini = new GeminiService();
@@ -59,7 +60,7 @@ async function decodeAudioData(
   }
 }
 
-export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
+export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSearch }) => {
   const [timer, setTimer] = useState(5);
   const [showContent, setShowContent] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -69,6 +70,12 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const isMounted = useRef(true);
+
+  const handleSynonymClick = (syn: string) => {
+    if (!onSearch) return;
+    const word = syn.split('(')[0].trim();
+    onSearch(word);
+  };
 
   useEffect(() => {
     isMounted.current = true;
@@ -316,9 +323,13 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language }) => {
              </h3>
              <div className="flex flex-wrap gap-2">
                {safeData.synonyms.map((syn, idx) => (
-                 <span key={idx} className="px-3 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300">
+                 <button 
+                   key={idx} 
+                   onClick={() => handleSynonymClick(syn)}
+                   className="px-3 py-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-indigo-500 hover:text-indigo-600 transition-all"
+                 >
                    {syn}
-                 </span>
+                 </button>
                ))}
              </div>
           </div>
