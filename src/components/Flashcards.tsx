@@ -375,7 +375,7 @@ export const Flashcards: React.FC<Props> = ({
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      handlePlayAudio(`${current.word}. ${current.data.phoneticLink}`);
+                      handlePlayAudio(current.word);
                     }}
                     disabled={isAudioLoading}
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
@@ -418,6 +418,31 @@ export const Flashcards: React.FC<Props> = ({
                   </div>
                 </div>
               )}
+
+              <div className="pt-4">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const ttsText = `${current.word}. ${current.data.meaning}. ${current.data.phoneticLink}. ${current.data.imagination}`;
+                    handlePlayAudio(ttsText);
+                  }}
+                  disabled={isAudioLoading}
+                  className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 transition-all ${
+                    isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-white/20 text-white hover:bg-white/30'
+                  } disabled:opacity-50`}
+                >
+                  {isAudioLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+                  ) : (
+                    <>
+                      <Volume2 size={20} />
+                      <span className="font-black uppercase tracking-widest text-xs">
+                        {language === Language.UZBEK ? "Hikoyani tinglash" : (language === Language.RUSSIAN ? "Слушать историю" : "Listen Story")}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

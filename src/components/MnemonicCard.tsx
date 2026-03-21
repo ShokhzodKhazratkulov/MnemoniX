@@ -240,7 +240,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
               [{safeData.transcription}]
             </p>
             <button 
-              onClick={() => handlePlayAudio(`${safeData.word}. ${safeData.phoneticLink}`)}
+              onClick={() => handlePlayAudio(safeData.word)}
               disabled={isAudioLoading}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                 isPlaying ? 'text-red-500' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800'

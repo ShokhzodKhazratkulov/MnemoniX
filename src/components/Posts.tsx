@@ -44,7 +44,24 @@ interface Props {
 }
 
 export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, onEditPost, remixSource, editingPost }) => {
-  const { posts, addPost, updatePost, deletePost, hidePost, hiddenPosts, isLoading: contextLoading } = usePosts();
+  const { 
+    posts, 
+    addPost, 
+    updatePost, 
+    deletePost, 
+    hidePost, 
+    hiddenPosts, 
+    isLoading: contextLoading,
+    loadMore,
+    hasMore,
+    isFetchingMore,
+    fetchPosts
+  } = usePosts();
+
+  // Reset and refetch when viewMode or language changes
+  useEffect(() => {
+    fetchPosts(false, true);
+  }, [viewMode, language]);
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPostId, setEditingPostId] = useState<string | null>(editingPost?.id || null);
@@ -580,6 +597,25 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
           <div className="text-center py-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl">
             <MessageSquare size={48} className="mx-auto text-gray-200 dark:text-slate-800 mb-4" />
             <p className="text-gray-500 font-bold">{t.empty}</p>
+          </div>
+        )}
+
+        {hasMore && filteredPosts.length > 0 && (
+          <div className="flex justify-center pt-4 pb-8">
+            <button
+              onClick={loadMore}
+              disabled={isFetchingMore}
+              className="px-8 py-3 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 text-gray-900 dark:text-white rounded-2xl font-bold shadow-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isFetchingMore ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                  {language === Language.UZBEK ? "Yuklanmoqda..." : (language === Language.RUSSIAN ? "Загрузка..." : "Loading...")}
+                </>
+              ) : (
+                language === Language.UZBEK ? "Yana yuklash" : (language === Language.RUSSIAN ? "Загрузить еще" : "Load More")
+              )}
+            </button>
           </div>
         )}
       </div>

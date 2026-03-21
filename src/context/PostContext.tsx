@@ -12,20 +12,38 @@ interface PostContextType {
   toggleDislike: (postId: string, userId: string) => Promise<void>;
   toggleEmoji: (postId: string, userId: string, emoji: string) => Promise<void>;
   isLoading: boolean;
+  isFetchingMore: boolean;
+  hasMore: boolean;
   hiddenPosts: string[];
-  fetchPosts: (silent?: boolean) => Promise<void>;
+  fetchPosts: (silent?: boolean, reset?: boolean) => Promise<void>;
+  loadMore: () => Promise<void>;
 }
 
 const PostContext = createContext<PostContextType | undefined>(undefined);
+
+const POSTS_PER_PAGE = 10;
 
 export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
 
-  const fetchPosts = async (silent: boolean = false) => {
-    if (!silent) setIsLoading(true);
+  const fetchPosts = async (silent: boolean = false, reset: boolean = false) => {
+    if (reset) {
+      setPage(0);
+      setHasMore(true);
+    }
+    
+    const currentPage = reset ? 0 : page;
+    if (!silent && currentPage === 0) setIsLoading(true);
+    
     try {
+      const from = currentPage * POSTS_PER_PAGE;
+      const to = from + POSTS_PER_PAGE - 1;
+
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
@@ -38,7 +56,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             profiles:user_id (username, full_name, avatar_url)
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (postsError) {
         console.error('Detailed Supabase Fetch Error:', postsError);
@@ -52,7 +71,6 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const dislikes = p.reactions.filter((r: any) => r.reaction_type === 'dislike');
         const emojis = p.reactions.filter((r: any) => !['like', 'dislike'].includes(r.reaction_type));
 
-        // Group emojis
         const emojiCounts: Record<string, number> = {};
         emojis.forEach((r: any) => {
           emojiCounts[r.reaction_type] = (emojiCounts[r.reaction_type] || 0) + 1;
@@ -103,13 +121,36 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } as any;
       });
 
-      setPosts(mappedPosts);
+      if (reset || currentPage === 0) {
+        setPosts(mappedPosts);
+      } else {
+        setPosts(prev => [...prev, ...mappedPosts]);
+      }
+
+      setHasMore(mappedPosts.length === POSTS_PER_PAGE);
     } catch (err) {
       console.error('Error fetching posts:', err);
     } finally {
       setIsLoading(false);
+      setIsFetchingMore(false);
     }
   };
+
+  const loadMore = async () => {
+    if (isFetchingMore || !hasMore) return;
+    setIsFetchingMore(true);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    // We don't call fetchPosts here directly to avoid state closure issues, 
+    // instead we use an effect or just call it with the next page value
+  };
+
+  // Handle page changes for loading more
+  useEffect(() => {
+    if (page > 0) {
+      fetchPosts(true, false);
+    }
+  }, [page]);
 
   useEffect(() => {
     fetchPosts();
@@ -429,8 +470,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleDislike,
       toggleEmoji, 
       isLoading,
+      isFetchingMore,
+      hasMore,
       hiddenPosts,
-      fetchPosts
+      fetchPosts,
+      loadMore
     }}>
       {children}
     </PostContext.Provider>
