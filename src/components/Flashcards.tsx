@@ -1,10 +1,12 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { SavedMnemonic, Language } from '../types';
-import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2, Sparkles } from 'lucide-react';
+import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2, Sparkles, Download } from 'lucide-react';
 import { MnemonicCard } from './MnemonicCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { GeminiService } from '../services/geminiService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const gemini = new GeminiService();
 
@@ -65,12 +67,12 @@ interface Props {
 }
 
 const FLASH_T: Record<Language, any> = {
-  [Language.UZBEK]: { title: "Flash-kartalar", range: "Davrni tanlang", empty: "Hali hech narsa o'rganilmagan", start: "Boshlash", next: "Keyingisi", prev: "Oldingisi", finish: "Tugatish", from: "Boshlanish sanasi", to: "Tugash sanasi", hint: "Kartani aylantirish uchun bosing", hardWords: "Qiyin so'zlar" },
-  [Language.KAZAKH]: { title: "Флэш-карталар", range: "Кезеңді таңдаңыз", empty: "Әлі ештеңе үйренілмеген", start: "Бастау", next: "Келесі", prev: "Алдыңғы", finish: "Аяқтау", from: "Басталу күні", to: "Аяқталу күні", hint: "Картаны айналдыру үшін басыңыз", hardWords: "Қиын сөздер" },
-  [Language.TAJIK]: { title: "Флэш-кортҳо", range: "Давраро интихоб кунед", empty: "Ҳанӯз чизе омӯхта نشدهаст", start: "Оғоз", next: "Оянда", prev: "Пешина", finish: "Анҷом", from: "Таърихи оғоз", to: "Таърихи анҷом", hint: "Барои чаппа кардани корт пахш кунед", hardWords: "Калимаҳои душвор" },
-  [Language.KYRGYZ]: { title: "Флэш-карталар", range: "Мөөнөттү тандаңыз", empty: "Азырынча эч нерсе үйрөнүлө элек", start: "Баштоо", next: "Кийинки", prev: "Мурунку", finish: "Бүтүрүү", from: "Баштоо күнү", to: "Аяктоо күнү", hint: "Картаны которуу үчүн басыңыз", hardWords: "Кыйын сөздөр" },
-  [Language.RUSSIAN]: { title: "Флэш-карты", range: "Выберите период", empty: "Еще ничего не выучено", start: "Начать", next: "Далее", prev: "Назад", finish: "Завершить", from: "Дата начала", to: "Дата окончания", hint: "Нажмите, чтобы перевернуть", hardWords: "Трудные слова" },
-  [Language.TURKMEN]: { title: "Fleş-kartalar", range: "Döwri saýlaň", empty: "Heniz hiç zat öwrenilmedi", start: "Başlamak", next: "Indiki", prev: "Öňki", finish: "Tamamlamak", from: "Başlanýan senesi", to: "Gutarýan senesi", hint: "Kartany öwürmek üçin basyň", hardWords: "Kyn sözler" },
+  [Language.UZBEK]: { title: "Flash-kartalar", range: "Davrni tanlang", empty: "Hali hech narsa o'rganilmagan", start: "Boshlash", next: "Keyingisi", prev: "Oldingisi", finish: "Tugatish", from: "Boshlanish sanasi", to: "Tugash sanasi", hint: "Kartani aylantirish uchun bosing", hardWords: "Qiyin so'zlar", download: "PDF yuklab olish" },
+  [Language.KAZAKH]: { title: "Флэш-карталар", range: "Кезеңді таңдаңыз", empty: "Әлі ештеңе үйренілмеген", start: "Бастау", next: "Келесі", prev: "Алдыңғы", finish: "Аяқтау", from: "Басталу күні", to: "Аяқталу күні", hint: "Картаны айналдыру үшін басыңыз", hardWords: "Қиын сөздер", download: "PDF жүктеу" },
+  [Language.TAJIK]: { title: "Флэш-кортҳо", range: "Давраро интихоб кунед", empty: "Ҳанӯз чизе омӯхта نشدهаст", start: "Оғоз", next: "Оянда", prev: "Пешина", finish: "Анҷом", from: "Таърихи оғоз", to: "Таърихи анҷом", hint: "Барои чаппа кардани корт пахш кунед", hardWords: "Калимаҳои душвор", download: "Боргирии PDF" },
+  [Language.KYRGYZ]: { title: "Флэш-карталар", range: "Мөөнөттү тандаңыз", empty: "Азырынча эч нерсе үйрөнүлө элек", start: "Баштоо", next: "Кийинки", prev: "Мурунку", finish: "Бүтүрүү", from: "Баштоо күнү", to: "Аяктоо күнү", hint: "Картаны которуу үчүн басыңыз", hardWords: "Кыйын сөздөр", download: "PDF жүктөп алуу" },
+  [Language.RUSSIAN]: { title: "Флэш-карты", range: "Выберите период", empty: "Еще ничего не выучено", start: "Начать", next: "Далее", prev: "Назад", finish: "Завершить", from: "Дата начала", to: "Дата окончания", hint: "Нажмите, чтобы перевернуть", hardWords: "Трудные слова", download: "Скачать PDF" },
+  [Language.TURKMEN]: { title: "Fleş-kartalar", range: "Döwri saýlaň", empty: "Heniz hiç zat öwrenilmedi", start: "Başlamak", next: "Indiki", prev: "Öňki", finish: "Tamamlamak", from: "Başlanýan senesi", to: "Gutarýan senesi", hint: "Kartany öwürmek üçin basyň", hardWords: "Kyn sözler", download: "PDF ýükle" },
 };
 
 export const Flashcards: React.FC<Props> = ({ 
@@ -205,6 +207,88 @@ export const Flashcards: React.FC<Props> = ({
     setCurrentIndex(0);
   };
 
+  const groupWordsByDate = (words: SavedMnemonic[]) => {
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const today = words.filter(w => {
+      const d = new Date(w.timestamp);
+      d.setHours(0,0,0,0);
+      return d.getTime() === now.getTime();
+    });
+    const yesterday = words.filter(w => {
+      const d = new Date(w.timestamp);
+      d.setHours(0,0,0,0);
+      const y = new Date(now);
+      y.setDate(y.getDate() - 1);
+      return d.getTime() === y.getTime();
+    });
+    const previous = words.filter(w => {
+      const d = new Date(w.timestamp);
+      d.setHours(0,0,0,0);
+      const y = new Date(now);
+      y.setDate(y.getDate() - 1);
+      return d.getTime() < y.getTime();
+    });
+    return { today, yesterday, previous };
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const { today, yesterday, previous } = groupWordsByDate(filtered);
+
+    // Add Logo/Title
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(63, 81, 181); // Indigo color
+    doc.text("Mnemonix", 105, 20, { align: "center" });
+
+    let yPos = 40;
+
+    const addSection = (title: string, words: SavedMnemonic[]) => {
+      if (words.length === 0) return;
+      
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 0, 0);
+      doc.text(title + "________________________________________________", 20, yPos);
+      yPos += 10;
+
+      const tableData = words.map((w, i) => [
+        (i + 1).toString() + " |",
+        w.word,
+        w.data.meaning
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [],
+        body: tableData,
+        theme: 'grid',
+        styles: {
+          fontSize: 12,
+          cellPadding: 4,
+          lineColor: [200, 200, 200],
+          lineWidth: 0.1,
+          textColor: [50, 50, 50],
+        },
+        columnStyles: {
+          0: { cellWidth: 15, fontStyle: 'bold' },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 80 },
+        },
+        margin: { left: 20 },
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+    };
+
+    addSection("today", today);
+    addSection("yesterday", yesterday);
+    addSection("previouse day", previous);
+
+    doc.save(`mnemonix-words-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   // Reset flip state when moving to a new card
   useEffect(() => {
     setIsFlipped(false);
@@ -294,13 +378,24 @@ export const Flashcards: React.FC<Props> = ({
             </div>
           </div>
 
-          <button 
-            disabled={filtered.length === 0}
-            onClick={() => setIsStarted(true)}
-            className="w-full py-6 sm:py-8 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 text-white rounded-2xl sm:rounded-[2rem] font-black text-xl sm:text-3xl shadow-2xl shadow-indigo-500/20 transition-all active:scale-95 transform hover:-translate-y-1"
-          >
-            {t.start} <span className="opacity-50 ml-2">({filtered.length})</span>
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+            <button 
+              disabled={filtered.length === 0}
+              onClick={() => setIsStarted(true)}
+              className="w-full py-6 sm:py-8 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 text-white rounded-2xl sm:rounded-[2rem] font-black text-xl sm:text-3xl shadow-2xl shadow-indigo-500/20 transition-all active:scale-95 transform hover:-translate-y-1"
+            >
+              {t.start} <span className="opacity-50 ml-2">({filtered.length})</span>
+            </button>
+
+            <button 
+              disabled={filtered.length === 0}
+              onClick={handleDownloadPDF}
+              className="w-full py-6 sm:py-8 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-800 text-white rounded-2xl sm:rounded-[2rem] font-black text-xl sm:text-3xl shadow-2xl shadow-emerald-500/20 transition-all active:scale-95 transform hover:-translate-y-1 flex items-center justify-center gap-3"
+            >
+              <Download size={24} />
+              {t.download}
+            </button>
+          </div>
         </div>
 
         {/* Hard Words Container */}

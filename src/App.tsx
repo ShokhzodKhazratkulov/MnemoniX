@@ -133,19 +133,10 @@ export default function App() {
     }
   }, [user, isAuthReady]);
 
-  // Protect private views on auth change
+  // Force sign-in for unauthenticated users
   useEffect(() => {
     if (isAuthReady && !user) {
-      const privateViews = [
-        AppView.DASHBOARD,
-        AppView.FLASHCARDS,
-        AppView.PROFILE,
-        AppView.MY_POSTS,
-        AppView.MY_REMIXES,
-        AppView.CREATE_POST,
-        AppView.PRACTICE
-      ];
-      if (privateViews.includes(view)) {
+      if (view !== AppView.AUTH) {
         setView(AppView.AUTH);
       }
     }
