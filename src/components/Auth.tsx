@@ -105,16 +105,6 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
 
       {/* Right Pane - Auth Form */}
       <div className="flex-1 flex flex-col p-6 lg:p-16 justify-center relative">
-        {onClose && (
-          <button 
-            onClick={onClose}
-            className="absolute top-8 left-8 lg:left-16 flex items-center gap-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors font-bold uppercase text-xs tracking-widest"
-          >
-            <ArrowLeft size={16} />
-            Back to App
-          </button>
-        )}
-
         <div className="max-w-md w-full mx-auto">
           <div className="mb-12">
             <h2 className="text-4xl lg:text-5xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">

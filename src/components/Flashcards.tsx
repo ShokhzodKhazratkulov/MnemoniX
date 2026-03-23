@@ -208,83 +208,102 @@ export const Flashcards: React.FC<Props> = ({
   };
 
   const groupWordsByDate = (words: SavedMnemonic[]) => {
-    const now = new Date();
-    now.setHours(0,0,0,0);
-    const today = words.filter(w => {
-      const d = new Date(w.timestamp);
-      d.setHours(0,0,0,0);
-      return d.getTime() === now.getTime();
+    const groups: { [key: string]: SavedMnemonic[] } = {};
+    words.forEach(w => {
+      const date = new Date(w.timestamp).toLocaleDateString('en-GB'); // dd/mm/yyyy
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(w);
     });
-    const yesterday = words.filter(w => {
-      const d = new Date(w.timestamp);
-      d.setHours(0,0,0,0);
-      const y = new Date(now);
-      y.setDate(y.getDate() - 1);
-      return d.getTime() === y.getTime();
+    // Sort keys descending (newest first)
+    const sortedDates = Object.keys(groups).sort((a, b) => {
+      const [ad, am, ay] = a.split('/').map(Number);
+      const [bd, bm, by] = b.split('/').map(Number);
+      return new Date(by, bm - 1, bd).getTime() - new Date(ay, am - 1, ad).getTime();
     });
-    const previous = words.filter(w => {
-      const d = new Date(w.timestamp);
-      d.setHours(0,0,0,0);
-      const y = new Date(now);
-      y.setDate(y.getDate() - 1);
-      return d.getTime() < y.getTime();
-    });
-    return { today, yesterday, previous };
+    return { groups, sortedDates };
   };
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-    const { today, yesterday, previous } = groupWordsByDate(filtered);
+    const { groups, sortedDates } = groupWordsByDate(filtered);
 
-    // Add Logo/Title
-    doc.setFontSize(24);
+    // Add Logo (Indigo square with white M)
+    doc.setFillColor(79, 70, 229); // Indigo-600
+    doc.roundedRect(20, 15, 12, 12, 3, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(63, 81, 181); // Indigo color
-    doc.text("Mnemonix", 105, 20, { align: "center" });
+    doc.text("M", 26, 23.5, { align: "center" });
+
+    // Add Title
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229);
+    doc.text("Mnemonix", 35, 24);
 
     let yPos = 40;
 
-    const addSection = (title: string, words: SavedMnemonic[]) => {
-      if (words.length === 0) return;
+    sortedDates.forEach(date => {
+      const words = groups[date];
       
-      doc.setFontSize(18);
+      // Check if we need a new page for the header
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(0, 0, 0);
-      doc.text(title + "________________________________________________", 20, yPos);
+      doc.text(date, 20, yPos);
+      yPos += 5;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, yPos, 190, yPos);
       yPos += 10;
 
+      const normalizeText = (text: string) => {
+        return text
+          .replace(/ʻ/g, "'")
+          .replace(/ʼ/g, "'")
+          .replace(/‘/g, "'")
+          .replace(/’/g, "'")
+          .replace(/“/g, '"')
+          .replace(/”/g, '"');
+      };
+
       const tableData = words.map((w, i) => [
-        (i + 1).toString() + " |",
-        w.word,
-        w.data.meaning
+        (i + 1).toString(),
+        normalizeText(w.word),
+        normalizeText(w.data.meaning)
       ]);
 
       autoTable(doc, {
         startY: yPos,
-        head: [],
+        head: [['#', 'Word', 'Meaning']],
         body: tableData,
-        theme: 'grid',
+        theme: 'striped',
         styles: {
           fontSize: 12,
-          cellPadding: 4,
-          lineColor: [200, 200, 200],
-          lineWidth: 0.1,
-          textColor: [50, 50, 50],
+          cellPadding: 5,
+          font: 'helvetica',
+          fontStyle: 'bold',
+          textColor: [30, 30, 30],
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontSize: 13,
+          fontStyle: 'bold',
         },
         columnStyles: {
-          0: { cellWidth: 15, fontStyle: 'bold' },
-          1: { cellWidth: 80 },
+          0: { cellWidth: 15, halign: 'center' },
+          1: { cellWidth: 75, fontStyle: 'bold' },
           2: { cellWidth: 80 },
         },
-        margin: { left: 20 },
+        margin: { left: 20, right: 20 },
       });
       
       yPos = (doc as any).lastAutoTable.finalY + 15;
-    };
-
-    addSection("today", today);
-    addSection("yesterday", yesterday);
-    addSection("previouse day", previous);
+    });
 
     doc.save(`mnemonix-words-${new Date().toISOString().split('T')[0]}.pdf`);
   };
@@ -378,7 +397,7 @@ export const Flashcards: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:gap-8">
             <button 
               disabled={filtered.length === 0}
               onClick={() => setIsStarted(true)}
