@@ -94,6 +94,8 @@ export const Flashcards: React.FC<Props> = ({
   const backSideRef = React.useRef<HTMLDivElement>(null);
   const [shuffledIndices, setShuffledIndices] = useState<number[]>([]);
   const [selectedWord, setSelectedWord] = useState<SavedMnemonic | null>(null);
+  const [localHard, setLocalHard] = useState<Record<string, boolean>>({});
+  const [localMastered, setLocalMastered] = useState<Record<string, boolean>>({});
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioContextRef = React.useRef<AudioContext | null>(null);
@@ -337,6 +339,8 @@ export const Flashcards: React.FC<Props> = ({
   }
 
   const current = filtered[shuffledIndices[currentIndex]];
+  const isHard = localHard[current.id] !== undefined ? localHard[current.id] : current.isHard;
+  const isMastered = localMastered[current.id] !== undefined ? localMastered[current.id] : current.isMastered;
 
   return (
     <div className="max-w-xl mx-auto space-y-6 sm:space-y-8 animate-fadeIn mt-4 px-4">
@@ -459,23 +463,31 @@ export const Flashcards: React.FC<Props> = ({
 
         <div className="flex items-center gap-2 flex-shrink-0">
           <button 
-            onClick={() => onToggleHard(current.id, !current.isHard)}
+            onClick={() => {
+              const newVal = !isHard;
+              setLocalHard(prev => ({ ...prev, [current.id]: newVal }));
+              onToggleHard(current.id, newVal);
+            }}
             className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-all ${
-              current.isHard ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-red-500'
+              isHard ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-red-500'
             }`}
             title="Mark as Hard"
           >
-            <Flag size={20} fill={current.isHard ? "currentColor" : "none"} />
+            <Flag size={20} fill={isHard ? "currentColor" : "none"} />
           </button>
 
           <button 
-            onClick={() => onToggleMastered(current.id, !current.isMastered)}
+            onClick={() => {
+              const newVal = !isMastered;
+              setLocalMastered(prev => ({ ...prev, [current.id]: newVal }));
+              onToggleMastered(current.id, newVal);
+            }}
             className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-all ${
-              current.isMastered ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-emerald-500'
+              isMastered ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-emerald-500'
             }`}
             title="Mark as Mastered"
           >
-            <CheckCircle size={20} fill={current.isMastered ? "currentColor" : "none"} />
+            <CheckCircle size={20} fill={isMastered ? "currentColor" : "none"} />
           </button>
         </div>
 

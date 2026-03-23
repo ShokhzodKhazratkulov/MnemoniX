@@ -306,7 +306,7 @@ export default function App() {
     setImageUrl('');
 
     try {
-      let correctedWord = await gemini.checkSpelling(searchQuery);
+      let correctedWord = await gemini.checkSpelling(query);
       correctedWord = correctedWord.toLowerCase().trim();
       
       // 1. Check if word exists in global mnemonics library for the SPECIFIC language

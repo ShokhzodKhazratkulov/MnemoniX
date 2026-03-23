@@ -413,7 +413,6 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                               <p className="text-xs text-gray-500 font-bold italic">{m.data.meaning}</p>
                             </div>
                           </div>
-                          <ChevronRight size={20} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
                         </div>
                       ))
                     )}
