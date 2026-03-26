@@ -897,38 +897,38 @@ export default function App() {
               </div>
 
               {/* Footer Section */}
-              <div className="pt-12 pb-8 border-t border-gray-100 dark:border-slate-800 space-y-8">
-                <div className="text-center space-y-6">
-                  <h4 className="text-gray-400 dark:text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Contact us:</h4>
+              <div className="pt-8 pb-4 border-t border-gray-100 dark:border-slate-800 space-y-4">
+                <div className="text-center space-y-4">
+                  <h4 className="text-gray-400 dark:text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Contact us:</h4>
                   <div className="flex justify-center gap-4 sm:gap-8">
                     <a href="https://www.instagram.com/mnemonix.io?igsh=b3UxZTZyOXJ0enhu" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-pink-500 group-hover:border-pink-500/30 transition-all shadow-sm">
-                        <Instagram size={28} />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-pink-500 border-pink-500/10 transition-all shadow-sm group-hover:scale-110">
+                        <Instagram size={24} />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-pink-500 transition-colors">Instagram</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-pink-500 transition-colors">Instagram</span>
                     </a>
                     <a href="https://t.me/mnemonix_io" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-400 group-hover:border-blue-400/30 transition-all shadow-sm">
-                        <Send size={28} />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-blue-400 border-blue-400/10 transition-all shadow-sm group-hover:scale-110">
+                        <Send size={24} />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-blue-400 transition-colors">Telegram</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-blue-400 transition-colors">Telegram</span>
                     </a>
                     <a href="mailto:hello@mnemonix.io" className="flex flex-col items-center gap-2 group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-red-500 group-hover:border-red-500/30 transition-all shadow-sm">
-                        <Mail size={28} />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-red-500 border-red-500/10 transition-all shadow-sm group-hover:scale-110">
+                        <Mail size={24} />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-red-500 transition-colors">Gmail</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-red-500 transition-colors">Gmail</span>
                     </a>
                     <a href="tel:+998504504182" className="flex flex-col items-center gap-2 group">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-emerald-500 group-hover:border-emerald-500/30 transition-all shadow-sm">
-                        <Phone size={28} />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-emerald-500 border-emerald-500/10 transition-all shadow-sm group-hover:scale-110">
+                        <Phone size={24} />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-emerald-500 transition-colors">Call</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-emerald-500 transition-colors">Call</span>
                     </a>
                   </div>
                 </div>
-                <div className="text-center pt-8">
-                  <p className="text-gray-400 dark:text-gray-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                <div className="text-center pt-4">
+                  <p className="text-gray-400 dark:text-gray-600 text-[9px] font-black uppercase tracking-[0.2em]">
                     © All rights are reserved - 2026
                   </p>
                 </div>
@@ -1100,22 +1100,6 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
-
-      {/* Floating Suggestions Button */}
-      <AnimatePresence>
-        {view === AppView.HOME && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0, x: -50 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0, x: -50 }}
-            onClick={() => setShowFeedback(true)}
-            className="fixed left-6 bottom-24 md:bottom-8 z-[60] flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-full font-black shadow-xl shadow-emerald-200 dark:shadow-none hover:bg-emerald-700 hover:scale-110 transition-all active:scale-95 group"
-          >
-            <MessageSquare size={18} />
-            <span className="hidden sm:inline">{t.suggestions}</span>
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       {/* Floating Practice Button */}
       <AnimatePresence>
