@@ -260,19 +260,7 @@ export default function App() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const searchCache = React.useRef<Record<string, { mnemonic: MnemonicResponse, imageUrl: string }>>({});
 
-  // Debounced search
-  useEffect(() => {
-    if (view !== AppView.SEARCH || !searchQuery || searchQuery.length < 3 || state === AppState.LOADING) return;
-
-    const timer = setTimeout(() => {
-      // Only auto-search if we are in IDLE state or already showing results for a different word
-      if (state === AppState.IDLE || (state === AppState.RESULTS && mnemonic?.word !== searchQuery)) {
-        handleSearch();
-      }
-    }, 1500); // 1.5s delay for auto-search to be less intrusive
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, view]);
+  // Removed debounced search as per user request to only search on button press or synonym click
 
   const handleSearch = async (e?: React.FormEvent, word?: string) => {
     if (e) e.preventDefault();
@@ -949,6 +937,11 @@ export default function App() {
                 forceCloseDetail={forceCloseFlashcardDetail}
                 forceCloseReview={forceCloseFlashcardReview}
                 onPractice={startPractice}
+                onSearchWord={(word) => {
+                  setSearchQuery(word);
+                  setView(AppView.SEARCH);
+                  handleSearch(undefined, word);
+                }}
               />
             </motion.div>
           )}

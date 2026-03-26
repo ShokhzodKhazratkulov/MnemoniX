@@ -62,6 +62,7 @@ interface Props {
   onReviewChange?: (isReviewing: boolean) => void;
   onPractice?: (word: string, meaning: string) => void;
   onWordSelect?: (word: SavedMnemonic | null) => void;
+  onSearchWord?: (word: string) => void;
   forceCloseDetail?: boolean;
   forceCloseReview?: boolean;
 }
@@ -84,6 +85,7 @@ export const Flashcards: React.FC<Props> = ({
   onReviewChange, 
   onPractice,
   onWordSelect,
+  onSearchWord,
   forceCloseDetail, 
   forceCloseReview 
 }) => {
@@ -529,9 +531,19 @@ export const Flashcards: React.FC<Props> = ({
                   <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Sinonimlar" : (language === Language.RUSSIAN ? "Синонимы" : "Synonyms")}</span>
                   <div className="flex flex-wrap justify-center gap-2">
                     {current.data.synonyms.map((syn, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-white/10 rounded-lg text-xs font-medium text-white/90">
+                      <button 
+                        key={idx} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onSearchWord) {
+                            const word = syn.split('(')[0].trim();
+                            onSearchWord(word);
+                          }
+                        }}
+                        className="px-2 py-0.5 bg-white/10 rounded-lg text-xs font-medium text-white/90 hover:bg-white/20 transition-colors"
+                      >
                         {syn}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 </div>
