@@ -1082,18 +1082,25 @@ export default function App() {
             initial={{ opacity: 0, scale: 0, x: 50 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0, x: 50 }}
-            onClick={() => setView(AppView.PRACTICE)}
+            onClick={() => {
+              const activeWord = (view === AppView.FLASHCARDS ? selectedFlashcardWord : (mnemonic ? { word: mnemonic.word, data: mnemonic } : null));
+              if (activeWord) {
+                startPractice(activeWord.word, activeWord.data?.meaning || (activeWord as any).meaning);
+              } else {
+                setView(AppView.PRACTICE);
+              }
+            }}
             className="fixed right-6 bottom-24 md:bottom-8 z-[60] flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-full font-black shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 hover:scale-110 transition-all active:scale-95 group"
           >
             <div className="relative">
               <Sparkles size={18} />
               <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-indigo-600 animate-pulse" />
             </div>
-            <span className="hidden sm:inline">Practice</span>
+            <span className="text-[10px] sm:text-base font-black">Practice</span>
 
             {/* Tooltip */}
             <div className="absolute bottom-full right-0 mb-4 px-3 py-1.5 bg-slate-900 text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold uppercase tracking-widest">
-              Master "{mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word}" now
+              Master "{ (view === AppView.FLASHCARDS ? selectedFlashcardWord?.word : mnemonic?.word) || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word}" now
             </div>
           </motion.button>
         )}

@@ -192,6 +192,14 @@ export const Flashcards: React.FC<Props> = ({
     });
   }, [savedMnemonics, dateFrom, dateTo]);
 
+  useEffect(() => {
+    if (isStarted && filtered.length > 0 && shuffledIndices.length > 0) {
+      onWordSelect?.(filtered[shuffledIndices[currentIndex]]);
+    } else if (!isStarted) {
+      onWordSelect?.(selectedWord);
+    }
+  }, [isStarted, currentIndex, shuffledIndices, filtered, onWordSelect, selectedWord]);
+
   // Initialize shuffled indices when starting or shuffling
   useEffect(() => {
     if (filtered.length > 0) {
@@ -357,6 +365,7 @@ export const Flashcards: React.FC<Props> = ({
                 data={selectedWord.data} 
                 imageUrl={selectedWord.imageUrl} 
                 language={language} 
+                onSearch={onSearchWord}
               />
             </div>
           </div>
