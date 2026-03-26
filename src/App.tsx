@@ -21,7 +21,11 @@ import {
   Sun,
   Languages,
   Home,
-  Globe
+  Globe,
+  Instagram,
+  Send,
+  Mail,
+  Phone
 } from 'lucide-react';
 
 import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic, Post } from './types';
@@ -890,6 +894,44 @@ export default function App() {
               {/* Results / Loading States */}
               <div className="min-h-[200px]">
                 <AboutSection t={t} />
+              </div>
+
+              {/* Footer Section */}
+              <div className="pt-12 pb-8 border-t border-gray-100 dark:border-slate-800 space-y-8">
+                <div className="text-center space-y-6">
+                  <h4 className="text-gray-400 dark:text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Contact us:</h4>
+                  <div className="flex justify-center gap-4 sm:gap-8">
+                    <a href="https://www.instagram.com/mnemonix.io?igsh=b3UxZTZyOXJ0enhu" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-pink-500 group-hover:border-pink-500/30 transition-all shadow-sm">
+                        <Instagram size={28} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-pink-500 transition-colors">Instagram</span>
+                    </a>
+                    <a href="https://t.me/mnemonix_io" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-400 group-hover:border-blue-400/30 transition-all shadow-sm">
+                        <Send size={28} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-blue-400 transition-colors">Telegram</span>
+                    </a>
+                    <a href="mailto:hello@mnemonix.io" className="flex flex-col items-center gap-2 group">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-red-500 group-hover:border-red-500/30 transition-all shadow-sm">
+                        <Mail size={28} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-red-500 transition-colors">Gmail</span>
+                    </a>
+                    <a href="tel:+998504504182" className="flex flex-col items-center gap-2 group">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-emerald-500 group-hover:border-emerald-500/30 transition-all shadow-sm">
+                        <Phone size={28} />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 group-hover:text-emerald-500 transition-colors">Call</span>
+                    </a>
+                  </div>
+                </div>
+                <div className="text-center pt-8">
+                  <p className="text-gray-400 dark:text-gray-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                    © All rights are reserved - 2026
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
