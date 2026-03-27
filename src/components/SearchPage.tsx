@@ -18,6 +18,7 @@ interface SearchPageProps {
   savedMnemonics: SavedMnemonic[];
   setState: (state: AppState) => void;
   onNavigate: (view: AppView) => void;
+  onPractice?: (word: string, meaning: string) => void;
   t: any;
   loadingMessage: string;
 }
@@ -35,6 +36,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   savedMnemonics,
   setState,
   onNavigate,
+  onPractice,
   t,
   loadingMessage
 }) => {
@@ -253,6 +255,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
               imageUrl={imageUrl} 
               language={language} 
               onSearch={(word) => handleSearch(undefined, word)}
+              onPractice={onPractice}
             />
           </motion.div>
         )}

@@ -1045,6 +1045,7 @@ export default function App() {
                 savedMnemonics={savedMnemonics}
                 setState={setState}
                 onNavigate={navigateTo}
+                onPractice={startPractice}
                 t={t}
                 loadingMessage={loadingMessage}
               />
@@ -1279,15 +1280,30 @@ export default function App() {
 
       {/* Floating Practice Button */}
       <AnimatePresence>
-        {((view === AppView.SEARCH && mnemonic) || (view === AppView.FLASHCARDS && selectedFlashcardWord)) && (
+        {((view === AppView.SEARCH && mnemonic) || 
+          (view === AppView.FLASHCARDS && selectedFlashcardWord) ||
+          (view === AppView.WORD_REVIEW && selectedMnemonicForReview)) && (
           <motion.button
             initial={{ opacity: 0, scale: 0, x: 50 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0, x: 50 }}
             onClick={() => {
-              const activeWord = (view === AppView.FLASHCARDS ? selectedFlashcardWord : (mnemonic ? { word: mnemonic.word, data: mnemonic } : null));
-              if (activeWord) {
-                startPractice(activeWord.word, activeWord.data?.meaning || (activeWord as any).meaning);
+              let wordToPractice = '';
+              let meaningToPractice = '';
+
+              if (view === AppView.FLASHCARDS && selectedFlashcardWord) {
+                wordToPractice = selectedFlashcardWord.word;
+                meaningToPractice = selectedFlashcardWord.data.meaning;
+              } else if (view === AppView.WORD_REVIEW && selectedMnemonicForReview) {
+                wordToPractice = selectedMnemonicForReview.word;
+                meaningToPractice = selectedMnemonicForReview.data.meaning;
+              } else if (view === AppView.SEARCH && mnemonic) {
+                wordToPractice = mnemonic.word;
+                meaningToPractice = mnemonic.meaning;
+              }
+
+              if (wordToPractice) {
+                startPractice(wordToPractice, meaningToPractice);
               } else {
                 setView(AppView.PRACTICE);
               }
@@ -1302,7 +1318,11 @@ export default function App() {
 
             {/* Tooltip */}
             <div className="absolute bottom-full right-0 mb-4 px-3 py-1.5 bg-slate-900 text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold uppercase tracking-widest">
-              Master "{ (view === AppView.FLASHCARDS ? selectedFlashcardWord?.word : mnemonic?.word) || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word}" now
+              Master "{ 
+                (view === AppView.FLASHCARDS ? selectedFlashcardWord?.word : 
+                 view === AppView.WORD_REVIEW ? selectedMnemonicForReview?.word : 
+                 mnemonic?.word) || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word
+              }" now
             </div>
           </motion.button>
         )}
