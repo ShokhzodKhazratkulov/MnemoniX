@@ -55,15 +55,20 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Daily Life': 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
 };
 
+const CATEGORY_LIST = [
+  'Education', 'Technology', 'Environment', 'Health', 'Crime', 
+  'Economy', 'Travel', 'Food', 'Sports', 'Art', 
+  'Science', 'Law', 'Business', 'Medicine', 'History', 
+  'Politics', 'Media', 'Nature', 'People', 'Daily Life'
+];
+
 export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, onSelectCategory }) => {
-  const categories = Array.from(new Set(savedMnemonics.map(m => m.data.category).filter(Boolean))) as string[];
-  
   const getWordCount = (category: string) => {
     return savedMnemonics.filter(m => m.data.category === category).length;
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center gap-4">
         <button 
           onClick={() => onNavigate(AppView.PROFILE)}
@@ -74,42 +79,37 @@ export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, on
         <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Kategoriyalar</h2>
       </div>
 
-      {categories.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-12 text-center shadow-xl border border-gray-100 dark:border-slate-800">
-          <BookOpen size={64} className="mx-auto text-gray-200 dark:text-slate-800 mb-6" />
-          <p className="text-gray-500 dark:text-gray-400 font-bold text-lg">Hali hech qanday so'z kategoriyalanmagan.</p>
-          <p className="text-gray-400 dark:text-gray-500 mt-2">Yangi so'zlarni qidiring va ular avtomatik ravishda kategoriyalarga ajratiladi.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {categories.map((category, index) => {
-            const Icon = CATEGORY_ICONS[category] || BookOpen;
-            const colorClass = CATEGORY_COLORS[category] || 'bg-gray-100 text-gray-600';
-            
-            return (
-              <motion.button
-                key={category}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onSelectCategory(category)}
-                className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center justify-between group hover:border-indigo-500 transition-all text-left"
-              >
-                <div className="flex items-center gap-5">
-                  <div className={`w-16 h-16 ${colorClass} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <Icon size={32} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-gray-900 dark:text-white">{category}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 font-bold">{getWordCount(category)} so'z</p>
-                  </div>
-                </div>
-                <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
-            );
-          })}
-        </div>
-      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {CATEGORY_LIST.map((category, index) => {
+          const Icon = CATEGORY_ICONS[category] || BookOpen;
+          const colorClass = CATEGORY_COLORS[category] || 'bg-gray-100 text-gray-600';
+          const count = getWordCount(category);
+          
+          return (
+            <motion.button
+              key={category}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.03 }}
+              onClick={() => onSelectCategory(category)}
+              className="bg-white dark:bg-slate-900 p-5 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center gap-4 group hover:border-indigo-500 transition-all text-center relative overflow-hidden"
+            >
+              <div className={`w-16 h-16 ${colorClass} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform relative z-10`}>
+                <Icon size={32} />
+              </div>
+              <div className="relative z-10">
+                <h3 className="text-base font-black text-gray-900 dark:text-white leading-tight">{category}</h3>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${count > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
+                  {count} so'z
+                </p>
+              </div>
+
+              {/* Decorative background element */}
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 w-16 h-16 bg-gray-50 dark:bg-slate-800/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.button>
+          );
+        })}
+      </div>
     </div>
   );
 };
