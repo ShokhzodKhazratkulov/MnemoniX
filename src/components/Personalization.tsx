@@ -154,7 +154,7 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                         : 'border-gray-100 dark:border-slate-800 text-gray-600 dark:text-gray-400 hover:border-amber-200'
                     }`}
                   >
-                    <div className="text-2xl sm:text-3xl">{band}.0</div>
+                    <div className="text-2xl sm:text-3xl">{band % 1 === 0 ? `${band}.0` : band}</div>
                     <div className="text-[10px] uppercase tracking-widest mt-1">Band Score</div>
                   </button>
                 ))}

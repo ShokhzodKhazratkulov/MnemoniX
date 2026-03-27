@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, X, Send, Sparkles, Loader2, User, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Loader2, User, Bot, Mic, MicOff } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { Language } from '../types';
 
@@ -24,8 +24,45 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [sentencesCount, setSentencesCount] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Initialize Speech Recognition
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      setIsListening(true);
+      recognitionRef.current?.start();
+    }
+  };
 
   useEffect(() => {
     // Initial greeting
@@ -160,22 +197,39 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
       <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-4 sm:p-8 sticky bottom-0">
         <form onSubmit={handleSend} className="max-w-4xl mx-auto">
           <div className="relative flex items-center gap-4">
-            <div className="relative flex-1">
-              <input 
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={isLoading || sentencesCount >= 5}
-                placeholder={sentencesCount >= 5 ? "Mashg'ulot yakunlandi!" : "Write your sentence in English..."}
-                className="w-full pl-6 pr-14 py-4 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-[2rem] outline-none transition-all font-bold text-gray-900 dark:text-white disabled:opacity-50 shadow-inner"
-              />
-              <button 
-                type="submit"
-                disabled={!input.trim() || isLoading || sentencesCount >= 5}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:scale-90 shadow-lg shadow-indigo-200 dark:shadow-none"
-              >
-                <Send size={20} />
-              </button>
+            <div className="relative flex-1 flex items-center gap-2">
+              <div className="relative flex-1">
+                <input 
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  disabled={isLoading || sentencesCount >= 5}
+                  placeholder={sentencesCount >= 5 ? "Mashg'ulot yakunlandi!" : "Write your sentence in English..."}
+                  className="w-full pl-6 pr-14 py-4 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-[2rem] outline-none transition-all font-bold text-gray-900 dark:text-white disabled:opacity-50 shadow-inner"
+                />
+                <button 
+                  type="submit"
+                  disabled={!input.trim() || isLoading || sentencesCount >= 5}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:scale-90 shadow-lg shadow-indigo-200 dark:shadow-none"
+                >
+                  <Send size={20} />
+                </button>
+              </div>
+
+              {recognitionRef.current && (
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={isLoading || sentencesCount >= 5}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
+                    isListening 
+                      ? 'bg-red-500 text-white animate-pulse' 
+                      : 'bg-indigo-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200'
+                  }`}
+                >
+                  {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                </button>
+              )}
             </div>
             
             {sentencesCount >= 5 && (

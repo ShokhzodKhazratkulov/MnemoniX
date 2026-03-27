@@ -143,7 +143,7 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         </div>
 
         <div className="space-y-3 sm:space-y-6">
-          <p className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 font-medium">{t.goal}: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal || 7}.0 Band Score</span></p>
+          <p className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 font-medium">{t.goal}: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal ? (profile.ielts_goal % 1 === 0 ? `${profile.ielts_goal}.0` : profile.ielts_goal) : '7.0'} Band Score</span></p>
           
           <div className="relative h-3 sm:h-6 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div 

@@ -187,12 +187,16 @@ CRITICAL RULES:
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) throw new Error("Gemini API Key not found.");
       const ai = new GoogleGenAI({ apiKey });
+      
+      // Explicitly map language enum to full names for the AI
+      const languageName = targetLanguage === Language.ENGLISH ? 'English' : targetLanguage;
+
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ 
           parts: [{ 
-            text: `Read the following text aloud. It contains English words and their explanation in ${targetLanguage}. 
-            Please use a clear, standard English accent for the English words and a natural, fluent ${targetLanguage} accent for the rest of the text.
+            text: `Read the following text aloud. It contains English words and their explanation in ${languageName}. 
+            Please use a clear, standard English accent for the English words and a natural, fluent ${languageName} accent for the rest of the text.
             Text: "${text}"` 
           }] 
         }],

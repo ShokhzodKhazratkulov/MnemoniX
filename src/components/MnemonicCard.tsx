@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MnemonicResponse, Language } from '../types';
 import { GeminiService } from '../services/geminiService';
-import { Sparkles, Volume2, Eye } from 'lucide-react';
+import { Sparkles, Volume2, Eye, Loader2, Target } from 'lucide-react';
+import { decode, decodeAudioData } from '../utils/audioUtils';
 import { AnimatePresence } from 'motion/react';
 
 interface Props {
@@ -10,57 +11,12 @@ interface Props {
   imageUrl: string;
   language: Language;
   onSearch?: (word: string) => void;
+  onPractice?: (word: string, meaning: string) => void;
 }
 
 const gemini = new GeminiService();
 
-function decode(base64: string) {
-  if (!base64) return new Uint8Array(0);
-  try {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-  } catch (e) {
-    console.error("Base64 decode error:", e);
-    return new Uint8Array(0);
-  }
-}
-
-async function decodeAudioData(
-  data: Uint8Array,
-  ctx: AudioContext,
-  sampleRate: number,
-  numChannels: number,
-): Promise<AudioBuffer | null> {
-  if (data.length === 0) return null;
-  // Ensure the buffer length is multiple of 2 (16-bit PCM)
-  const byteLength = data.byteLength;
-  const bufferToUse = byteLength % 2 === 0 ? data.buffer : data.buffer.slice(0, byteLength - 1);
-  const dataInt16 = new Int16Array(bufferToUse);
-  const frameCount = dataInt16.length / numChannels;
-  
-  if (frameCount <= 0) return null;
-  
-  try {
-    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-    for (let channel = 0; channel < numChannels; channel++) {
-      const channelData = buffer.getChannelData(channel);
-      for (let i = 0; i < frameCount; i++) {
-        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-      }
-    }
-    return buffer;
-  } catch (e) {
-    console.error("Error creating audio buffer:", e);
-    return null;
-  }
-}
-
-export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSearch }) => {
+export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSearch, onPractice }) => {
   const [timer, setTimer] = useState(5);
   const [showContent, setShowContent] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -241,16 +197,27 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
             <p className="text-2xl sm:text-3xl text-gray-400 dark:text-gray-500 font-mono font-medium tracking-tight">
               [{safeData.transcription}]
             </p>
-            <button 
-              onClick={() => handlePlayAudio(safeData.word)}
-              disabled={isAudioLoading}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                isPlaying ? 'text-red-500' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800'
-              } disabled:opacity-50`}
-              title="Pronounce word"
-            >
-              <Volume2 size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => handlePlayAudio(safeData.word)}
+                disabled={isAudioLoading}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                  isPlaying ? 'text-red-500' : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-slate-800'
+                } disabled:opacity-50`}
+                title="Pronounce word"
+              >
+                <Volume2 size={20} />
+              </button>
+              {onPractice && (
+                <button
+                  onClick={() => onPractice(safeData.word, safeData.meaning)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800"
+                  title="Practice word"
+                >
+                  <Target size={20} />
+                </button>
+              )}
+            </div>
           </div>
           <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 font-bold">
             {safeData.meaning}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, BookOpen, Search, Trash2, Award } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Search, Trash2, Award, Volume2, Loader2, Target } from 'lucide-react';
 import { SavedMnemonic, AppView } from '../types';
 
 interface Props {
@@ -8,10 +8,22 @@ interface Props {
   savedMnemonics: SavedMnemonic[];
   onNavigate: (view: AppView) => void;
   onSelectWord: (word: string) => void;
+  onPractice: (word: string, meaning: string) => void;
+  onPlayAudio: (word: string) => void;
+  isAudioLoading?: boolean;
   t: any;
 }
 
-export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, onNavigate, onSelectWord, t }) => {
+export const CategoryDetailPage: React.FC<Props> = ({ 
+  category, 
+  savedMnemonics, 
+  onNavigate, 
+  onSelectWord, 
+  onPractice,
+  onPlayAudio,
+  isAudioLoading,
+  t 
+}) => {
   const words = savedMnemonics.filter(m => m.data.category === category);
 
   return (
@@ -31,15 +43,17 @@ export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {words.map((m, index) => (
-          <motion.button
+          <motion.div
             key={m.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            onClick={() => onSelectWord(m.word)}
             className="bg-white dark:bg-slate-900 p-4 rounded-[2rem] shadow-lg border border-gray-100 dark:border-slate-800 flex items-center justify-between group hover:border-indigo-500 transition-all text-left"
           >
-            <div className="flex items-center gap-4">
+            <button 
+              onClick={() => onSelectWord(m.word)}
+              className="flex items-center gap-4 flex-1"
+            >
               <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border-2 border-gray-50 dark:border-slate-800 group-hover:scale-110 transition-transform">
                 <img src={m.imageUrl} alt={m.word} className="w-full h-full object-cover" />
               </div>
@@ -51,16 +65,37 @@ export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, 
                     {m.data.level}
                   </span>
                   {m.isMastered && (
-                    <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                       <Award size={10} />
                       {t.mastered}
                     </span>
                   )}
                 </div>
               </div>
+            </button>
+            
+            <div className="flex flex-col gap-2 ml-4">
+              <button
+                onClick={() => onPlayAudio(m.word)}
+                disabled={isAudioLoading}
+                className="p-2 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-400 hover:text-indigo-600 transition-colors"
+                title="Listen Pronunciation"
+              >
+                {isAudioLoading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Volume2 size={18} />
+                )}
+              </button>
+              <button
+                onClick={() => onPractice(m.word, m.data.meaning)}
+                className="p-2 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-gray-400 hover:text-emerald-600 transition-colors"
+                title="Practice Word"
+              >
+                <Target size={18} />
+              </button>
             </div>
-            <ChevronRight size={20} className="text-gray-300 group-hover:translate-x-1 transition-transform" />
-          </motion.button>
+          </motion.div>
         ))}
       </div>
     </div>

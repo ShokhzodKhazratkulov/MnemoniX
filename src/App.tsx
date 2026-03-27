@@ -32,6 +32,7 @@ import { Language, AppState, AppView, MnemonicResponse, SavedMnemonic, Post } fr
 import { GeminiService } from './services/geminiService';
 import { usePosts } from './context/PostContext';
 import { supabase } from './supabaseClient';
+import { decode, decodeAudioData } from './utils/audioUtils';
 import { getStorageUrl } from './services/supabase';
 
 // Components
@@ -80,6 +81,42 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedMnemonicForReview, setSelectedMnemonicForReview] = useState<SavedMnemonic | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfileType | null>(null);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const audioContextRef = React.useRef<AudioContext | null>(null);
+  const sourceRef = React.useRef<AudioBufferSourceNode | null>(null);
+
+  const handlePlayAudio = async (text: string) => {
+    if (isAudioLoading) return;
+    setIsAudioLoading(true);
+
+    try {
+      if (sourceRef.current) {
+        sourceRef.current.stop();
+      }
+
+      const base64Audio = await gemini.generateTTS(text, language);
+      if (!base64Audio) throw new Error("No audio data");
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      }
+
+      const decodedData = decode(base64Audio);
+      const audioBuffer = await decodeAudioData(decodedData, audioContextRef.current, 24000, 1);
+
+      if (audioBuffer) {
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContextRef.current.destination);
+        source.start(0);
+        sourceRef.current = source;
+      }
+    } catch (error) {
+      console.error("Audio error:", error);
+    } finally {
+      setIsAudioLoading(false);
+    }
+  };
 
   // Auth state listener
   useEffect(() => {
@@ -1207,6 +1244,12 @@ export default function App() {
                     navigateTo(AppView.WORD_REVIEW);
                   }
                 }} 
+                onPractice={(word, meaning) => {
+                  setPracticeWord({ word, meaning });
+                  setView(AppView.PRACTICE);
+                }}
+                onPlayAudio={handlePlayAudio}
+                isAudioLoading={isAudioLoading}
                 t={t.categories}
               />
             </motion.div>
@@ -1226,6 +1269,7 @@ export default function App() {
                   data={selectedMnemonicForReview.data} 
                   imageUrl={selectedMnemonicForReview.imageUrl} 
                   language={language} 
+                  onPractice={startPractice}
                 />
               </div>
             </motion.div>
