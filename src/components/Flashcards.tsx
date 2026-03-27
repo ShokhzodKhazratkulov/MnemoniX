@@ -65,17 +65,8 @@ interface Props {
   onSearchWord?: (word: string) => void;
   forceCloseDetail?: boolean;
   forceCloseReview?: boolean;
+  t: any;
 }
-
-const FLASH_T: Record<Language, any> = {
-  [Language.ENGLISH]: { title: "Flashcards", range: "Select period", empty: "Nothing learned yet", start: "Start", next: "Next", prev: "Previous", finish: "Finish", from: "Start date", to: "End date", hint: "Click to flip the card", hardWords: "Hard words", download: "Download PDF" },
-  [Language.UZBEK]: { title: "Flash-kartalar", range: "Davrni tanlang", empty: "Hali hech narsa o'rganilmagan", start: "Boshlash", next: "Keyingisi", prev: "Oldingisi", finish: "Tugatish", from: "Boshlanish sanasi", to: "Tugash sanasi", hint: "Kartani aylantirish uchun bosing", hardWords: "Qiyin so'zlar", download: "PDF yuklab olish" },
-  [Language.KAZAKH]: { title: "Флэш-карталар", range: "Кезеңді таңдаңыз", empty: "Әлі ештеңе үйренілмеген", start: "Бастау", next: "Келесі", prev: "Алдыңғы", finish: "Аяқтау", from: "Басталу күні", to: "Аяқталу күні", hint: "Картаны айналдыру үшін басыңыз", hardWords: "Қиын сөздер", download: "PDF жүктеу" },
-  [Language.TAJIK]: { title: "Флэш-кортҳо", range: "Давраро интихоб кунед", empty: "Ҳанӯз чизе омӯхта نشدهаст", start: "Оғоз", next: "Оянда", prev: "Пешина", finish: "Анҷом", from: "Таърихи оғоз", to: "Таърихи анҷом", hint: "Барои чаппа кардани корт пахш кунед", hardWords: "Калимаҳои душвор", download: "Боргирии PDF" },
-  [Language.KYRGYZ]: { title: "Флэш-карталар", range: "Мөөнөттү тандаңыз", empty: "Азырынча эч нерсе үйрөнүлө элек", start: "Баштоо", next: "Кийинки", prev: "Мурунку", finish: "Бүтүрүү", from: "Баштоо күнү", to: "Аяктоо күнү", hint: "Картаны которуу үчүн басыңыз", hardWords: "Кыйын сөздөр", download: "PDF жүктөп алуу" },
-  [Language.RUSSIAN]: { title: "Флэш-карты", range: "Выберите период", empty: "Еще ничего не выучено", start: "Начать", next: "Далее", prev: "Назад", finish: "Завершить", from: "Дата начала", to: "Дата окончания", hint: "Нажмите, чтобы перевернуть", hardWords: "Трудные слова", download: "Скачать PDF" },
-  [Language.TURKMEN]: { title: "Fleş-kartalar", range: "Döwri saýlaň", empty: "Heniz hiç zat öwrenilmedi", start: "Başlamak", next: "Indiki", prev: "Öňki", finish: "Tamamlamak", from: "Başlanýan senesi", to: "Gutarýan senesi", hint: "Kartany öwürmek üçin basyň", hardWords: "Kyn sözler", download: "PDF ýükle" },
-};
 
 export const Flashcards: React.FC<Props> = ({ 
   savedMnemonics, 
@@ -88,9 +79,9 @@ export const Flashcards: React.FC<Props> = ({
   onWordSelect,
   onSearchWord,
   forceCloseDetail, 
-  forceCloseReview 
+  forceCloseReview,
+  t
 }) => {
-  const t = FLASH_T[language];
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -337,12 +328,7 @@ export const Flashcards: React.FC<Props> = ({
         <div className="text-8xl float-anim">📭</div>
         <div className="space-y-2">
           <p className="text-2xl font-black text-gray-800 dark:text-gray-200">{t.empty}</p>
-          <p className="text-gray-400">{language === Language.UZBEK ? "Siz o'rgangan so'zlar avtomatik tarzda shu yerda paydo bo'ladi." : 
-             language === Language.RUSSIAN ? "Выученные вами слова автоматически появятся здесь." :
-             language === Language.KAZAKH ? "Сіз үйренген сөздер автоматты түрде осында пайда болады." :
-             language === Language.TAJIK ? "Калимаҳои омӯхтаи шумо ба таври худкор дар ин ҷо пайдо мешаванд." :
-             language === Language.KYRGYZ ? "Сиз үйрөнгөн сөздөр автоматтык түрдө бул жерде пайда болот." :
-             "The words you learn will automatically appear here."}</p>
+          <p className="text-gray-400">{t.emptySub}</p>
         </div>
       </div>
     );
@@ -499,7 +485,7 @@ export const Flashcards: React.FC<Props> = ({
             
             <div className="space-y-6 sm:space-y-10">
               <div className="space-y-1 sm:space-y-2 relative">
-                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "So'z" : (language === Language.RUSSIAN ? "Слово" : "Word")}</span>
+                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{t.word}</span>
                 <div className="flex items-center justify-center gap-4">
                   <h3 className="text-4xl sm:text-5xl font-black text-white tracking-tighter">{current.word}</h3>
                   <button 
@@ -522,23 +508,23 @@ export const Flashcards: React.FC<Props> = ({
               </div>
               
               <div className="space-y-1 sm:space-y-2">
-                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Ma'nosi" : (language === Language.RUSSIAN ? "Значение" : "Meaning")}</span>
+                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{t.meaning}</span>
                 <p className="text-white font-black text-2xl sm:text-3xl px-2">{current.data.meaning}</p>
               </div>
 
               <div className="space-y-1 sm:space-y-2">
-                 <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Mnemonik bog'liqlik" : (language === Language.RUSSIAN ? "Мнемоническая связь" : "Mnemonic Link")}</span>
+                 <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{t.mnemonicLink}</span>
                  <p className="text-indigo-100 font-bold text-sm sm:text-base px-2">{current.data.phoneticLink}</p>
               </div>
 
               <div className="space-y-3 sm:space-y-4 bg-white/10 rounded-3xl p-6 sm:p-10 backdrop-blur-md border border-white/10">
-                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Tasavvur" : (language === Language.RUSSIAN ? "Воображение" : "Imagination")}</span>
+                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{t.imagination}</span>
                 <p className="text-white/90 text-base sm:text-lg italic leading-relaxed">{current.data.imagination}</p>
               </div>
 
               {current.data.synonyms && current.data.synonyms.length > 0 && (
                 <div className="space-y-1 sm:space-y-2">
-                  <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{language === Language.UZBEK ? "Sinonimlar" : (language === Language.RUSSIAN ? "Синонимы" : "Synonyms")}</span>
+                  <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em]">{t.synonyms}</span>
                   <div className="flex flex-wrap justify-center gap-2">
                     {current.data.synonyms.map((syn, idx) => (
                       <button 
@@ -577,7 +563,7 @@ export const Flashcards: React.FC<Props> = ({
                     <>
                       <Volume2 size={20} />
                       <span className="font-black uppercase tracking-widest text-xs">
-                        {language === Language.UZBEK ? "Hikoyani tinglash" : (language === Language.RUSSIAN ? "Слушать историю" : "Listen Story")}
+                        {t.listenStory}
                       </span>
                     </>
                   )}

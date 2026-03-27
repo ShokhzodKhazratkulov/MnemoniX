@@ -36,22 +36,22 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
     const averageDaily = Math.round(last7DaysCount / 7);
 
     // Level logic
-    let level = "Beginner";
+    let level = t.beginner;
     if (savedMnemonics.length > 0) {
       const levelCounts: Record<string, number> = {
-        "Beginner": 0,
-        "Intermediate": 0,
-        "Advanced": 0
+        [t.beginner]: 0,
+        [t.intermediate]: 0,
+        [t.advanced]: 0
       };
       
       savedMnemonics.forEach(m => {
         const rawLevel = (m.data.level || 'BEGINNER').toUpperCase();
         if (rawLevel.includes('ADVANCED')) {
-          levelCounts["Advanced"]++;
+          levelCounts[t.advanced]++;
         } else if (rawLevel.includes('INTERMEDIATE')) {
-          levelCounts["Intermediate"]++;
+          levelCounts[t.intermediate]++;
         } else {
-          levelCounts["Beginner"]++;
+          levelCounts[t.beginner]++;
         }
       });
       
@@ -133,17 +133,17 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         <div className="flex items-center justify-between gap-4 mb-4 sm:mb-8">
           <div className="flex items-center gap-2 sm:gap-3 text-amber-500">
             <Award className="w-5 h-5 sm:w-6 sm:h-6" />
-            <h3 className="text-sm sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">IELTS Roadmap</h3>
+            <h3 className="text-sm sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t.ieltsRoadmap}</h3>
             <span className="sm:hidden text-lg font-black text-indigo-600 dark:text-indigo-400 ml-2">{Math.round(stats.ieltsProgress)}%</span>
           </div>
           <div className="hidden sm:block text-right">
             <div className="text-2xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-400">{Math.round(stats.ieltsProgress)}%</div>
-            <div className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">Progress</div>
+            <div className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">{t.progressLabel}</div>
           </div>
         </div>
 
         <div className="space-y-3 sm:space-y-6">
-          <p className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 font-medium">Goal: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal || 7}.0 Band Score</span></p>
+          <p className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 font-medium">{t.goal}: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal || 7}.0 Band Score</span></p>
           
           <div className="relative h-3 sm:h-6 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div 
@@ -159,12 +159,12 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
           </div>
           
           <div className="flex justify-between items-center text-[8px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">
-            <span>0 words</span>
+            <span>0 {t.words}</span>
             <div className="flex items-center gap-1 sm:gap-2 text-indigo-600 dark:text-indigo-400">
               <TrendingUp size={10} className="sm:w-3.5 sm:h-3.5" />
-              <span>{stats.totalCount} learned</span>
+              <span>{stats.totalCount} {t.learned}</span>
             </div>
-            <span>{stats.targetWords} words</span>
+            <span>{stats.targetWords} {t.words}</span>
           </div>
         </div>
       </div>

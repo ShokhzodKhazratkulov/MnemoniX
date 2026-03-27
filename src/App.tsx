@@ -1060,6 +1060,7 @@ export default function App() {
                   setView(AppView.SEARCH);
                   handleSearch(undefined, word);
                 }}
+                t={t.flashcards}
               />
             </motion.div>
           )}
@@ -1100,6 +1101,7 @@ export default function App() {
                   setEditingPost(post);
                   setView(AppView.CREATE_POST);
                 }}
+                t={t.posts}
               />
             </motion.div>
           )}
@@ -1118,6 +1120,7 @@ export default function App() {
                   setEditingPost(post);
                   setView(AppView.CREATE_POST);
                 }}
+                t={t.posts}
               />
             </motion.div>
           )}
@@ -1136,6 +1139,7 @@ export default function App() {
                   setEditingPost(post);
                   setView(AppView.CREATE_POST);
                 }}
+                t={t.posts}
               />
             </motion.div>
           )}
@@ -1152,6 +1156,7 @@ export default function App() {
                 onRemix={handleRemixPost}
                 remixSource={remixSource}
                 editingPost={editingPost}
+                t={t.posts}
               />
             </motion.div>
           )}
@@ -1184,6 +1189,7 @@ export default function App() {
                   setSelectedCategory(cat);
                   navigateTo(AppView.CATEGORY_DETAIL);
                 }} 
+                t={t.categories}
               />
             </motion.div>
           )}
@@ -1201,6 +1207,7 @@ export default function App() {
                     navigateTo(AppView.WORD_REVIEW);
                   }
                 }} 
+                t={t.categories}
               />
             </motion.div>
           )}

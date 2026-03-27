@@ -7,6 +7,7 @@ interface Props {
   savedMnemonics: SavedMnemonic[];
   onNavigate: (view: AppView) => void;
   onSelectCategory: (category: string) => void;
+  t: any;
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -62,7 +63,7 @@ const CATEGORY_LIST = [
   'Politics', 'Media', 'Nature', 'People', 'Daily Life'
 ];
 
-export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, onSelectCategory }) => {
+export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, onSelectCategory, t }) => {
   const getWordCount = (category: string) => {
     return savedMnemonics.filter(m => m.data.category === category).length;
   };
@@ -76,7 +77,7 @@ export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, on
         >
           <ChevronLeft size={24} className="text-gray-600 dark:text-gray-400" />
         </button>
-        <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Categories</h2>
+        <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{t.title}</h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -100,7 +101,7 @@ export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, on
               <div className="relative z-10">
                 <h3 className="text-base font-black text-gray-900 dark:text-white leading-tight">{category}</h3>
                 <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${count > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
-                  {count} {count === 1 ? 'word' : 'words'}
+                  {count} {count === 1 ? t.word : t.words}
                 </p>
               </div>
 

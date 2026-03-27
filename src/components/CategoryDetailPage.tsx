@@ -8,9 +8,10 @@ interface Props {
   savedMnemonics: SavedMnemonic[];
   onNavigate: (view: AppView) => void;
   onSelectWord: (word: string) => void;
+  t: any;
 }
 
-export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, onNavigate, onSelectWord }) => {
+export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, onNavigate, onSelectWord, t }) => {
   const words = savedMnemonics.filter(m => m.data.category === category);
 
   return (
@@ -24,7 +25,7 @@ export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, 
         </button>
         <div>
           <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{category}</h2>
-          <p className="text-gray-500 dark:text-gray-400 font-bold">{words.length} {words.length === 1 ? 'word' : 'words'} learned</p>
+          <p className="text-gray-500 dark:text-gray-400 font-bold">{words.length} {words.length === 1 ? t.word : t.words} {t.learned}</p>
         </div>
       </div>
 
@@ -52,7 +53,7 @@ export const CategoryDetailPage: React.FC<Props> = ({ category, savedMnemonics, 
                   {m.isMastered && (
                     <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                       <Award size={10} />
-                      Mastered
+                      {t.mastered}
                     </span>
                   )}
                 </div>

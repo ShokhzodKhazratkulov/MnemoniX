@@ -220,17 +220,17 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             </span>
             {!user && window.location.hostname === 'mnemonix.io' && (
               <p className="w-full text-center sm:text-left text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest mt-2">
-                Note: Limited features in Guest Mode. Sign in to sync your data.
+                {t.guestModeNote}
               </p>
             )}
             {user && !user.is_pro && (
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${isTrialExpired ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                {isTrialExpired ? 'Trial Expired' : `Trial ends: ${trialEndsAt?.toLocaleDateString()}`}
+                {isTrialExpired ? t.trialExpired : `${t.trialEnds}: ${trialEndsAt?.toLocaleDateString()}`}
               </span>
             )}
             {user?.is_pro && (
               <span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-sm font-bold border border-emerald-100">
-                Pro Member
+                {t.proMember}
               </span>
             )}
           </div>

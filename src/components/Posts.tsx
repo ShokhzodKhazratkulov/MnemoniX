@@ -41,9 +41,10 @@ interface Props {
   onEditPost?: (post: Post) => void;
   remixSource?: Post | null;
   editingPost?: Post | null;
+  t: any;
 }
 
-export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, onEditPost, remixSource, editingPost }) => {
+export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all', onNavigate, onSaveToLibrary, onRemix, onEditPost, remixSource, editingPost, t }) => {
   const { 
     posts, 
     addPost, 
@@ -140,208 +141,16 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
         setIsUploading(false);
       };
       reader.onerror = () => {
-        alert("Failed to read image. Please try again.");
+        alert(t.error || "Failed to read image. Please try again.");
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (err) {
       console.error("Upload error:", err);
-      alert("Failed to process image. Please try again.");
+      alert(t.error || "Failed to process image. Please try again.");
       setIsUploading(false);
     }
   };
-
-  const t = {
-    [Language.UZBEK]: {
-      title: "Hamjamiyat",
-      create: "Post yaratish",
-      placeholderWord: "Inglizcha so'z",
-      placeholderKeyword: "Fonetik bog'liqlik (Kalit so'z)",
-      placeholderStory: "Tasavvur hikoyasi (Absurd va qiziqarli)",
-      post: "Ulashish",
-      cancel: "Bekor qilish",
-      empty: "Hozircha postlar yo'q. Birinchilardan bo'lib ulashing!",
-      loginRequired: "Post yaratish uchun tizimga kiring",
-      researchNote: "Tadqiqot siri: Raugh va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
-      searchPlaceholder: "So'zlarni yoki kalit so'zlarni qidirish...",
-      yourPosts: "Mening Postlarim",
-      revealImage: "Tasvirni ko'rish",
-      hide: "Yashirish",
-      delete: "O'chirish",
-      edit: "Tahrirlash",
-      confirmDelete: "Haqiqatan ham o'chirmoqchimisiz?",
-      dislike: "Yoqmadi",
-      saveToLibrary: "Kutubxonaga saqlash",
-      remix: "Remiks qilish",
-      remixedFrom: "dan remiks qilindi",
-      myRemixes: "Mening remikslarim",
-      leaderboard: "Eng ko'p remiks qilinganlar",
-      remixes: "Remikslar",
-      signIn: "Kirish"
-    },
-    [Language.RUSSIAN]: {
-      title: "Сообщество",
-      create: "Создать пост",
-      placeholderWord: "Английское слово",
-      placeholderKeyword: "Фонетическая связь (Ключевое слово)",
-      placeholderStory: "История воображения (Абсурдная и интересная)",
-      post: "Поделиться",
-      cancel: "Отмена",
-      empty: "Пока нет постов. Будьте первым!",
-      loginRequired: "Войдите, чтобы создать пост",
-      researchNote: "Секрет исследования: Эксперимент Ро и Аткинсона показал, что метод в 2-3 раза эффективнее, когда пользователь сам представляет образ.",
-      searchPlaceholder: "Поиск слов или ключевых слов...",
-      yourPosts: "Мои Посты",
-      revealImage: "Показать изображение",
-      hide: "Скрыть",
-      delete: "Удалить",
-      edit: "Редактировать",
-      confirmDelete: "Вы уверены, что хотите удалить?",
-      dislike: "Не нравится",
-      saveToLibrary: "Сохранить в библиотеку",
-      remix: "Ремикс",
-      remixedFrom: "ремикс от",
-      myRemixes: "Мои ремиксы",
-      leaderboard: "Самые популярные ремиксы",
-      remixes: "Ремиксы",
-      signIn: "Войти"
-    },
-    [Language.KAZAKH]: {
-      title: "Қауымдастық",
-      create: "Пост жасау",
-      placeholderWord: "Ағылшын сөзі",
-      placeholderKeyword: "Фонетикалық байланыс (Кілт сөз)",
-      placeholderStory: "Елестету хикаясы (Абсурд және қызықты)",
-      post: "Бөлісу",
-      cancel: "Бас тарту",
-      empty: "Әзірге посттар жоқ. Бірінші болып бөлісіңіз!",
-      loginRequired: "Пост жасау үшін жүйеге кіріңіз",
-      researchNote: "Зерттеу құпиясы: Ро мен Аткинсонның тәжірибесі көрсеткендей, пайдаланушы бейнені өзі елестеткенде әдіс 2-3 есе тиімдірек болады.",
-      searchPlaceholder: "Сөздерді немесе кілт сөздерді іздеу...",
-      yourPosts: "Сіздің Посттарыңыз",
-      revealImage: "Кескінді көрсету",
-      hide: "Жасыру",
-      delete: "Жою",
-      edit: "Өңдеу",
-      confirmDelete: "Жоюды растайсыз ба?",
-      dislike: "Ұнамады",
-      saveToLibrary: "Кітапханаға сақтау",
-      remix: "Ремикс жасау",
-      remixedFrom: "ремиксі",
-      myRemixes: "Менің ремикстерім",
-      leaderboard: "Ең көп ремикс жасалғандар",
-      remixes: "Ремикстер",
-      signIn: "Кіру"
-    },
-    [Language.TAJIK]: {
-      title: "Ҳамҷамоа",
-      create: "Эҷоди пост",
-      placeholderWord: "Калимаи англисӣ",
-      placeholderKeyword: "Пайванди фонетикӣ (Калимаи калидӣ)",
-      placeholderStory: "Ҳикояи тасаввур (Абсурд ва ҷолиб)",
-      post: "Мубодила",
-      cancel: "Лағв",
-      empty: "Ҳоло постҳо нест. Аввалин шуда мубодила кунед!",
-      loginRequired: "Барои эҷоди пост ворид шавед",
-      researchNote: "Сирри тадқиқот: Таҷрибаи Ро ва Аткинсон нишон дод, ки вақте корбар тасвирро худаш тасаввур мекунад, метод 2-3 маротиба самараноктар мешавад.",
-      searchPlaceholder: "Ҷустуҷӯи калимаҳо ё калимаҳои калидӣ...",
-      yourPosts: "Постҳои Шумо",
-      revealImage: "Нишон додани тасвир",
-      hide: "Пинҳон кардан",
-      delete: "Нест кардан",
-      edit: "Таҳрир",
-      confirmDelete: "Оё боварӣ доред, ки нест кунед?",
-      dislike: "Нописанд",
-      saveToLibrary: "Захира дар китобхона",
-      remix: "Ремикс",
-      remixedFrom: "ремикс аз",
-      myRemixes: "Ремиксҳои ман",
-      leaderboard: "Беҳтарин ремиксҳо",
-      remixes: "Ремиксҳо",
-      signIn: "Ворид шудан"
-    },
-    [Language.KYRGYZ]: {
-      title: "Коомчулук",
-      create: "Пост түзүү",
-      placeholderWord: "Англисче сөз",
-      placeholderKeyword: "Фонетикалык байланыш (Ачкыч сөз)",
-      placeholderStory: "Элестетүү окуясы (Абсурд жана кызыктуу)",
-      post: "Бөлүшүү",
-      cancel: "Жокко чыгаруу",
-      empty: "Азырынча посттор жок. Биринчилерден болуп бөлүшүңүз!",
-      loginRequired: "Пост түзүү үчүн кириңиз",
-      researchNote: "Изилдөө сыры: Ро жана Аткинсондун тажрыйбасы көрсөткөндөй, колдонуучу образды өзү элестеткенде ыкма 2-3 эсе натыйжалуу болот.",
-      searchPlaceholder: "Сөздөрдү же ачкыч сөздөрдү издөө...",
-      yourPosts: "Сиздин Постторуңуз",
-      revealImage: "Сүрөттү көрсөтүү",
-      hide: "Жашыруу",
-      delete: "Өчүрүү",
-      edit: "Түзөтүү",
-      confirmDelete: "Өчүрүүнү ырастайсызбы?",
-      dislike: "Жаккан жок",
-      saveToLibrary: "Китепканага сактоо",
-      remix: "Ремикс",
-      remixedFrom: "ремикс",
-      myRemixes: "Менин ремикстерим",
-      leaderboard: "Эң көп ремиксделгендер",
-      remixes: "Ремикстер",
-      signIn: "Кирүү"
-    },
-    [Language.TURKMEN]: {
-      title: "Jemgyýet",
-      create: "Post döretmek",
-      placeholderWord: "Iňlisçe söz",
-      placeholderKeyword: "Fonetiki baglanyşyk (Açar söz)",
-      placeholderStory: "Göz öňüne getirme hekaýasy (Absurd we gyzykly)",
-      post: "Paýlaşmak",
-      cancel: "Bes etmek",
-      empty: "Häzirlikçe postlar ýok. Birinji bolup paýlaşyň!",
-      loginRequired: "Post döretmek üçin ulgama giriň",
-      researchNote: "Gözleg syry: Ro we Atkinsonyň tejribesi görkezişi ýaly, ulanyjy şekili özi göz öňüne getirende usul 2-3 esse has täsirli bolýar.",
-      searchPlaceholder: "Sözleri ýa-da açar sözleri gözle...",
-      yourPosts: "Seniň Postlaryň",
-      revealImage: "Şekili görkez",
-      hide: "Gizlemek",
-      delete: "Öçürmek",
-      edit: "Redaktirlemek",
-      confirmDelete: "Öçürmek isleýärsiňizmi?",
-      dislike: "Halamadym",
-      saveToLibrary: "Kitaphanada sakla",
-      remix: "Remiks",
-      remixedFrom: "remiks",
-      myRemixes: "Meniň remikslerim",
-      leaderboard: "Iň köp remiks edilenler",
-      remixes: "Remiksler",
-      signIn: "Girmek"
-    },
-    [Language.ENGLISH]: {
-      title: "Community",
-      create: "Create Post",
-      placeholderWord: "English Word",
-      placeholderKeyword: "Phonetic Link (Keyword)",
-      placeholderStory: "Visualization Story (Absurd & Fun)",
-      post: "Post",
-      cancel: "Cancel",
-      empty: "No posts yet. Be the first to share!",
-      loginRequired: "Sign in to create a post",
-      researchNote: "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.",
-      searchPlaceholder: "Search words or keywords...",
-      yourPosts: "Your Posts",
-      revealImage: "Reveal Image",
-      hide: "Hide",
-      delete: "Delete",
-      edit: "Edit",
-      confirmDelete: "Are you sure you want to delete?",
-      dislike: "Dislike",
-      saveToLibrary: "Save to Library",
-      remix: "Remix",
-      remixedFrom: "remixed from",
-      myRemixes: "My Remixes",
-      leaderboard: "Most Remixed",
-      remixes: "Remixes",
-      signIn: "Sign In"
-    }
-  }[language];
 
   const handleCreatePost = async () => {
     if (!newPost.english_word || !newPost.native_keyword || !newPost.story) return;
@@ -365,7 +174,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
         if (onNavigate) onNavigate(AppView.POSTS);
       } catch (err: any) {
         console.error("Error updating post:", err);
-        alert(err.message || "Xatolik yuz berdi. Iltimos qayta urining.");
+        alert(err.message || t.error);
       }
     } else {
       const post: Post = {
@@ -407,7 +216,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
         if (onNavigate) onNavigate(AppView.POSTS);
       } catch (err: any) {
         console.error("Error creating post:", err);
-        alert(err.message || "Xatolik yuz berdi. Iltimos qayta urining.");
+        alert(err.message || t.error);
       }
     }
   };
@@ -529,7 +338,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
                 disabled={!newPost.english_word || !newPost.native_keyword || !newPost.story}
                 className="px-12 py-3 bg-indigo-600 text-white rounded-full font-bold text-base shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95"
               >
-                {editingPostId ? (language === Language.UZBEK ? 'Saqlash' : 'Save') : t.post}
+                {editingPostId ? (t.save || 'Save') : t.post}
               </button>
             </div>
           </div>
@@ -578,7 +387,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
         {contextLoading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-500 font-bold animate-pulse">Loading feed...</p>
+            <p className="text-gray-500 font-bold animate-pulse">{t.loading}</p>
           </div>
         ) : filteredPosts.length > 0 ? (
           filteredPosts.map((post) => (
@@ -617,10 +426,10 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
               {isFetchingMore ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                  {language === Language.UZBEK ? "Yuklanmoqda..." : (language === Language.RUSSIAN ? "Загрузка..." : "Loading...")}
+                  {t.loading}
                 </>
               ) : (
-                language === Language.UZBEK ? "Yana yuklash" : (language === Language.RUSSIAN ? "Загрузить еще" : "Load More")
+                t.loadMore
               )}
             </button>
           </div>
@@ -686,9 +495,7 @@ const PostCard: React.FC<{
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black border border-indigo-100 dark:border-indigo-800/50 min-w-0">
                     <RefreshCw size={8} className="shrink-0" />
                     <span className="truncate">
-                      {language === Language.UZBEK 
-                        ? `@${post.remix_data.parent_username} dan remiks` 
-                        : `remix from @${post.remix_data.parent_username}`}
+                      {t.remixedFrom} @{post.remix_data.parent_username}
                     </span>
                   </div>
                 )}
@@ -859,7 +666,7 @@ const PostCard: React.FC<{
           {(post as any).is_updated && (
             <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800">
               <Edit2 size={10} />
-              <span>{language === Language.UZBEK ? "Yangilandi" : "Edited"}</span>
+              <span>{t.edited}</span>
             </div>
           )}
         </div>
