@@ -165,6 +165,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
 
   const getMonthName = (date: Date, lang: Language) => {
     const months = {
+      [Language.ENGLISH]: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
       [Language.UZBEK]: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
       [Language.RUSSIAN]: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
       [Language.KAZAKH]: ['Қаңтар', 'Ақпан', 'Наурыз', 'Сәуір', 'Мамыр', 'Маусым', 'Шілде', 'Тамыз', 'Қыркүйек', 'Қазан', 'Қараша', 'Желтоқсан'],
@@ -278,9 +279,9 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                 <BookOpen size={28} />
               </div>
               <div className="text-left">
-                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">Words by Categories</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.wordsByCategories}</p>
                 <p className="text-2xl font-black text-gray-900 dark:text-white">
-                  {new Set(savedMnemonics.map(m => m.data.category).filter(Boolean)).size} Categories
+                  {new Set(savedMnemonics.map(m => m.data.category).filter(Boolean)).size}
                 </p>
               </div>
             </div>

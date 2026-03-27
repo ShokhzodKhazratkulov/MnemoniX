@@ -69,7 +69,7 @@ export default function App() {
   const [isFlashcardReviewOpen, setIsFlashcardReviewOpen] = useState(false);
   const [forceCloseFlashcardDetail, setForceCloseFlashcardDetail] = useState(false);
   const [forceCloseFlashcardReview, setForceCloseFlashcardReview] = useState(false);
-  const [language, setLanguage] = useState<Language>(Language.UZBEK);
+  const [language, setLanguage] = useState<Language>(Language.ENGLISH);
   const [searchQuery, setSearchQuery] = useState('');
   const [mnemonic, setMnemonic] = useState<MnemonicResponse | null>(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -354,12 +354,13 @@ export default function App() {
       let mnemonicData: MnemonicResponse;
       let img: string;
       let audio: string | undefined;
+      const contentLanguage = userProfile?.preferred_language || Language.UZBEK;
 
       const { data: existingMnemonic } = await supabase
         .from('mnemonics')
         .select('*')
         .eq('word', correctedWord)
-        .eq('language', language)
+        .eq('language', contentLanguage)
         .maybeSingle();
 
       if (existingMnemonic) {
@@ -369,7 +370,7 @@ export default function App() {
       } else {
         // Generate new for this specific language
         setLoadingMessage(t.loadingMnemonic);
-        mnemonicData = await gemini.getMnemonic(correctedWord, language);
+        mnemonicData = await gemini.getMnemonic(correctedWord, contentLanguage);
         
         setLoadingMessage(t.loadingImage);
         const base64Image = await gemini.generateImage(mnemonicData.imagePrompt);
@@ -379,7 +380,7 @@ export default function App() {
         if (base64Image) {
           try {
             const imageBlob = await (await fetch(base64Image)).blob();
-            const fileName = `${correctedWord}-${language}-${Date.now()}.png`;
+            const fileName = `${correctedWord}-${contentLanguage}-${Date.now()}.png`;
             const { error: uploadError } = await supabase.storage
               .from('mnemonic_assets')
               .upload(`images/${fileName}`, imageBlob, { upsert: true });
@@ -397,13 +398,13 @@ export default function App() {
         // Generate and upload audio
         let storedAudioUrl = '';
         const ttsText = `${mnemonicData.word}. ${mnemonicData.meaning}. ${mnemonicData.phoneticLink}. ${mnemonicData.imagination}. ${mnemonicData.connectorSentence}`;
-        const base64Audio = await gemini.generateTTS(ttsText, language);
+        const base64Audio = await gemini.generateTTS(ttsText, contentLanguage);
         
         if (base64Audio) {
           try {
             const audioResponse = await fetch(`data:audio/wav;base64,${base64Audio}`);
             const audioBlob = await audioResponse.blob();
-            const audioFileName = `${correctedWord}-${language}-${Date.now()}.wav`;
+            const audioFileName = `${correctedWord}-${contentLanguage}-${Date.now()}.wav`;
             const { error: audioUploadError } = await supabase.storage
               .from('mnemonic_assets')
               .upload(`audio/${audioFileName}`, audioBlob, { upsert: true });
@@ -428,7 +429,7 @@ export default function App() {
           data: mnemonicData,
           image_url: img,
           audio_url: audio,
-          language: language,
+          language: contentLanguage,
           keyword: mnemonicData.phoneticLink,
           story: mnemonicData.imagination
         }).select().single();
@@ -440,7 +441,7 @@ export default function App() {
               .from('mnemonics')
               .select('*')
               .eq('word', correctedWord)
-              .eq('language', language)
+              .eq('language', contentLanguage)
               .single();
             if (existing) {
               mnemonicData = existing.data as MnemonicResponse;

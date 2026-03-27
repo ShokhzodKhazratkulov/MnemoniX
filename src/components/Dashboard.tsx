@@ -126,23 +126,22 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
       </div>
 
       {/* IELTS Roadmap */}
-      <div className="bg-white dark:bg-slate-900/50 p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 text-amber-500">
-              <Award size={24} />
-              <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">IELTS Roadmap</h3>
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium">Maqsad: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal || 7}.0 Band Score</span></p>
+      <div className="bg-white dark:bg-slate-900/50 p-6 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 text-amber-500">
+            <Award className="w-5 h-5 sm:w-6 sm:h-6" />
+            <h3 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">IELTS Roadmap</h3>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{Math.round(stats.ieltsProgress)}%</div>
-            <div className="text-xs font-black text-gray-400 uppercase tracking-widest">Progress</div>
+            <div className="text-2xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-400">{Math.round(stats.ieltsProgress)}%</div>
+            <div className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">Progress</div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="relative h-6 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+        <div className="space-y-4 sm:space-y-6">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">Maqsad: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal || 7}.0 Band Score</span></p>
+          
+          <div className="relative h-4 sm:h-6 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div 
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all duration-1000 ease-out"
               style={{ width: `${stats.ieltsProgress}%` }}
@@ -155,19 +154,14 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
             </div>
           </div>
           
-          <div className="flex justify-between items-center text-xs font-black text-gray-400 uppercase tracking-widest">
-            <span>0 so'z</span>
-            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-              <TrendingUp size={14} />
-              <span>{stats.totalCount} o'rganildi</span>
+          <div className="flex justify-between items-center text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">
+            <span>0 words</span>
+            <div className="flex items-center gap-1 sm:gap-2 text-indigo-600 dark:text-indigo-400">
+              <TrendingUp size={12} className="sm:w-3.5 sm:h-3.5" />
+              <span>{stats.totalCount} learned</span>
             </div>
-            <span>{stats.targetWords} so'z</span>
+            <span>{stats.targetWords} words</span>
           </div>
-        </div>
-
-        {/* Background Decoration */}
-        <div className="absolute -bottom-10 -right-10 text-gray-50 dark:text-slate-800/50 -rotate-12 pointer-events-none">
-          <Award size={200} />
         </div>
       </div>
 

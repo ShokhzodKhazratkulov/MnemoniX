@@ -313,28 +313,35 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
       leaderboard: "Iň köp remiks edilenler",
       remixes: "Remiksler",
       signIn: "Girmek"
+    },
+    [Language.ENGLISH]: {
+      title: "Community",
+      create: "Create Post",
+      placeholderWord: "English Word",
+      placeholderKeyword: "Phonetic Link (Keyword)",
+      placeholderStory: "Visualization Story (Absurd & Fun)",
+      post: "Post",
+      cancel: "Cancel",
+      empty: "No posts yet. Be the first to share!",
+      loginRequired: "Sign in to create a post",
+      researchNote: "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.",
+      searchPlaceholder: "Search words or keywords...",
+      yourPosts: "Your Posts",
+      revealImage: "Reveal Image",
+      hide: "Hide",
+      delete: "Delete",
+      edit: "Edit",
+      confirmDelete: "Are you sure you want to delete?",
+      dislike: "Dislike",
+      saveToLibrary: "Save to Library",
+      remix: "Remix",
+      remixedFrom: "remixed from",
+      myRemixes: "My Remixes",
+      leaderboard: "Most Remixed",
+      remixes: "Remixes",
+      signIn: "Sign In"
     }
-  }[language] || {
-    title: "Community",
-    create: "Create Post",
-    placeholderWord: "English Word",
-    placeholderKeyword: "Phonetic Link (Keyword)",
-    placeholderStory: "Visualization Story (Absurd & Fun)",
-    post: "Post",
-    cancel: "Cancel",
-    empty: "No posts yet. Be the first to share!",
-    loginRequired: "Sign in to create a post",
-    researchNote: "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.",
-    searchPlaceholder: "Search words or keywords...",
-    yourPosts: "Your Posts",
-    revealImage: "Reveal Image",
-    hide: "Hide",
-    delete: "Delete",
-    edit: "Edit",
-    confirmDelete: "Are you sure you want to delete?",
-    dislike: "Dislike",
-    signIn: "Sign In"
-  };
+  }[language];
 
   const handleCreatePost = async () => {
     if (!newPost.english_word || !newPost.native_keyword || !newPost.story) return;

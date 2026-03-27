@@ -88,22 +88,24 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
   }, []);
 
   const researchNote = {
+    [Language.ENGLISH]: "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.",
     [Language.UZBEK]: "Tadqiqot siri: Ro va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
     [Language.RUSSIAN]: "Секрет исследования: эксперимент Ро и Аткинсона показал, что метод в 2-3 раза эффективнее, когда пользователь сам представляет изображение.",
     [Language.KAZAKH]: "Зерттеу құпиясы: Ро мен Аткинсонның эксперименті көрсеткендей, пайдаланушы кескінді өзі елестеткенде әдіс 2-3 есе тиімдірек болады.",
     [Language.TAJIK]: "Сирри тадқиқот: таҷрибаи Ро ва Аткинсон нишон дод, ки вақте корбар тасвирро худаш тасаввур мекунад, усул 2-3 маротиба самараноктар аст.",
     [Language.KYRGYZ]: "Изилдөө сыры: Ро жана Аткинсондун эксперименти көрсөткөндөй, колдонуучу сүрөттү өзү элестеткенде ыкма 2-3 эсе натыйжалуу болот.",
     [Language.TURKMEN]: "Gözleg syry: Ro we Atkinsonuň synagy, ulanyjy şekili öz-özüne göz öňüne getirende, usulyň 2-3 esse has täsirli bolýandygyny görkezdi."
-  }[language] || "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.";
+  }[language];
 
   const revealText = {
+    [Language.ENGLISH]: "Reveal Image",
     [Language.UZBEK]: "Tasvirni ko'rish",
     [Language.RUSSIAN]: "Показать изображение",
     [Language.KAZAKH]: "Кескінді көрсету",
     [Language.TAJIK]: "Нишон додани тасвир",
     [Language.KYRGYZ]: "Сүрөттү көрсөтүү",
     [Language.TURKMEN]: "Şekili görkez"
-  }[language] || "Reveal Image";
+  }[language];
 
   const safeData = {
     word: data?.word || 'English Word',

@@ -1,5 +1,6 @@
 
 export enum Language {
+  ENGLISH = 'English',
   UZBEK = 'Uzbek',
   KAZAKH = 'Kazakh',
   TAJIK = 'Tajik',

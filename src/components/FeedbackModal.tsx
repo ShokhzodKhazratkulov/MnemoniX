@@ -9,6 +9,7 @@ interface Props {
 }
 
 const FEEDBACK_T: Record<Language, any> = {
+  [Language.ENGLISH]: { title: "Feedback", desc: "Do you have suggestions to improve the app? Write to us!", labelName: "Your name (optional)", labelMsg: "Your suggestion", btnSend: "Send", btnCancel: "Cancel", subject: "MnemoniX: Suggestion for improvement" },
   [Language.UZBEK]: { title: "Fikr-mulohaza", desc: "Ilovani yaxshilash bo'yicha taklifingiz bormi? Bizga yozing!", labelName: "Ismingiz (ixtiyoriy)", labelMsg: "Sizning taklifingiz", btnSend: "Yuborish", btnCancel: "Bekor qilish", subject: "MnemoniX: Yaxshilash bo'yicha taklif" },
   [Language.KAZAKH]: { title: "Кері байланыс", desc: "Қолданбаны жақсарту бойынша ұсыныстарыңыз бар ма? Бізге жазыңыз!", labelName: "Атыңыз (міндетті емес)", labelMsg: "Сіздің ұсынысыңыз", btnSend: "Жіберу", btnCancel: "Бас тарту", subject: "MnemoniX: Жақсарту бойынша ұсыныс" },
   [Language.TAJIK]: { title: "Фикру мулоҳиза", desc: "Шумо барои такмил додани барнома пешниҳод доред? Ба мо нависед!", labelName: "Номи шумо (ихтиёрӣ)", labelMsg: "Пешниҳоди шумо", btnSend: "Фиристодан", btnCancel: "Бекор кардан", subject: "MnemoniX: Пешниҳод барои такмил" },

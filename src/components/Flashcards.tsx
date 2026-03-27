@@ -68,6 +68,7 @@ interface Props {
 }
 
 const FLASH_T: Record<Language, any> = {
+  [Language.ENGLISH]: { title: "Flashcards", range: "Select period", empty: "Nothing learned yet", start: "Start", next: "Next", prev: "Previous", finish: "Finish", from: "Start date", to: "End date", hint: "Click to flip the card", hardWords: "Hard words", download: "Download PDF" },
   [Language.UZBEK]: { title: "Flash-kartalar", range: "Davrni tanlang", empty: "Hali hech narsa o'rganilmagan", start: "Boshlash", next: "Keyingisi", prev: "Oldingisi", finish: "Tugatish", from: "Boshlanish sanasi", to: "Tugash sanasi", hint: "Kartani aylantirish uchun bosing", hardWords: "Qiyin so'zlar", download: "PDF yuklab olish" },
   [Language.KAZAKH]: { title: "Флэш-карталар", range: "Кезеңді таңдаңыз", empty: "Әлі ештеңе үйренілмеген", start: "Бастау", next: "Келесі", prev: "Алдыңғы", finish: "Аяқтау", from: "Басталу күні", to: "Аяқталу күні", hint: "Картаны айналдыру үшін басыңыз", hardWords: "Қиын сөздер", download: "PDF жүктеу" },
   [Language.TAJIK]: { title: "Флэш-кортҳо", range: "Давраро интихоб кунед", empty: "Ҳанӯз чизе омӯхта نشدهаст", start: "Оғоз", next: "Оянда", prev: "Пешина", finish: "Анҷом", from: "Таърихи оғоз", to: "Таърихи анҷом", hint: "Барои чаппа кардани корт пахш кунед", hardWords: "Калимаҳои душвор", download: "Боргирии PDF" },

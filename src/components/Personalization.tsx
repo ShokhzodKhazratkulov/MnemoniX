@@ -76,11 +76,11 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 <Languages size={32} />
               </div>
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Qaysi tilda o'rganmoqchisiz?</h2>
-                <p className="text-gray-500 dark:text-gray-400 font-medium">Mnemoniclar va tarjimalar ushbu tilda ko'rsatiladi.</p>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white">What is your native language?</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Mnemonics and translations will be shown in this language.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {Object.values(Language).map((lang) => (
+                {Object.values(Language).filter(l => l !== Language.ENGLISH).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setSettings({ ...settings, preferred_language: lang })}
@@ -108,8 +108,8 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 <Target size={32} />
               </div>
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Kunlik maqsadingiz?</h2>
-                <p className="text-gray-500 dark:text-gray-400 font-medium">Kuniga nechtadan so'z o'rganmoqchisiz?</p>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Your daily goal?</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">How many words do you want to learn per day?</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[10, 20, 50, 100].map((goal) => (
@@ -123,7 +123,7 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                     }`}
                   >
                     <div className="text-2xl">{goal}</div>
-                    <div className="text-xs uppercase tracking-widest mt-1">so'z / kun</div>
+                    <div className="text-xs uppercase tracking-widest mt-1">words / day</div>
                   </button>
                 ))}
               </div>
@@ -140,8 +140,8 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 <Award size={32} />
               </div>
               <div className="space-y-2">
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white">IELTS maqsadli ballingiz?</h2>
-                <p className="text-gray-500 dark:text-gray-400 font-medium">Sizga mos keladigan so'z boyligi darajasini aniqlaymiz.</p>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Your target IELTS score?</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">We will determine the vocabulary level that suits you.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[6, 7, 8, 9].map((band) => (
@@ -168,7 +168,7 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 onClick={() => setStep(step - 1)}
                 className="flex-1 py-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all"
               >
-                Orqaga
+                Back
               </button>
             )}
             <button 
@@ -180,7 +180,7 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  {step === 3 ? "O'rganishni boshlash" : "Keyingisi"}
+                  {step === 3 ? "Start Learning" : "Next"}
                   <ChevronRight size={20} />
                 </>
               )}

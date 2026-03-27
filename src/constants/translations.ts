@@ -2,6 +2,80 @@
 import { Language } from '../types';
 
 export const TRANSLATIONS: Record<Language, any> = {
+  [Language.ENGLISH]: {
+    heroTitle: "Memorize foreign words instantly",
+    heroSubtitle: "Increase your vocabulary 10x faster with mnemonics and AI.",
+    searchPlaceholder: "Enter an English word...",
+    btnSearch: "Learn",
+    btnVoice: "Live Mode",
+    btnStartSearch: "Start Search",
+    navHome: "Home",
+    navSearch: "Search",
+    navDash: "Stats",
+    navFlash: "Cards",
+    navPosts: "Posts",
+    navProfile: "Profile",
+    howItWorksTitle: "How it works?",
+    howItWorksStep1: "Search a word",
+    howItWorksStep1Desc: "Enter the English word you want to learn.",
+    howItWorksStep2: "Get mnemonics",
+    howItWorksStep2Desc: "AI will create a clear association and an image for you.",
+    howItWorksStep3: "Seal in memory",
+    howItWorksStep3Desc: "Visualize and remember the word forever.",
+    howItWorksMethodTitle: "Keyword Method",
+    howItWorksMethodDesc: "Developed by Stanford scientists, this method is proven to boost memory by 3x.",
+    errorTitle: "An error occurred",
+    errorQuota: "Limit reached. Please wait a bit.",
+    errorGeneral: "Something went wrong. Please try again.",
+    loadingMnemonic: "Creating mnemonic...",
+    loadingImage: "Drawing image...",
+    saveSuccess: "Word saved!",
+    feedback: "Feedback",
+    suggestions: "Suggestions",
+    allWords: "All words",
+    retry: "Retry",
+    startLearning: "Start learning new words",
+    loadingStory: "The master is thinking of an interesting story for you...",
+    checkingSpelling: "CHECKING SPELLING...",
+    creatingImage: "CREATING IMAGE...",
+    recentSearches: "Recent searches",
+    darkMode: "Dark mode",
+    lightMode: "Light mode",
+    langLabel: "Language",
+    searchHeroTitle1: "Every word has ",
+    searchHeroTitle2: "a story",
+    searchHeroTitle3: ".",
+    searchHeroSubtitle: "Learn English in a fun and easy way.",
+    aboutMethodTitle: "MnemoniX Method",
+    aboutMethodDesc: "Our brains are built to remember stories and images, not abstract lists. By creating vivid, interesting, and sometimes strange associations, we bypass the 'forgetting curve' and transfer information directly into long-term memory.",
+    dashboard: {
+      title: "Activity",
+      stats: "Learning statistics",
+      total: "TOTAL LEARNED",
+      today: "TODAY'S COUNT",
+      average: "DAILY AVERAGE",
+      level: "WORD LEVEL",
+      progress: "Last 7 days progress",
+      noData: "No data found"
+    },
+    profile: {
+      learner: "Learner",
+      guestLearner: "Guest learner",
+      joined: "Joined date",
+      guestSession: "Guest session",
+      noAccount: "Account not connected",
+      wordsSearched: "Searched words",
+      mastered: "Mastered",
+      accountSettings: "Account settings",
+      editProfile: "Edit profile",
+      signOut: "Sign out",
+      signIn: "Sign in / Create account",
+      hardWords: "Hard words",
+      yourPosts: "My Posts",
+      myRemixes: "My Remixes",
+      wordsByCategories: "Words by Categories"
+    }
+  },
   [Language.UZBEK]: {
     heroTitle: "Xorijiy so'zlarni bir zumda eslab qoling",
     heroSubtitle: "Mnemonika va sun'iy intellekt yordamida so'z boyligingizni 10 barobar tezroq oshiring.",
@@ -72,7 +146,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signIn: "Kirish / Hisob yaratish",
       hardWords: "Qiyin so'zlar",
       yourPosts: "Mening Postlarim",
-      myRemixes: "Mening Remikslarim"
+      myRemixes: "Mening Remikslarim",
+      wordsByCategories: "Kategoriyalar bo'yicha so'zlar"
     }
   },
   [Language.RUSSIAN]: {
@@ -145,7 +220,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       signIn: "Войти / Создать аккаунт",
       hardWords: "Трудные слова",
       yourPosts: "Мои Посты",
-      myRemixes: "Мои Ремиксы"
+      myRemixes: "Мои Ремиксы",
+      wordsByCategories: "Слова по категориям"
     }
   },
   [Language.KAZAKH]: {

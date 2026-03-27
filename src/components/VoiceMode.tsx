@@ -9,6 +9,17 @@ interface Props {
 }
 
 const VOICE_T: Record<Language, any> = {
+  [Language.ENGLISH]: { 
+    connecting: "Connecting...", 
+    ready: "Ready! Speak now...", 
+    error: "An error occurred.", 
+    quotaError: "Quota limit reached. Please wait.",
+    micError: "Could not enable microphone.",
+    title: "Live Mnemonic",
+    finish: "Finish",
+    aiLabel: "Master",
+    userLabel: "You"
+  },
   [Language.UZBEK]: { 
     connecting: "Ulanmoqda...", 
     ready: "Tayyor! Gapiring...", 
