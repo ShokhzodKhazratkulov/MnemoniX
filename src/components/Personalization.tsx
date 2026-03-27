@@ -50,11 +50,11 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center max-w-2xl mx-auto px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center max-w-2xl mx-auto px-4 py-8 sm:py-12">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full bg-white dark:bg-slate-900 rounded-[3rem] p-8 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-800 relative overflow-hidden"
+        className="w-full bg-white dark:bg-slate-900 rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-800 relative overflow-hidden"
       >
         {/* Progress Bar */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-gray-100 dark:bg-slate-800">

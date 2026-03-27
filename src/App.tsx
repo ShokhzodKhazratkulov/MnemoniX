@@ -78,6 +78,7 @@ export default function App() {
   const { posts, fetchPosts } = usePosts();
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedMnemonicForReview, setSelectedMnemonicForReview] = useState<SavedMnemonic | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfileType | null>(null);
 
   // Auth state listener
@@ -201,7 +202,7 @@ export default function App() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const t = TRANSLATIONS[language];
+  const t = TRANSLATIONS[Language.ENGLISH];
 
   const navigateTo = async (newView: AppView) => {
     if (newView !== view) {
@@ -803,7 +804,7 @@ export default function App() {
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50"
                     >
-                      {Object.values(Language).map((l) => (
+                      {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
                         <button
                           key={l}
                           onClick={() => {
@@ -878,7 +879,7 @@ export default function App() {
                         <div className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                           {t.langLabel}
                         </div>
-                        {Object.values(Language).map((l) => (
+                        {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
                           <button
                             key={l}
                             onClick={() => {
@@ -1197,11 +1198,32 @@ export default function App() {
                 savedMnemonics={savedMnemonics} 
                 onNavigate={navigateTo} 
                 onSelectWord={(word) => {
-                  setSearchQuery(word);
-                  setView(AppView.SEARCH);
-                  handleSearch(undefined, word);
+                  const saved = savedMnemonics.find(m => m.word === word);
+                  if (saved) {
+                    setSelectedMnemonicForReview(saved);
+                    navigateTo(AppView.WORD_REVIEW);
+                  }
                 }} 
               />
+            </motion.div>
+          )}
+
+          {view === AppView.WORD_REVIEW && selectedMnemonicForReview && (
+            <motion.div key="word-review" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+                <button 
+                  onClick={() => navigateTo(AppView.CATEGORY_DETAIL)}
+                  className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 hover:scale-110 transition-transform active:scale-95 flex items-center gap-2 font-black text-gray-600 dark:text-gray-400"
+                >
+                  <ChevronLeft size={24} />
+                  Back to {selectedCategory}
+                </button>
+                <MnemonicCard 
+                  data={selectedMnemonicForReview.data} 
+                  imageUrl={selectedMnemonicForReview.imageUrl} 
+                  language={language} 
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

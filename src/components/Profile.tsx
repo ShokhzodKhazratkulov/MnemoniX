@@ -281,7 +281,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
               <div className="text-left">
                 <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">{t.wordsByCategories}</p>
                 <p className="text-2xl font-black text-gray-900 dark:text-white">
-                  {new Set(savedMnemonics.map(m => m.data.category).filter(Boolean)).size}
+                  20
                 </p>
               </div>
             </div>
