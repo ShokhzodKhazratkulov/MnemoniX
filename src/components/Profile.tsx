@@ -42,7 +42,10 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
   const [editForm, setEditForm] = useState({
     username: '',
     full_name: '',
-    avatar_url: ''
+    avatar_url: '',
+    preferred_language: Language.UZBEK,
+    daily_goal: 50,
+    ielts_goal: 7
   });
 
   useEffect(() => {
@@ -74,7 +77,10 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         setEditForm({
           username: data.username || '',
           full_name: data.full_name || '',
-          avatar_url: data.avatar_url || ''
+          avatar_url: data.avatar_url || '',
+          preferred_language: data.preferred_language || Language.UZBEK,
+          daily_goal: data.daily_goal || 50,
+          ielts_goal: data.ielts_goal || 7
         });
       } else {
         // Create profile if not exists
@@ -119,16 +125,19 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           username: editForm.username,
           full_name: editForm.full_name,
           avatar_url: editForm.avatar_url,
+          preferred_language: editForm.preferred_language,
+          daily_goal: editForm.daily_goal,
+          ielts_goal: editForm.ielts_goal,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
       if (error) throw error;
       setActiveModal('none');
-      alert('Profil muvaffaqiyatli yangilandi!');
+      alert(t.profileUpdated || 'Profile updated successfully!');
     } catch (err: any) {
       console.error('Error updating profile:', err);
-      alert('Xatolik yuz berdi: ' + err.message);
+      alert((t.errorOccurred || 'An error occurred') + ': ' + err.message);
     } finally {
       setIsUpdating(false);
     }
@@ -157,7 +166,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
       setEditForm(prev => ({ ...prev, avatar_url: publicUrl }));
     } catch (err: any) {
       console.error('Error uploading avatar:', err);
-      alert('Rasm yuklashda xatolik: ' + err.message);
+      alert((t.uploadError || 'Error uploading image') + ': ' + err.message);
     } finally {
       setIsUpdating(false);
     }
@@ -456,12 +465,12 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                           <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                         </label>
                       </div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Profil rasmini o'zgartirish</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{t.changeAvatar}</p>
                     </div>
 
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Username</label>
+                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.username}</label>
                           <div className="relative">
                             <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input 
@@ -469,13 +478,13 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                               value={editForm.username}
                               onChange={(e) => setEditForm({...editForm, username: e.target.value})}
                               className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
-                              placeholder="Username"
+                              placeholder={t.username}
                             />
                           </div>
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">To'liq ism</label>
+                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.fullName}</label>
                           <div className="relative">
                             <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input 
@@ -483,8 +492,45 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                               value={editForm.full_name}
                               onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
                               className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
-                              placeholder="Ismingizni kiriting"
+                              placeholder={t.fullName}
                             />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.preferredLanguage}</label>
+                          <select 
+                            value={editForm.preferred_language}
+                            onChange={(e) => setEditForm({...editForm, preferred_language: e.target.value as Language})}
+                            className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
+                          >
+                            {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
+                              <option key={l} value={l}>{l}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.dailyGoal}</label>
+                            <input 
+                              type="number" 
+                              value={editForm.daily_goal}
+                              onChange={(e) => setEditForm({...editForm, daily_goal: parseInt(e.target.value)})}
+                              className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.ieltsGoal}</label>
+                            <select 
+                              value={editForm.ielts_goal}
+                              onChange={(e) => setEditForm({...editForm, ielts_goal: parseFloat(e.target.value)})}
+                              className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
+                            >
+                              {[6, 6.5, 7, 7.5, 8, 8.5, 9].map((score) => (
+                                <option key={score} value={score}>{score}</option>
+                              ))}
+                            </select>
                           </div>
                         </div>
                       </div>
@@ -495,7 +541,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                       className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
                     >
                       {isUpdating ? <Loader2 className="animate-spin" /> : <Save size={20} />}
-                      Saqlash
+                      {t.save}
                     </button>
                   </form>
                 )}

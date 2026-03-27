@@ -5,7 +5,8 @@ import { Language } from '../types';
 
 interface Props {
   onClose: () => void;
-  targetLanguage: Language;
+  uiLanguage: Language;
+  contentLanguage: Language;
 }
 
 const VOICE_T: Record<Language, any> = {
@@ -152,8 +153,8 @@ function createBlob(data: Float32Array): Blob {
   };
 }
 
-export const VoiceMode: React.FC<Props> = ({ onClose, targetLanguage }) => {
-  const t = VOICE_T[targetLanguage];
+export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguage }) => {
+  const t = VOICE_T[uiLanguage];
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState(t.connecting);
   const [transcriptions, setTranscriptions] = useState<string[]>([]);
@@ -240,15 +241,15 @@ export const VoiceMode: React.FC<Props> = ({ onClose, targetLanguage }) => {
             systemInstruction: `Siz professional 'Mnemonika va Ingliz tili ustozi'siz. Sizning vazifangiz foydalanuvchiga xorijiy (ingliz) so‘zlarni bir marta ko‘rganda eslab qoladigan darajada qiziqarli va assotsiativ usulda tushuntirish.
             
             Har bir so‘z uchun quyidagi strukturani qo‘llang:
-            1. So‘zning transkripsiyasi va ${targetLanguage}cha ma’nosini aniq ayting.
+            1. So‘zning transkripsiyasi va ${contentLanguage}cha ma’nosini aniq ayting.
             2. Morfologik tahlil: So‘zni mantiqiy qismlarga bo‘ling.
             3. Tasavvur (Imagination): Yorqin, g‘alati yoki kulgili sahna yarating.
-            4. Phonetic Link (Talaffuz bog'liqligi): So‘zning talaffuzi ${targetLanguage} tilidagi qaysi so‘zga o‘xshashligini toping va bog'lang.
+            4. Phonetic Link (Talaffuz bog'liqligi): So‘zning talaffuzi ${contentLanguage} tilidagi qaysi so‘zga o‘xshashligini toping va bog'lang.
             5. Connector Sentence: So‘z va tasvirni birlashtiruvchi 1 ta qisqa gap.
             6. Examples: So‘z qatnashgan 2 ta oddiy gap (Inglizcha gap, keyin tarjimasi).
             7. Visualisation Command: Foydalanuvchiga ushbu tasvirni 5 soniya davomida tasavvur qilishni buyuring.
             
-            STRICT REQUIREMENT: Communicate EXCLUSIVELY in the ${targetLanguage} language. Use natural, flowing sentences optimized for Gemini Live. Be warm, motivating, and humorous.`,
+            STRICT REQUIREMENT: Communicate EXCLUSIVELY in the ${contentLanguage} language. Use natural, flowing sentences optimized for Gemini Live. Be warm, motivating, and humorous.`,
             speechConfig: {
               voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
             },
@@ -270,7 +271,7 @@ export const VoiceMode: React.FC<Props> = ({ onClose, targetLanguage }) => {
         sessionPromise.then(s => s.close());
       }
     };
-  }, [targetLanguage, t]);
+  }, [contentLanguage, t]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900/95 backdrop-blur-xl p-4">

@@ -73,7 +73,17 @@ export const TRANSLATIONS: Record<Language, any> = {
       hardWords: "Hard words",
       yourPosts: "My Posts",
       myRemixes: "My Remixes",
-      wordsByCategories: "Words by Categories"
+      wordsByCategories: "Words by Categories",
+      preferredLanguage: "Preferred Native Language",
+      dailyGoal: "Daily Vocabulary Goal",
+      ieltsGoal: "IELTS Band Goal",
+      save: "Save Changes",
+      changeAvatar: "Change profile picture",
+      fullName: "Full Name",
+      username: "Username",
+      profileUpdated: "Profile updated successfully!",
+      errorOccurred: "An error occurred",
+      uploadError: "Error uploading image"
     }
   },
   [Language.UZBEK]: {
@@ -147,7 +157,17 @@ export const TRANSLATIONS: Record<Language, any> = {
       hardWords: "Qiyin so'zlar",
       yourPosts: "Mening Postlarim",
       myRemixes: "Mening Remikslarim",
-      wordsByCategories: "Kategoriyalar bo'yicha so'zlar"
+      wordsByCategories: "Kategoriyalar bo'yicha so'zlar",
+      preferredLanguage: "Afzal ko'rilgan ona tili",
+      dailyGoal: "Kunlik so'z boyligi maqsadi",
+      ieltsGoal: "IELTS natijasi maqsadi",
+      save: "O'zgarishlarni saqlash",
+      changeAvatar: "Profil rasmini o'zgartirish",
+      fullName: "To'liq ism",
+      username: "Foydalanuvchi nomi",
+      profileUpdated: "Profil muvaffaqiyatli yangilandi!",
+      errorOccurred: "Xatolik yuz berdi",
+      uploadError: "Rasm yuklashda xatolik"
     }
   },
   [Language.RUSSIAN]: {

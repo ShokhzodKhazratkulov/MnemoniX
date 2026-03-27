@@ -76,7 +76,7 @@ export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, on
         >
           <ChevronLeft size={24} className="text-gray-600 dark:text-gray-400" />
         </button>
-        <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Kategoriyalar</h2>
+        <h2 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Categories</h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -100,7 +100,7 @@ export const CategoriesPage: React.FC<Props> = ({ savedMnemonics, onNavigate, on
               <div className="relative z-10">
                 <h3 className="text-base font-black text-gray-900 dark:text-white leading-tight">{category}</h3>
                 <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${count > 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
-                  {count} so'z
+                  {count} {count === 1 ? 'word' : 'words'}
                 </p>
               </div>
 

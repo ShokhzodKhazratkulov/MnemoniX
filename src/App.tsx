@@ -151,9 +151,6 @@ export default function App() {
 
       if (data) {
         setUserProfile(data);
-        if (data.preferred_language) {
-          setLanguage(data.preferred_language);
-        }
         if (!data.is_personalized && view !== AppView.PERSONALIZATION) {
           setView(AppView.PERSONALIZATION);
         }
@@ -1291,7 +1288,11 @@ export default function App() {
       {/* Modals */}
       <AnimatePresence>
         {state === AppState.VOICE_MODE && (
-          <VoiceMode onClose={() => setState(AppState.IDLE)} targetLanguage={language} />
+          <VoiceMode 
+            onClose={() => setState(AppState.IDLE)} 
+            uiLanguage={language} 
+            contentLanguage={userProfile?.preferred_language || Language.UZBEK}
+          />
         )}
         {showFeedback && (
           <FeedbackModal 

@@ -143,30 +143,30 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 <h2 className="text-3xl font-black text-gray-900 dark:text-white">Your target IELTS score?</h2>
                 <p className="text-gray-500 dark:text-gray-400 font-medium">We will determine the vocabulary level that suits you.</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {[6, 7, 8, 9].map((band) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                {[6, 6.5, 7, 7.5, 8, 8.5, 9].map((band) => (
                   <button
                     key={band}
                     onClick={() => setSettings({ ...settings, ielts_goal: band })}
-                    className={`p-6 rounded-2xl border-2 transition-all font-black text-center ${
+                    className={`p-4 sm:p-6 rounded-2xl border-2 transition-all font-black text-center ${
                       settings.ielts_goal === band 
                         ? 'border-amber-600 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' 
                         : 'border-gray-100 dark:border-slate-800 text-gray-600 dark:text-gray-400 hover:border-amber-200'
                     }`}
                   >
-                    <div className="text-3xl">{band}.0</div>
-                    <div className="text-xs uppercase tracking-widest mt-1">Band Score</div>
+                    <div className="text-2xl sm:text-3xl">{band}.0</div>
+                    <div className="text-[10px] uppercase tracking-widest mt-1">Band Score</div>
                   </button>
                 ))}
               </div>
             </motion.div>
           )}
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
             {step > 1 && (
               <button 
                 onClick={() => setStep(step - 1)}
-                className="flex-1 py-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all"
+                className="w-full sm:flex-1 py-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all"
               >
                 Back
               </button>
@@ -174,7 +174,7 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
             <button 
               onClick={() => step < 3 ? setStep(step + 1) : handleComplete()}
               disabled={isSaving}
-              className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
             >
               {isSaving ? (
                 <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
