@@ -108,9 +108,13 @@ export class GeminiService {
                   type: Type.STRING, 
                   description: "CEFR level of the word (Beginner, Pre-Intermediate, Intermediate, Advanced)" 
               },
+              category: { 
+                  type: Type.STRING, 
+                  description: "One of the top 20 categories: Crime, Technology, Medicine, Education, Environment, Economy, Travel, Food, Sports, Art, Science, Law, Business, Health, History, Politics, Media, Nature, People, Daily Life." 
+              },
               imagePrompt: { type: Type.STRING, description: "Detailed visual description for an image generation AI" }
             },
-            required: ["word", "transcription", "meaning", "morphology", "imagination", "phoneticLink", "connectorSentence", "examples", "synonyms", "level", "imagePrompt"]
+            required: ["word", "transcription", "meaning", "morphology", "imagination", "phoneticLink", "connectorSentence", "examples", "synonyms", "level", "category", "imagePrompt"]
           },
           systemInstruction: `Role: You are a Linguistic Mnemonic Architect specializing in the "Keyword Method" established by Raugh and Atkinson at Stanford University. Your goal is to help users acquire English vocabulary by building a two-stage mnemonic chain consisting of an acoustic link and an imagery link.
 

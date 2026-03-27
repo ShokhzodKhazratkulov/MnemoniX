@@ -20,6 +20,7 @@ export interface MnemonicResponse {
   synonyms: string[];
   imagePrompt: string;
   level: string;
+  category?: string;
   audioUrl?: string;
   isHard?: boolean;
 }
@@ -54,6 +55,8 @@ export enum AppView {
   MY_REMIXES = 'MY_REMIXES',
   CREATE_POST = 'CREATE_POST',
   PRACTICE = 'PRACTICE',
+  CATEGORIES = 'CATEGORIES',
+  CATEGORY_DETAIL = 'CATEGORY_DETAIL',
   AUTH = 'AUTH'
 }
 

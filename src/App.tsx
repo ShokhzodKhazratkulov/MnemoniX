@@ -46,6 +46,8 @@ import { SearchPage } from './components/SearchPage';
 import { FeedbackModal } from './components/FeedbackModal';
 import { Posts } from './components/Posts';
 import { PracticePartner } from './components/PracticePartner';
+import { CategoriesPage } from './components/CategoriesPage';
+import { CategoryDetailPage } from './components/CategoryDetailPage';
 
 import { TRANSLATIONS } from './constants/translations';
 
@@ -73,6 +75,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const { posts, fetchPosts } = usePosts();
   const [showFeedback, setShowFeedback] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Auth state listener
   useEffect(() => {
@@ -167,7 +170,9 @@ export default function App() {
         AppView.MY_POSTS,
         AppView.MY_REMIXES,
         AppView.CREATE_POST,
-        AppView.PRACTICE
+        AppView.PRACTICE,
+        AppView.CATEGORIES,
+        AppView.CATEGORY_DETAIL
       ];
 
       if (privateViews.includes(newView)) {
@@ -226,6 +231,16 @@ export default function App() {
 
     if (view === AppView.PRACTICE) {
       setView(AppView.SEARCH);
+      return;
+    }
+
+    if (view === AppView.CATEGORIES) {
+      setView(AppView.PROFILE);
+      return;
+    }
+
+    if (view === AppView.CATEGORY_DETAIL) {
+      setView(AppView.CATEGORIES);
       return;
     }
 
@@ -1097,6 +1112,34 @@ export default function App() {
                 }
               }}
             />
+          )}
+
+          {view === AppView.CATEGORIES && (
+            <motion.div key="categories" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <CategoriesPage 
+                savedMnemonics={savedMnemonics} 
+                onNavigate={navigateTo} 
+                onSelectCategory={(cat) => {
+                  setSelectedCategory(cat);
+                  navigateTo(AppView.CATEGORY_DETAIL);
+                }} 
+              />
+            </motion.div>
+          )}
+
+          {view === AppView.CATEGORY_DETAIL && selectedCategory && (
+            <motion.div key="category-detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <CategoryDetailPage 
+                category={selectedCategory} 
+                savedMnemonics={savedMnemonics} 
+                onNavigate={navigateTo} 
+                onSelectWord={(word) => {
+                  setSearchQuery(word);
+                  setView(AppView.SEARCH);
+                  handleSearch(undefined, word);
+                }} 
+              />
+            </motion.div>
           )}
         </AnimatePresence>
       </main>

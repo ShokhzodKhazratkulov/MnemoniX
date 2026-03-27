@@ -268,6 +268,25 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
             <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
           </button>
 
+          {/* Words by Categories */}
+          <button 
+            onClick={() => onNavigate(AppView.CATEGORIES)}
+            className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors group"
+          >
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BookOpen size={28} />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-gray-400 text-xs font-black uppercase tracking-wider">Words by Categories</p>
+                <p className="text-2xl font-black text-gray-900 dark:text-white">
+                  {new Set(savedMnemonics.map(m => m.data.category).filter(Boolean)).size} Categories
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="text-gray-300 group-hover:translate-x-1 transition-transform" />
+          </button>
+
           {/* Your Posts */}
           <button 
             onClick={() => onNavigate(AppView.MY_POSTS)}
