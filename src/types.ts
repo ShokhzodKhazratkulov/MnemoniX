@@ -57,7 +57,8 @@ export enum AppView {
   PRACTICE = 'PRACTICE',
   CATEGORIES = 'CATEGORIES',
   CATEGORY_DETAIL = 'CATEGORY_DETAIL',
-  AUTH = 'AUTH'
+  AUTH = 'AUTH',
+  PERSONALIZATION = 'PERSONALIZATION'
 }
 
 export interface Profile {
@@ -69,6 +70,10 @@ export interface Profile {
   is_pro: boolean;
   subscription_id: string | null;
   created_at: string;
+  preferred_language?: Language;
+  daily_goal?: number;
+  ielts_goal?: number;
+  is_personalized?: boolean;
 }
 
 export interface Post {

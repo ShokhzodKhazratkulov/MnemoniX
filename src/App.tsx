@@ -48,8 +48,10 @@ import { Posts } from './components/Posts';
 import { PracticePartner } from './components/PracticePartner';
 import { CategoriesPage } from './components/CategoriesPage';
 import { CategoryDetailPage } from './components/CategoryDetailPage';
+import { Personalization } from './components/Personalization';
 
 import { TRANSLATIONS } from './constants/translations';
+import { Profile as UserProfileType } from './types';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -76,6 +78,7 @@ export default function App() {
   const { posts, fetchPosts } = usePosts();
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfileType | null>(null);
 
   // Auth state listener
   useEffect(() => {
@@ -134,9 +137,49 @@ export default function App() {
     }
   };
 
+  // Fetch user profile
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (data) {
+        setUserProfile(data);
+        if (data.preferred_language) {
+          setLanguage(data.preferred_language);
+        }
+        if (!data.is_personalized && view !== AppView.PERSONALIZATION) {
+          setView(AppView.PERSONALIZATION);
+        }
+      } else {
+        // Create profile if not exists
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({ 
+            id: userId, 
+            username: user?.email?.split('@')[0] || 'user', 
+            full_name: user?.user_metadata?.full_name || '',
+            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`
+          });
+        
+        if (!insertError) {
+          fetchProfile(userId);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  };
+
   useEffect(() => {
     if (isAuthReady && user) {
       fetchUserWords();
+      fetchProfile(user.id);
     }
   }, [user, isAuthReady]);
 
@@ -974,7 +1017,26 @@ export default function App() {
 
           {view === AppView.DASHBOARD && (
             <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Dashboard savedMnemonics={savedMnemonics} language={language} onDelete={handleDelete} t={t.dashboard} />
+              <Dashboard 
+                savedMnemonics={savedMnemonics} 
+                language={language} 
+                onDelete={handleDelete} 
+                t={t.dashboard} 
+                profile={userProfile}
+              />
+            </motion.div>
+          )}
+
+          {view === AppView.PERSONALIZATION && (
+            <motion.div key="personalization" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Personalization 
+                user={user} 
+                onComplete={(settings) => {
+                  setLanguage(settings.preferred_language);
+                  fetchProfile(user.id);
+                  setView(AppView.HOME);
+                }} 
+              />
             </motion.div>
           )}
 

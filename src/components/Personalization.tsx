@@ -1,0 +1,198 @@
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { 
+  Languages, 
+  Target, 
+  Award, 
+  ChevronRight, 
+  Check,
+  Sparkles
+} from 'lucide-react';
+import { Language, AppView } from '../types';
+import { supabase } from '../supabaseClient';
+
+interface Props {
+  user: any;
+  onComplete: (settings: { preferred_language: Language, daily_goal: number, ielts_goal: number }) => void;
+}
+
+export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
+  const [step, setStep] = useState(1);
+  const [settings, setSettings] = useState({
+    preferred_language: Language.UZBEK,
+    daily_goal: 50,
+    ielts_goal: 7
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleComplete = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          preferred_language: settings.preferred_language,
+          daily_goal: settings.daily_goal,
+          ielts_goal: settings.ielts_goal,
+          is_personalized: true
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      onComplete(settings);
+    } catch (err) {
+      console.error('Error saving personalization:', err);
+      // Fallback to onComplete even if DB update fails for some reason
+      onComplete(settings);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[80vh] flex flex-col items-center justify-center max-w-2xl mx-auto px-4 py-12">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full bg-white dark:bg-slate-900 rounded-[3rem] p-8 sm:p-12 shadow-2xl border border-gray-100 dark:border-slate-800 relative overflow-hidden"
+      >
+        {/* Progress Bar */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gray-100 dark:bg-slate-800">
+          <motion.div 
+            initial={{ width: '0%' }}
+            animate={{ width: `${(step / 3) * 100}%` }}
+            className="h-full bg-indigo-600"
+          />
+        </div>
+
+        <div className="space-y-8">
+          {step === 1 && (
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
+              <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center">
+                <Languages size={32} />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Qaysi tilda o'rganmoqchisiz?</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Mnemoniclar va tarjimalar ushbu tilda ko'rsatiladi.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.values(Language).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setSettings({ ...settings, preferred_language: lang })}
+                    className={`p-4 rounded-2xl border-2 transition-all font-bold text-left flex items-center justify-between ${
+                      settings.preferred_language === lang 
+                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400' 
+                        : 'border-gray-100 dark:border-slate-800 text-gray-600 dark:text-gray-400 hover:border-indigo-200'
+                    }`}
+                  >
+                    {lang}
+                    {settings.preferred_language === lang && <Check size={18} />}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
+              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center">
+                <Target size={32} />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white">Kunlik maqsadingiz?</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Kuniga nechtadan so'z o'rganmoqchisiz?</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[10, 20, 50, 100].map((goal) => (
+                  <button
+                    key={goal}
+                    onClick={() => setSettings({ ...settings, daily_goal: goal })}
+                    className={`p-6 rounded-2xl border-2 transition-all font-black text-center ${
+                      settings.daily_goal === goal 
+                        ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' 
+                        : 'border-gray-100 dark:border-slate-800 text-gray-600 dark:text-gray-400 hover:border-emerald-200'
+                    }`}
+                  >
+                    <div className="text-2xl">{goal}</div>
+                    <div className="text-xs uppercase tracking-widest mt-1">so'z / kun</div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
+              <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center">
+                <Award size={32} />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white">IELTS maqsadli ballingiz?</h2>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Sizga mos keladigan so'z boyligi darajasini aniqlaymiz.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[6, 7, 8, 9].map((band) => (
+                  <button
+                    key={band}
+                    onClick={() => setSettings({ ...settings, ielts_goal: band })}
+                    className={`p-6 rounded-2xl border-2 transition-all font-black text-center ${
+                      settings.ielts_goal === band 
+                        ? 'border-amber-600 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' 
+                        : 'border-gray-100 dark:border-slate-800 text-gray-600 dark:text-gray-400 hover:border-amber-200'
+                    }`}
+                  >
+                    <div className="text-3xl">{band}.0</div>
+                    <div className="text-xs uppercase tracking-widest mt-1">Band Score</div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          <div className="flex gap-4 pt-4">
+            {step > 1 && (
+              <button 
+                onClick={() => setStep(step - 1)}
+                className="flex-1 py-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-2xl font-black hover:bg-gray-200 transition-all"
+              >
+                Orqaga
+              </button>
+            )}
+            <button 
+              onClick={() => step < 3 ? setStep(step + 1) : handleComplete()}
+              disabled={isSaving}
+              className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+            >
+              {isSaving ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  {step === 3 ? "O'rganishni boshlash" : "Keyingisi"}
+                  <ChevronRight size={20} />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Decorative Sparkles */}
+        <div className="absolute -bottom-12 -right-12 text-indigo-100 dark:text-indigo-900/20 opacity-50">
+          <Sparkles size={200} />
+        </div>
+      </motion.div>
+    </div>
+  );
+};

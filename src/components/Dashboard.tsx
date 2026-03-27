@@ -1,26 +1,26 @@
 
 import React, { useMemo } from 'react';
-import { SavedMnemonic, Language } from '../types';
+import { SavedMnemonic, Language, Profile } from '../types';
 import { 
-  LineChart, 
-  Line, 
+  AreaChart,
+  Area,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts';
+import { Target, TrendingUp, Award } from 'lucide-react';
 
 interface Props {
   savedMnemonics: SavedMnemonic[];
   language: Language;
   onDelete: (id: string) => void;
   t: any;
+  profile?: Profile | null;
 }
 
-export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete, t }) => {
+export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete, t, profile }) => {
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -35,7 +35,7 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
     const last7DaysCount = savedMnemonics.filter(m => m.timestamp >= sevenDaysAgo).length;
     const averageDaily = Math.round(last7DaysCount / 7);
 
-    // Level logic: Analyze all words to find most frequent level
+    // Level logic
     let level = "Beginner";
     if (savedMnemonics.length > 0) {
       const levelCounts: Record<string, number> = {
@@ -55,7 +55,6 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         }
       });
       
-      // Find the level with the highest count
       level = Object.entries(levelCounts).reduce((a, b) => a[1] >= b[1] ? a : b)[0];
     }
 
@@ -73,8 +72,18 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
       chartData.push({ name: label, count });
     }
 
-    return { todayCount, totalCount, averageDaily, level, chartData, hardWords };
-  }, [savedMnemonics]);
+    // IELTS targets
+    const ieltsTargets: Record<number, number> = {
+      6: 3000,
+      7: 5000,
+      8: 7500,
+      9: 10000
+    };
+    const targetWords = ieltsTargets[profile?.ielts_goal || 7] || 5000;
+    const ieltsProgress = Math.min(100, (totalCount / targetWords) * 100);
+
+    return { todayCount, totalCount, averageDaily, level, chartData, hardWords, targetWords, ieltsProgress };
+  }, [savedMnemonics, profile]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 animate-fadeIn pb-20 px-4">
@@ -92,9 +101,14 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
           <span className="text-indigo-100 font-black text-[10px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase leading-tight">{t.total}</span>
         </div>
 
-        {/* Today's Count */}
+        {/* Today's Count / Goal */}
         <div className="bg-white dark:bg-slate-900/50 p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-2 transform hover:scale-105 transition-transform duration-300">
-          <span className="text-4xl sm:text-5xl lg:text-7xl font-black text-gray-900 dark:text-white">{stats.todayCount}</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-4xl sm:text-5xl lg:text-7xl font-black text-gray-900 dark:text-white">{stats.todayCount}</span>
+            {profile?.daily_goal && (
+              <span className="text-xl sm:text-2xl font-black text-gray-400">/ {profile.daily_goal}</span>
+            )}
+          </div>
           <span className="text-gray-400 dark:text-gray-500 font-black text-[10px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase leading-tight">{t.today}</span>
         </div>
 
@@ -108,6 +122,52 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         <div className="bg-white dark:bg-slate-900/50 p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-2 transform hover:scale-105 transition-transform duration-300 overflow-hidden">
           <span className="text-lg sm:text-xl lg:text-2xl font-black text-indigo-500 dark:text-indigo-400 tracking-tight whitespace-nowrap">{stats.level}</span>
           <span className="text-gray-400 dark:text-gray-500 font-black text-[10px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase leading-tight">{t.level}</span>
+        </div>
+      </div>
+
+      {/* IELTS Roadmap */}
+      <div className="bg-white dark:bg-slate-900/50 p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] border border-gray-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 text-amber-500">
+              <Award size={24} />
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">IELTS Roadmap</h3>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium">Maqsad: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal || 7}.0 Band Score</span></p>
+          </div>
+          <div className="text-right">
+            <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{Math.round(stats.ieltsProgress)}%</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-widest">Progress</div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="relative h-6 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div 
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all duration-1000 ease-out"
+              style={{ width: `${stats.ieltsProgress}%` }}
+            />
+            {/* Markers */}
+            <div className="absolute top-0 left-0 w-full h-full flex justify-between px-1 pointer-events-none">
+              {[0, 25, 50, 75, 100].map(m => (
+                <div key={m} className="h-full w-px bg-white/20" />
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center text-xs font-black text-gray-400 uppercase tracking-widest">
+            <span>0 so'z</span>
+            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <TrendingUp size={14} />
+              <span>{stats.totalCount} o'rganildi</span>
+            </div>
+            <span>{stats.targetWords} so'z</span>
+          </div>
+        </div>
+
+        {/* Background Decoration */}
+        <div className="absolute -bottom-10 -right-10 text-gray-50 dark:text-slate-800/50 -rotate-12 pointer-events-none">
+          <Award size={200} />
         </div>
       </div>
 
