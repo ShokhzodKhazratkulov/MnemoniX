@@ -31,7 +31,9 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
   const [selectedLevel, setSelectedLevel] = useState<PracticeLevel | null>(null);
   const [showLevelSelector, setShowLevelSelector] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Initialize Speech Recognition
@@ -91,9 +93,13 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+    // Auto-focus input when not loading and level is selected
+    if (!isLoading && selectedLevel && !showLevelSelector && sentencesCount < 5) {
+      inputRef.current?.focus();
+    }
+  }, [messages, isLoading, showLevelSelector]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,7 +267,10 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 overflow-y-auto space-y-6">
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 overflow-y-auto space-y-6 custom-scrollbar"
+      >
         {messages.map((m, idx) => (
           <motion.div 
             key={idx}
@@ -299,6 +308,7 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
             <div className="relative flex-1 flex items-center gap-2">
               <div className="relative flex-1">
                 <input 
+                  ref={inputRef}
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
