@@ -52,7 +52,7 @@ export const CategoryDetailPage: React.FC<Props> = ({
           >
             <button 
               onClick={() => onSelectWord(m.word)}
-              className="flex items-center gap-4 flex-1"
+              className="flex items-center gap-4 flex-1 text-left"
             >
               <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border-2 border-gray-50 dark:border-slate-800 group-hover:scale-110 transition-transform">
                 <img src={m.imageUrl} alt={m.word} className="w-full h-full object-cover" />
@@ -86,13 +86,6 @@ export const CategoryDetailPage: React.FC<Props> = ({
                 ) : (
                   <Volume2 size={18} />
                 )}
-              </button>
-              <button
-                onClick={() => onPractice(m.word, m.data.meaning)}
-                className="p-2 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-gray-400 hover:text-emerald-600 transition-colors"
-                title="Practice Word"
-              >
-                <Target size={18} />
               </button>
             </div>
           </motion.div>

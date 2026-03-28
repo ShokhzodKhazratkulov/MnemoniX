@@ -39,6 +39,14 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cacheKey = `${viewMode}-${language}-${user?.id || 'guest'}`;
 
     if (reset) {
+      // If we have a cache, set it immediately but still fetch in the background
+      if (cache.current[cacheKey]) {
+        setPosts(cache.current[cacheKey].posts);
+        setHasMore(cache.current[cacheKey].hasMore);
+        setPage(0);
+        setIsLoading(false);
+        silent = true; // Make the subsequent fetch silent
+      }
       setPage(0);
       setHasMore(true);
       setLastViewMode(viewMode);

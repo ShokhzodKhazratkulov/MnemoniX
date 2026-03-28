@@ -208,15 +208,6 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
               >
                 <Volume2 size={20} />
               </button>
-              {onPractice && (
-                <button
-                  onClick={() => onPractice(safeData.word, safeData.meaning)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-800"
-                  title="Practice word"
-                >
-                  <Target size={20} />
-                </button>
-              )}
             </div>
           </div>
           <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 font-bold">

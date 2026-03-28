@@ -74,15 +74,17 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
 
     // IELTS targets
     const ieltsTargets: Record<number, number> = {
-      6: 1000,
-      6.5: 1500,
-      7: 2500,
-      7.5: 3500,
-      8: 5000,
-      8.5: 7000,
-      9: 9000
+      5: 4000,
+      5.5: 4500,
+      6: 5000,
+      6.5: 6000,
+      7: 7000,
+      7.5: 8500,
+      8: 10000,
+      8.5: 11000,
+      9: 12000
     };
-    const targetWords = ieltsTargets[profile?.ielts_goal || 7] || 2500;
+    const targetWords = ieltsTargets[profile?.ielts_goal || 7] || 7000;
     const ieltsProgress = Math.min(100, (totalCount / targetWords) * 100);
 
     return { todayCount, totalCount, averageDaily, level, chartData, hardWords, targetWords, ieltsProgress };

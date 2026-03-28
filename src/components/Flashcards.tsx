@@ -398,16 +398,6 @@ export const Flashcards: React.FC<Props> = ({
                       <p className="text-gray-500 font-mono text-xs">[{m.data.transcription}]</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPractice?.(m.word, m.data.meaning);
-                        }}
-                        className="p-2 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-gray-400 hover:text-emerald-600 transition-colors"
-                        title="Practice Word"
-                      >
-                        <Target size={18} />
-                      </button>
                       <div className="text-gray-600 group-hover:text-red-500 transition-colors">
                         <Flag size={16} fill="currentColor" />
                       </div>
@@ -474,16 +464,6 @@ export const Flashcards: React.FC<Props> = ({
                     ) : (
                       <Volume2 size={20} />
                     )}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPractice?.(current.word, current.data.meaning);
-                    }}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/20 text-white hover:bg-emerald-500 transition-all"
-                    title="Practice Word"
-                  >
-                    <Target size={20} />
                   </button>
                 </div>
               </div>
