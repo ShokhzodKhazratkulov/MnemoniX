@@ -8,6 +8,7 @@ import { decode, decodeAudioData } from '../utils/audioUtils';
 import { GeminiService } from '../services/geminiService';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { MNEMONIX_LOGO_BASE64 } from '../../logos';
 
 const gemini = new GeminiService();
 
@@ -187,18 +188,13 @@ export const Flashcards: React.FC<Props> = ({
     const doc = new jsPDF();
     const { groups, sortedDates } = groupWordsByDate(filtered);
 
-    // Add Logo (Indigo square with white M)
-    doc.setFillColor(79, 70, 229); // Indigo-600
-    doc.roundedRect(20, 15, 12, 12, 3, 3, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("M", 26, 23.5, { align: "center" });
+    // Add Logo from base64
+    doc.addImage(MNEMONIX_LOGO_BASE64, 'PNG', 20, 12, 15, 15);
 
     // Add Title
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setTextColor(79, 70, 229);
-    doc.text("Mnemonix", 35, 24);
+    doc.text("Mnemonix", 38, 23);
 
     let yPos = 40;
 
