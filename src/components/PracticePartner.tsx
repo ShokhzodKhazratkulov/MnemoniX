@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, X, Send, Sparkles, Loader2, User, Bot, Mic, MicOff } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Loader2, User, Bot, Mic, MicOff, ChevronRight } from 'lucide-react';
 import { GeminiService } from '../services/geminiService';
 import { Language } from '../types';
+
+type PracticeLevel = 'Easy' | 'Medium' | 'Hard';
 
 interface Props {
   word: string;
@@ -26,6 +28,8 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [sentencesCount, setSentencesCount] = useState(0);
+  const [selectedLevel, setSelectedLevel] = useState<PracticeLevel | null>(null);
+  const [showLevelSelector, setShowLevelSelector] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -64,24 +68,26 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
     }
   };
 
-  useEffect(() => {
-    // Initial greeting
-    const startSession = async () => {
-      setIsLoading(true);
-      try {
-        const response = await gemini.getPracticeResponse(word, meaning, language, []);
-        if (response) {
-          setMessages([{ role: 'model', text: response }]);
-        }
-      } catch (error) {
-        console.error("Practice session error:", error);
-        setMessages([{ role: 'model', text: "Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring!" }]);
-      } finally {
-        setIsLoading(false);
+  const startSession = async (level: PracticeLevel) => {
+    setIsLoading(true);
+    try {
+      const response = await gemini.getPracticeResponse(word, meaning, language, [], level);
+      if (response) {
+        setMessages([{ role: 'model', text: response }]);
       }
-    };
-    startSession();
-  }, [word, meaning, language]);
+    } catch (error) {
+      console.error("Practice session error:", error);
+      setMessages([{ role: 'model', text: "Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring!" }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLevelSelect = (level: PracticeLevel) => {
+    setSelectedLevel(level);
+    setShowLevelSelector(false);
+    startSession(level);
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -105,7 +111,7 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
         parts: [{ text: m.text }]
       }));
 
-      const response = await gemini.getPracticeResponse(word, meaning, language, history);
+      const response = await gemini.getPracticeResponse(word, meaning, language, history, selectedLevel || 'Easy');
       if (response) {
         setMessages(prev => [...prev, { role: 'model', text: response }]);
         // Simple heuristic: if the AI praises the user, count it as a successful sentence
@@ -127,6 +133,88 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-gray-50 dark:bg-slate-950 flex flex-col"
     >
+      <AnimatePresence>
+        {showLevelSelector && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 sm:p-12 max-w-2xl w-full shadow-2xl border border-white/20"
+            >
+              <div className="text-center mb-10">
+                <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                  <Sparkles className="text-indigo-600" size={40} />
+                </div>
+                <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
+                  Choose Practice Level
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">
+                  Select the complexity of sentences you want to practice with <span className="text-indigo-600 font-bold">{word}</span>.
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {[
+                  { 
+                    id: 'Easy' as PracticeLevel, 
+                    title: 'Easy', 
+                    desc: 'Simple sentences (Subject + Verb + Object).',
+                    example: 'The cat sits on the mat.'
+                  },
+                  { 
+                    id: 'Medium' as PracticeLevel, 
+                    title: 'Medium', 
+                    desc: 'Compound sentences using "and," "but," or "or."',
+                    example: 'The cat sits on the mat, but the dog is outside.'
+                  },
+                  { 
+                    id: 'Hard' as PracticeLevel, 
+                    title: 'Hard', 
+                    desc: 'Complex sentences with relative clauses or passive voice.',
+                    example: 'Although it was raining, the cat remained on the mat that was placed near the fire.'
+                  }
+                ].map((level) => (
+                  <button
+                    key={level.id}
+                    onClick={() => handleLevelSelect(level.id)}
+                    className="group relative p-6 bg-gray-50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-3xl border-2 border-transparent hover:border-indigo-500 transition-all text-left overflow-hidden"
+                  >
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xl font-black text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                          {level.title}
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                          <ChevronRight size={18} />
+                        </div>
+                      </div>
+                      <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                        {level.desc}
+                      </p>
+                      <p className="text-xs font-medium text-indigo-600/60 dark:text-indigo-400/60 italic">
+                        e.g. "{level.example}"
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={onClose}
+                className="mt-8 w-full py-4 text-gray-500 dark:text-gray-400 font-black uppercase tracking-widest hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-4 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -141,6 +229,11 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
               <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
                 <Sparkles className="text-indigo-600" size={20} />
                 Practice Partner
+                {selectedLevel && (
+                  <span className="ml-2 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-full">
+                    {selectedLevel}
+                  </span>
+                )}
               </h2>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                 Word: <span className="text-indigo-600">{word}</span> • {sentencesCount}/5 sentences
