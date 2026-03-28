@@ -31,11 +31,12 @@ interface Props {
   onSignOut: () => void;
   onSignIn: () => void;
   onNavigate: (view: AppView) => void;
+  onProfileUpdate?: () => void;
   language: Language;
   t: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, language, t }) => {
+export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, language, t }) => {
   const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -133,6 +134,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         .eq('id', user.id);
 
       if (error) throw error;
+      if (onProfileUpdate) onProfileUpdate();
       setActiveModal('none');
       alert(t.profileUpdated || 'Profile updated successfully!');
     } catch (err: any) {

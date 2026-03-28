@@ -188,6 +188,10 @@ export default function App() {
 
       if (data) {
         setUserProfile(data);
+        // Sync app language with user's preferred language
+        if (data.preferred_language) {
+          setLanguage(data.preferred_language as Language);
+        }
         if (!data.is_personalized && view !== AppView.PERSONALIZATION) {
           setView(AppView.PERSONALIZATION);
         }
@@ -1119,6 +1123,7 @@ export default function App() {
                 }} 
                 onSignIn={() => navigateTo(AppView.AUTH)}
                 onNavigate={navigateTo}
+                onProfileUpdate={() => fetchProfile(user.id)}
                 language={language}
                 t={t.profile}
               />
@@ -1277,6 +1282,56 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Floating Practice Button */}
+      <AnimatePresence>
+        {((view === AppView.SEARCH && mnemonic) || 
+          (view === AppView.FLASHCARDS && selectedFlashcardWord) ||
+          (view === AppView.WORD_REVIEW && selectedMnemonicForReview)) && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0, x: 50 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0, x: 50 }}
+            onClick={() => {
+              let wordToPractice = '';
+              let meaningToPractice = '';
+
+              if (view === AppView.FLASHCARDS && selectedFlashcardWord) {
+                wordToPractice = selectedFlashcardWord.word;
+                meaningToPractice = selectedFlashcardWord.data.meaning;
+              } else if (view === AppView.WORD_REVIEW && selectedMnemonicForReview) {
+                wordToPractice = selectedMnemonicForReview.word;
+                meaningToPractice = selectedMnemonicForReview.data.meaning;
+              } else if (view === AppView.SEARCH && mnemonic) {
+                wordToPractice = mnemonic.word;
+                meaningToPractice = mnemonic.meaning;
+              }
+
+              if (wordToPractice) {
+                startPractice(wordToPractice, meaningToPractice);
+              } else {
+                setView(AppView.PRACTICE);
+              }
+            }}
+            className="fixed right-6 bottom-24 md:bottom-8 z-[60] flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-full font-black shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 hover:scale-110 transition-all active:scale-95 group"
+          >
+            <div className="relative">
+              <Sparkles size={18} />
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-indigo-600 animate-pulse" />
+            </div>
+            <span className="text-[10px] sm:text-base font-black">Practice</span>
+
+            {/* Tooltip */}
+            <div className="absolute bottom-full right-0 mb-4 px-3 py-1.5 bg-slate-900 text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold uppercase tracking-widest">
+              Master "{ 
+                (view === AppView.FLASHCARDS ? selectedFlashcardWord?.word : 
+                 view === AppView.WORD_REVIEW ? selectedMnemonicForReview?.word : 
+                 mnemonic?.word) || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word
+              }" now
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Navigation for Mobile */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-2xl border-t border-gray-100 dark:border-slate-800/50 pb-safe">

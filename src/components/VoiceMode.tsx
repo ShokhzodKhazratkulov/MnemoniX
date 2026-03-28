@@ -162,14 +162,20 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     let sessionPromise: Promise<any>;
 
     const startSession = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!mountedRef.current) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
         const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         audioContextRef.current = outputAudioContext;
         const inputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
@@ -178,6 +184,7 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
           model: 'gemini-2.5-flash-native-audio-preview-12-2025',
           callbacks: {
             onopen: () => {
+              if (!mountedRef.current) return;
               setStatus(t.ready);
               setIsActive(true);
               
@@ -185,10 +192,13 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
               const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
               
               scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                if (!mountedRef.current) return;
                 const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
                 const pcmBlob = createBlob(inputData);
                 sessionPromise.then((session) => {
-                  session.sendRealtimeInput({ media: pcmBlob });
+                  if (mountedRef.current) {
+                    session.sendRealtimeInput({ media: pcmBlob });
+                  }
                 });
               };
               
@@ -196,6 +206,7 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
               scriptProcessor.connect(inputAudioContext.destination);
             },
             onmessage: async (message: LiveServerMessage) => {
+              if (!mountedRef.current) return;
               if (message.serverContent?.outputTranscription) {
                   setTranscriptions(prev => [...prev.slice(-4), `${t.aiLabel}: ${message.serverContent?.outputTranscription?.text || ''}`]);
               } else if (message.serverContent?.inputTranscription) {
@@ -203,11 +214,11 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
               }
 
               const base64EncodedAudioString = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-              if (base64EncodedAudioString && audioContextRef.current) {
+              if (base64EncodedAudioString && audioContextRef.current && mountedRef.current) {
                 const decodedData = decode(base64EncodedAudioString);
                 const audioBuffer = await decodeAudioData(decodedData, audioContextRef.current, 24000, 1);
                 
-                if (audioBuffer) {
+                if (audioBuffer && mountedRef.current) {
                   const source = audioContextRef.current.createBufferSource();
                   source.buffer = audioBuffer;
                   source.connect(audioContextRef.current.destination);
@@ -226,6 +237,7 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
               }
             },
             onerror: (err: any) => {
+                if (!mountedRef.current) return;
                 console.error('Session error:', err);
                 const msg = err?.message || '';
                 if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
@@ -234,7 +246,9 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
                   setStatus(t.error);
                 }
             },
-            onclose: () => setIsActive(false),
+            onclose: () => {
+              if (mountedRef.current) setIsActive(false);
+            },
           },
           config: {
             responseModalities: [Modality.AUDIO],
@@ -259,16 +273,33 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
         });
 
       } catch (err) {
-        console.error('Initialization error:', err);
-        setStatus(t.micError);
+        if (mountedRef.current) {
+          console.error('Initialization error:', err);
+          setStatus(t.micError);
+        }
       }
     };
 
     startSession();
     
     return () => { 
+      mountedRef.current = false;
       if (sessionPromise) {
         sessionPromise.then(s => s.close());
+      }
+      // Stop all active audio sources
+      sourcesRef.current.forEach(s => {
+        try {
+          s.stop();
+        } catch (e) {
+          // Ignore errors if already stopped
+        }
+      });
+      sourcesRef.current.clear();
+      
+      // Close audio contexts
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(console.error);
       }
     };
   }, [contentLanguage, t]);

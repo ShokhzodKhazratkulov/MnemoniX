@@ -76,6 +76,13 @@ export const CategoryDetailPage: React.FC<Props> = ({
             
             <div className="flex flex-col gap-2 ml-4">
               <button
+                onClick={() => onPractice(m.word, m.data.meaning)}
+                className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
+                title="Practice"
+              >
+                <Target size={18} />
+              </button>
+              <button
                 onClick={() => onPlayAudio(m.word)}
                 disabled={isAudioLoading}
                 className="p-2 bg-gray-50 dark:bg-slate-800 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-gray-400 hover:text-indigo-600 transition-colors"

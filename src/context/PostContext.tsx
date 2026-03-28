@@ -66,7 +66,7 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const from = currentPage * POSTS_PER_PAGE;
       const to = from + POSTS_PER_PAGE - 1;
 
-      const { data: postsData, error: postsError } = await supabase
+      let query = supabase
         .from('posts')
         .select(`
           *,
@@ -78,8 +78,11 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
             profiles:user_id (username, full_name, avatar_url)
           )
         `)
+        .eq('language', language)
         .order('created_at', { ascending: false })
         .range(from, to);
+
+      const { data: postsData, error: postsError } = await query;
 
       if (postsError) {
         console.error('Detailed Supabase Fetch Error:', postsError);
