@@ -266,6 +266,16 @@ CRITICAL RULES:
         model: "gemini-3-flash-preview",
         contents,
         config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              feedback: { type: Type.STRING, description: "The AI's response to the user in the target language." },
+              isCorrect: { type: Type.BOOLEAN, description: "Whether the user's English sentence was correct and met the level requirements." },
+              sessionComplete: { type: Type.BOOLEAN, description: "Whether the 5-step practice session is now complete." }
+            },
+            required: ["feedback", "isCorrect", "sessionComplete"]
+          },
           systemInstruction: `You are a helpful English Practice Partner. 
           The user is learning the word "${word}" (meaning: ${meaning}).
           Your goal is to help them practice using this word in context at the ${displayLevel} level.
@@ -277,10 +287,12 @@ CRITICAL RULES:
           1. Communicate EXCLUSIVELY in ${targetLanguage}. 
           2. Give the user a specific scenario or question in ${targetLanguage} that requires them to use the English word "${word}".
           3. The user MUST respond in English using the sentence structure appropriate for the ${displayLevel} level.
-          4. Evaluate their English sentence. If it's correct and matches the level's complexity, praise them in ${targetLanguage} and give a new challenge.
-          5. If it's incorrect or too simple for the level, gently correct or guide them in ${targetLanguage} and explain why, then ask them to try again.
-          6. Keep your responses concise (max 2-3 sentences).
-          7. This is a 5-step practice session. After 5 successful English sentences, congratulate them warmly in ${targetLanguage} and tell them they have mastered the word!`,
+          4. Evaluate their English sentence. 
+          5. If it's correct and matches the level's complexity, set isCorrect to true, provide praise in the feedback field, and give a new challenge.
+          6. If it's incorrect or too simple for the level, set isCorrect to false, gently correct or guide them in the feedback field, and ask them to try again.
+          7. This is a 5-step practice session. After 5 successful English sentences, set sessionComplete to true, congratulate them warmly in the feedback field, and tell them they have mastered the word!
+          8. Keep your feedback concise (max 2-3 sentences).
+          9. Return ONLY a valid JSON object.`,
         },
       });
       return response.text;

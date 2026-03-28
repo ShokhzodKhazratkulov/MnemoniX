@@ -73,9 +73,14 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
   const startSession = async (level: PracticeLevel) => {
     setIsLoading(true);
     try {
-      const response = await gemini.getPracticeResponse(word, meaning, language, [], level, 0);
-      if (response) {
-        setMessages([{ role: 'model', text: response }]);
+      const responseText = await gemini.getPracticeResponse(word, meaning, language, [], level, 0);
+      if (responseText) {
+        try {
+          const data = JSON.parse(responseText);
+          setMessages([{ role: 'model', text: data.feedback }]);
+        } catch (e) {
+          setMessages([{ role: 'model', text: responseText }]);
+        }
       }
     } catch (error) {
       console.error("Practice session error:", error);
@@ -95,8 +100,9 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-    // Auto-focus input when not loading and level is selected
-    if (!isLoading && selectedLevel && !showLevelSelector && sentencesCount < 5) {
+    // Auto-focus input when not loading and level is selected, but not on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!isLoading && selectedLevel && !showLevelSelector && sentencesCount < 5 && !isMobile) {
       inputRef.current?.focus();
     }
   }, [messages, isLoading, showLevelSelector]);
@@ -117,12 +123,19 @@ export const PracticePartner: React.FC<Props> = ({ word, meaning, language, onCl
         parts: [{ text: m.text }]
       }));
 
-      const response = await gemini.getPracticeResponse(word, meaning, language, history, selectedLevel || 'Easy', sentencesCount);
-      if (response) {
-        setMessages(prev => [...prev, { role: 'model', text: response }]);
-        // Simple heuristic: if the AI praises the user, count it as a successful sentence
-        // In a real app, we might check the AI's structured output, but for now we'll increment on every model response
-        setSentencesCount(prev => Math.min(5, prev + 1));
+      const responseText = await gemini.getPracticeResponse(word, meaning, language, history, selectedLevel || 'Easy', sentencesCount);
+      if (responseText) {
+        try {
+          const data = JSON.parse(responseText);
+          setMessages(prev => [...prev, { role: 'model', text: data.feedback }]);
+          
+          if (data.isCorrect) {
+            setSentencesCount(prev => Math.min(5, prev + 1));
+          }
+        } catch (e) {
+          setMessages(prev => [...prev, { role: 'model', text: responseText }]);
+          setSentencesCount(prev => Math.min(5, prev + 1));
+        }
       }
     } catch (error) {
       console.error("Practice message error:", error);
