@@ -1,6 +1,7 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { SavedMnemonic, Language, Profile } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   AreaChart,
   Area,
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete, t, profile }) => {
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -90,8 +92,98 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
     return { todayCount, totalCount, averageDaily, level, chartData, hardWords, targetWords, ieltsProgress };
   }, [savedMnemonics, profile]);
 
+  useEffect(() => {
+    const dailyGoal = profile?.daily_goal || 10;
+    if (stats.todayCount >= dailyGoal) {
+      // Check if we've already celebrated today in this session
+      const lastCelebrated = sessionStorage.getItem('last_celebrated_date');
+      const todayStr = new Date().toDateString();
+      
+      if (lastCelebrated !== todayStr) {
+        setShowCelebration(true);
+        sessionStorage.setItem('last_celebrated_date', todayStr);
+        // Auto hide after 5 seconds
+        const timer = setTimeout(() => setShowCelebration(false), 5000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [stats.todayCount, profile?.daily_goal]);
+
+  const isGoalReached = stats.todayCount >= (profile?.daily_goal || 10);
+
   return (
-    <div className="max-w-7xl mx-auto space-y-12 animate-fadeIn pb-20 px-4">
+    <div className="max-w-7xl mx-auto space-y-12 animate-fadeIn pb-20 px-4 relative">
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4"
+          >
+            {/* Confetti Particles */}
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ 
+                  x: 0, 
+                  y: 0, 
+                  scale: 0,
+                  rotate: 0 
+                }}
+                animate={{ 
+                  x: (Math.random() - 0.5) * 1000, 
+                  y: (Math.random() - 0.5) * 1000, 
+                  scale: [0, 1, 0.5, 0],
+                  rotate: Math.random() * 360 
+                }}
+                transition={{ 
+                  duration: 2 + Math.random() * 2,
+                  repeat: Infinity,
+                  ease: "easeOut"
+                }}
+                className={`absolute w-4 h-4 rounded-sm ${
+                  ['bg-emerald-400', 'bg-indigo-400', 'bg-amber-400', 'bg-rose-400'][i % 4]
+                }`}
+              />
+            ))}
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: -20 }}
+              className="bg-white dark:bg-slate-900 border-4 border-emerald-500 p-8 sm:p-12 rounded-[3rem] shadow-[0_0_100px_rgba(16,185,129,0.4)] text-center space-y-4 max-w-md relative overflow-hidden pointer-events-auto"
+            >
+              {/* Decorative particles */}
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"
+              />
+              <motion.div 
+                animate={{ rotate: -360 }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                className="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl"
+              />
+              
+              <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Award className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              
+              <h3 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white leading-tight">
+                Woow! Congratulations!
+              </h3>
+              <p className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                You hit your daily word target goal! 🎯
+              </p>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">
+                Keep up the amazing work! You're crushing your IELTS journey.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="space-y-1">
         <h2 className="text-5xl font-black text-gray-900 dark:text-white tracking-tight">{t.title}</h2>
@@ -107,14 +199,14 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         </div>
 
         {/* Today's Count / Goal */}
-        <div className="bg-white dark:bg-slate-900/50 p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-2 transform hover:scale-105 transition-transform duration-300">
+        <div className={`${isGoalReached ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 shadow-lg shadow-emerald-500/10' : 'bg-white dark:bg-slate-900/50 border-gray-100 dark:border-slate-800'} p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border flex flex-col items-center justify-center text-center space-y-2 transform hover:scale-105 transition-transform duration-300`}>
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl sm:text-5xl lg:text-7xl font-black text-gray-900 dark:text-white">{stats.todayCount}</span>
+            <span className={`text-4xl sm:text-5xl lg:text-7xl font-black ${isGoalReached ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}>{stats.todayCount}</span>
             {profile?.daily_goal && (
-              <span className="text-xl sm:text-2xl font-black text-gray-400">/ {profile.daily_goal}</span>
+              <span className={`text-xl sm:text-2xl font-black ${isGoalReached ? 'text-emerald-400/60' : 'text-gray-400'}`}>/ {profile.daily_goal}</span>
             )}
           </div>
-          <span className="text-gray-400 dark:text-gray-500 font-black text-[10px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase leading-tight">{t.today}</span>
+          <span className={`font-black text-[10px] sm:text-xs tracking-[0.1em] sm:tracking-[0.2em] uppercase leading-tight ${isGoalReached ? 'text-emerald-600/70 dark:text-emerald-400/70' : 'text-gray-400 dark:text-gray-500'}`}>{t.today}</span>
         </div>
 
         {/* Daily Average */}
