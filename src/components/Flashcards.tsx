@@ -188,13 +188,18 @@ export const Flashcards: React.FC<Props> = ({
     const doc = new jsPDF();
     const { groups, sortedDates } = groupWordsByDate(filtered);
 
-    // Add Logo from base64
-    doc.addImage(MNEMONIX_LOGO_BASE64, 'PNG', 20, 12, 15, 15);
+    // Draw Logo (Indigo square with white M) - Manual drawing as requested
+    doc.setFillColor(79, 70, 229); // Indigo-600
+    doc.roundedRect(20, 12, 15, 15, 4, 4, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("M", 27.5, 22.5, { align: "center" });
 
     // Add Title
-    doc.setFontSize(22);
-    doc.setTextColor(79, 70, 229);
-    doc.text("Mnemonix", 38, 23);
+    doc.setFontSize(24);
+    doc.setTextColor(30, 41, 59); // Slate-800
+    doc.text("Mnemonix", 40, 23);
 
     let yPos = 40;
 
@@ -217,13 +222,32 @@ export const Flashcards: React.FC<Props> = ({
       yPos += 10;
 
       const normalizeText = (text: string) => {
+        if (!text) return "";
+        // Replace non-ASCII characters that cause garbage in jsPDF with standard fonts
         return text
           .replace(/ʻ/g, "'")
           .replace(/ʼ/g, "'")
           .replace(/‘/g, "'")
           .replace(/’/g, "'")
           .replace(/“/g, '"')
-          .replace(/”/g, '"');
+          .replace(/”/g, '"')
+          .replace(/–/g, "-")
+          .replace(/—/g, "-")
+          .replace(/[^\x00-\x7F]/g, (char) => {
+            // Map common accented characters to ASCII
+            const accents: Record<string, string> = {
+              'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a',
+              'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
+              'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
+              'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o',
+              'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u',
+              'ñ': 'n', 'ç': 'c', 'À': 'A', 'Á': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A', 'Å': 'A',
+              'È': 'E', 'É': 'E', 'Ê': 'E', 'Ë': 'E', 'Ì': 'I', 'Í': 'I', 'Î': 'I', 'Ï': 'I',
+              'Ò': 'O', 'Ó': 'O', 'Ô': 'O', 'Õ': 'O', 'Ö': 'O', 'Ù': 'U', 'Ú': 'U', 'Û': 'U', 'Ü': 'U',
+              'Ñ': 'N', 'Ç': 'C'
+            };
+            return accents[char] || "?";
+          });
       };
 
       const tableData = words.map((w, i) => [
@@ -241,7 +265,6 @@ export const Flashcards: React.FC<Props> = ({
           fontSize: 12,
           cellPadding: 5,
           font: 'helvetica',
-          fontStyle: 'bold',
           textColor: [30, 30, 30],
         },
         headStyles: {
@@ -261,7 +284,9 @@ export const Flashcards: React.FC<Props> = ({
       yPos = (doc as any).lastAutoTable.finalY + 15;
     });
 
-    doc.save(`mnemonix-words-${new Date().toISOString().split('T')[0]}.pdf`);
+    const startStr = dateFrom || 'start';
+    const endStr = dateTo || 'end';
+    doc.save(`words-${startStr}-${endStr}.pdf`);
   };
 
   // Reset flip state when moving to a new card
