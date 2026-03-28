@@ -43,7 +43,18 @@ export class GeminiService {
         // Handle "Requested entity was not found" which can happen during key selection race conditions
         const isNotFoundError = message.includes('Requested entity was not found');
 
-        if (isQuotaError || isServerError || isNotFoundError) {
+        // Handle transient network errors like "Failed to fetch"
+        const isNetworkError = 
+          message.includes('Failed to fetch') || 
+          message.includes('NetworkError') || 
+          message.includes('fetch failed') ||
+          message.includes('ERR_CONNECTION_CLOSED') ||
+          message.includes('ERR_INTERNET_DISCONNECTED') ||
+          message.includes('ERR_NETWORK_CHANGED') ||
+          message.includes('ERR_CONNECTION_RESET') ||
+          error instanceof TypeError;
+
+        if (isQuotaError || isServerError || isNotFoundError || isNetworkError) {
           if (attempt < maxRetries) {
             // Reduced delay: 2s, 5s... to better handle strict quotas without long waits
             const delay = (Math.pow(2, attempt + 1) - 1) * 1000 + Math.random() * 1000;

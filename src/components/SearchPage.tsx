@@ -270,7 +270,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
               <p className="text-red-600 dark:text-red-400 font-medium text-lg">{error}</p>
             </div>
             <button 
-              onClick={() => setState(AppState.IDLE)}
+              onClick={() => searchQuery ? handleSearch() : setState(AppState.IDLE)}
               className="w-full py-4 bg-white dark:bg-slate-900 text-red-600 dark:text-red-400 border-2 border-red-100 dark:border-red-900/30 rounded-2xl font-black hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95"
             >
               {t.retry}
