@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MnemonicResponse, Language } from '../types';
 import { GeminiService } from '../services/geminiService';
-import { Sparkles, Volume2, Eye, Loader2, Target } from 'lucide-react';
+import { Sparkles, Volume2, Eye, Loader2 } from 'lucide-react';
 import { decode, decodeAudioData } from '../utils/audioUtils';
 import { AnimatePresence } from 'motion/react';
 
@@ -187,19 +187,6 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
                   {language === Language.UZBEK ? "Hikoyani tinglash" : (language === Language.RUSSIAN ? "Слушать историю" : "Listen Story")}
                 </span>
               </button>
-
-              {onPractice && (
-                <button 
-                  onClick={() => onPractice(safeData.word, safeData.meaning)}
-                  className="group relative w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-orange-500 text-white flex items-center justify-center transition-all shadow-xl hover:bg-orange-600 active:scale-95 flex-shrink-0"
-                  title="Practice this word"
-                >
-                  <Target className="w-6 h-6 sm:w-10 sm:h-10" />
-                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:block">
-                    {language === Language.UZBEK ? "Mashq qilish" : (language === Language.RUSSIAN ? "Практика" : "Practice")}
-                  </span>
-                </button>
-              )}
             </div>
           </div>
           {audioError && <p className="text-xs font-bold text-red-500 animate-bounce">{audioError}</p>}

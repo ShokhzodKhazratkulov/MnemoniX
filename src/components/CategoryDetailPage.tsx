@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, BookOpen, Search, Trash2, Award, Volume2, Loader2, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Search, Trash2, Award, Volume2, Loader2 } from 'lucide-react';
 import { SavedMnemonic, AppView } from '../types';
 
 interface Props {
@@ -75,13 +75,6 @@ export const CategoryDetailPage: React.FC<Props> = ({
             </button>
             
             <div className="flex flex-col gap-2 ml-4">
-              <button
-                onClick={() => onPractice(m.word, m.data.meaning)}
-                className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
-                title="Practice"
-              >
-                <Target size={18} />
-              </button>
               <button
                 onClick={() => onPlayAudio(m.word)}
                 disabled={isAudioLoading}

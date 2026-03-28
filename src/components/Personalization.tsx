@@ -144,7 +144,7 @@ export const Personalization: React.FC<Props> = ({ user, onComplete }) => {
                 <p className="text-gray-500 dark:text-gray-400 font-medium">We will determine the vocabulary level that suits you.</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-                {[6, 6.5, 7, 7.5, 8, 8.5, 9].map((band) => (
+                {[6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((band) => (
                   <button
                     key={band}
                     onClick={() => setSettings({ ...settings, ielts_goal: band })}

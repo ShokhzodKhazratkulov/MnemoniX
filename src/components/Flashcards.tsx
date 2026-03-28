@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { SavedMnemonic, Language } from '../types';
-import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2, Sparkles, Download, Target } from 'lucide-react';
+import { Shuffle, Flag, ChevronLeft, ChevronRight, X, CheckCircle, Volume2, Sparkles, Download } from 'lucide-react';
 import { MnemonicCard } from './MnemonicCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { decode, decodeAudioData } from '../utils/audioUtils';

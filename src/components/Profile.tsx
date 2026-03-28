@@ -202,15 +202,15 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
         className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 sm:p-10 shadow-xl border border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-8"
       >
         <div className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-200 dark:shadow-none overflow-hidden">
-          {user?.user_metadata?.avatar_url ? (
-            <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+          {editForm.avatar_url ? (
+            <img src={editForm.avatar_url} alt="Profile" className="w-full h-full object-cover" />
           ) : (
             <UserIcon size={48} className="sm:size-64" />
           )}
         </div>
         <div className="text-center sm:text-left space-y-2">
           <h2 className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white">
-            {user?.user_metadata?.full_name || (user ? t.learner : t.guestLearner)}
+            {editForm.full_name || (user ? t.learner : t.guestLearner)}
           </h2>
           <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center justify-center sm:justify-start gap-2">
             <Calendar size={18} />
@@ -512,7 +512,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                           </select>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.dailyGoal}</label>
                             <input 
@@ -529,8 +529,8 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                               onChange={(e) => setEditForm({...editForm, ielts_goal: parseFloat(e.target.value)})}
                               className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
                             >
-                              {[6, 6.5, 7, 7.5, 8, 8.5, 9].map((score) => (
-                                <option key={score} value={score}>{score}</option>
+                              {[6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0].map((score) => (
+                                <option key={score} value={score}>{score % 1 === 0 ? `${score}.0` : score}</option>
                               ))}
                             </select>
                           </div>

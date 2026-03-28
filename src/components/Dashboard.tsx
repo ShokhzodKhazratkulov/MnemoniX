@@ -10,7 +10,7 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from 'recharts';
-import { Target, TrendingUp, Award } from 'lucide-react';
+import { TrendingUp, Award } from 'lucide-react';
 
 interface Props {
   savedMnemonics: SavedMnemonic[];

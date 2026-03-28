@@ -814,9 +814,13 @@ export default function App() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setView(AppView.PROFILE)}
-                className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 rounded-full text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm"
+                className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 rounded-full text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm overflow-hidden"
               >
-                <UserIcon size={20} />
+                {userProfile?.avatar_url ? (
+                  <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon size={20} />
+                )}
               </button>
               <button 
                 onClick={toggleTheme}
@@ -896,7 +900,13 @@ export default function App() {
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
                       >
-                        <UserIcon size={18} />
+                        <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+                          {userProfile?.avatar_url ? (
+                            <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <UserIcon size={14} />
+                          )}
+                        </div>
                         {t.navProfile}
                       </button>
 
