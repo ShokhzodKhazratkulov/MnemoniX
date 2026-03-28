@@ -236,22 +236,30 @@ CRITICAL RULES:
     });
   }
 
-  async getPracticeResponse(word: string, meaning: string, targetLanguage: Language, history: any[], level?: 'Easy' | 'Medium' | 'Hard') {
+  async getPracticeResponse(word: string, meaning: string, targetLanguage: Language, history: any[], level?: 'Easy' | 'Medium' | 'Hard' | 'EasyToHard', sentenceCount: number = 0) {
     return this.withRetry(async () => {
       const ai = this.getAI();
       
       const levelInstructions = {
         Easy: "Focus on SIMPLE sentences (Subject + Verb + Object). Use high-frequency, basic vocabulary. Example structure: 'The cat sits on the mat.'",
         Medium: "Focus on COMPOUND sentences using 'and,' 'but,' or 'or.' Encourage the use of common adverbs. Example structure: 'The cat sits on the mat, but the dog is outside.'",
-        Hard: "Focus on COMPLEX sentences with relative clauses, passive voice, or conditional tense. Example structure: 'Although it was raining, the cat remained on the mat that was placed near the fire.'"
+        Hard: "Focus on COMPLEX sentences with relative clauses, passive voice, or conditional tense. Example structure: 'Although it was raining, the cat remained on the mat that was placed near the fire.'",
+        EasyToHard: `This is a progressive session. 
+          - For sentences 1-2: Use EASY level (Simple sentences).
+          - For sentences 3-4: Use MEDIUM level (Compound sentences).
+          - For sentence 5: Use HARD level (Complex sentences).
+          Current sentence number: ${sentenceCount + 1}.`
       };
 
       const selectedLevelInstruction = level ? levelInstructions[level] : levelInstructions.Easy;
+      const displayLevel = level === 'EasyToHard' 
+        ? (sentenceCount < 2 ? 'Easy' : sentenceCount < 4 ? 'Medium' : 'Hard')
+        : (level || 'Easy');
 
       // If history is empty, we need an initial prompt to trigger the first greeting
       const contents = history.length > 0 ? history : [{
         role: 'user',
-        parts: [{ text: `Hi! I want to practice the word "${word}". I've chosen the ${level || 'Easy'} level. Please start the session in ${targetLanguage}.` }]
+        parts: [{ text: `Hi! I want to practice the word "${word}". I've chosen the ${level === 'EasyToHard' ? 'Easy to Hard' : (level || 'Easy')} level. Please start the session in ${targetLanguage}.` }]
       }];
 
       const response = await ai.models.generateContent({
@@ -260,7 +268,7 @@ CRITICAL RULES:
         config: {
           systemInstruction: `You are a helpful English Practice Partner. 
           The user is learning the word "${word}" (meaning: ${meaning}).
-          Your goal is to help them practice using this word in context at the ${level || 'Easy'} level.
+          Your goal is to help them practice using this word in context at the ${displayLevel} level.
           
           Level-Specific Sentence Requirements:
           ${selectedLevelInstruction}
@@ -268,7 +276,7 @@ CRITICAL RULES:
           Instructions:
           1. Communicate EXCLUSIVELY in ${targetLanguage}. 
           2. Give the user a specific scenario or question in ${targetLanguage} that requires them to use the English word "${word}".
-          3. The user MUST respond in English using the sentence structure appropriate for the ${level || 'Easy'} level.
+          3. The user MUST respond in English using the sentence structure appropriate for the ${displayLevel} level.
           4. Evaluate their English sentence. If it's correct and matches the level's complexity, praise them in ${targetLanguage} and give a new challenge.
           5. If it's incorrect or too simple for the level, gently correct or guide them in ${targetLanguage} and explain why, then ask them to try again.
           6. Keep your responses concise (max 2-3 sentences).
