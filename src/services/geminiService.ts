@@ -82,7 +82,7 @@ export class GeminiService {
         }
       });
 
-      const corrected = response.text?.trim().toLowerCase().replace(/[^a-z]/g, '');
+      const corrected = response.text?.trim().toLowerCase().replace(/[^a-z\s-]/g, '');
       return corrected || word.toLowerCase();
     });
   }

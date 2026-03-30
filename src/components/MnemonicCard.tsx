@@ -110,6 +110,10 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       }
 
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
       // If we have a stored audio URL and we're playing the main story, use it
       if (data.audioUrl && !text) {
         const response = await fetch(data.audioUrl);
@@ -160,7 +164,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
       <div className="text-center space-y-6">
         <div className="flex flex-col items-center gap-4">
           <div className="flex items-center justify-center gap-4 sm:gap-8">
-            <h1 className="text-5xl sm:text-8xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter text-center">{safeData.word}</h1>
+            <h1 className="text-4xl sm:text-8xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter text-center">{safeData.word}</h1>
             <div className="flex flex-col items-center gap-2">
               <button 
                 onClick={() => handlePlayAudio()}
@@ -271,11 +275,11 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
             </h3>
             <p className="text-gray-800 dark:text-gray-200 text-lg font-medium italic">{safeData.phoneticLink}</p>
           </div>
-          <div className="bg-indigo-600 p-6 rounded-2xl shadow-xl text-white transition-transform hover:scale-[1.02]">
+          <div className="bg-indigo-600 p-4 sm:p-6 rounded-2xl shadow-xl text-white transition-transform hover:scale-[1.02]">
              <h3 className="text-indigo-200 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-80">
                {language === Language.UZBEK ? "Mnemonik kalit" : (language === Language.RUSSIAN ? "Мнемонический ключ" : "Mnemonic Key")}
              </h3>
-            <p className="text-xl font-semibold italic">"{safeData.connectorSentence}"</p>
+            <p className="text-lg sm:text-xl font-semibold italic">"{safeData.connectorSentence}"</p>
           </div>
           <div className="bg-gray-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-200 dark:border-slate-800">
              <h3 className="text-gray-400 dark:text-gray-500 font-bold uppercase text-[10px] tracking-widest mb-4">

@@ -101,6 +101,10 @@ export default function App() {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       }
 
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
       const decodedData = decode(base64Audio);
       const audioBuffer = await decodeAudioData(decodedData, audioContextRef.current, 24000, 1);
 
@@ -459,7 +463,7 @@ export default function App() {
         }
 
         img = storedImageUrl || base64Image;
-        audio = storedAudioUrl;
+        audio = storedAudioUrl || (base64Audio ? `data:audio/wav;base64,${base64Audio}` : '');
         mnemonicData.audioUrl = audio;
 
         // Save to global library
