@@ -32,11 +32,12 @@ interface Props {
   onSignIn: () => void;
   onNavigate: (view: AppView) => void;
   onProfileUpdate?: () => void;
+  onLanguageChange?: (lang: Language) => void;
   language: Language;
   t: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, language, t }) => {
+export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, onLanguageChange, language, t }) => {
   const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -507,6 +508,22 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                             className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
                           >
                             {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
+                              <option key={l} value={l}>{l}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.uiLanguage}</label>
+                          <select 
+                            value={language}
+                            onChange={(e) => {
+                              const newLang = e.target.value as Language;
+                              if (onLanguageChange) onLanguageChange(newLang);
+                            }}
+                            className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"
+                          >
+                            {Object.values(Language).map((l) => (
                               <option key={l} value={l}>{l}</option>
                             ))}
                           </select>

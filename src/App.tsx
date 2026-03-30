@@ -832,44 +832,6 @@ export default function App() {
               >
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
               </button>
-              
-              {/* Language Dropdown */}
-              <div className="relative">
-                <button 
-                  onClick={() => setIsLangOpen(!isLangOpen)}
-                  className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 rounded-full text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm"
-                >
-                  <Languages size={20} />
-                </button>
-                
-                <AnimatePresence>
-                  {isLangOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50"
-                    >
-                      {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
-                        <button
-                          key={l}
-                          onClick={() => {
-                            setLanguage(l);
-                            setIsLangOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                            language === l 
-                              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
             </div>
           </div>
 
@@ -925,29 +887,6 @@ export default function App() {
                         {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                         {theme === 'light' ? t.darkMode : t.lightMode}
                       </button>
-
-                      {/* Language Selector */}
-                      <div className="border-t border-gray-100 dark:border-slate-800 mt-2 pt-2">
-                        <div className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                          {t.langLabel}
-                        </div>
-                        {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
-                          <button
-                            key={l}
-                            onClick={() => {
-                              setLanguage(l);
-                              setIsMenuOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                              language === l 
-                                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            {l}
-                          </button>
-                        ))}
-                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
