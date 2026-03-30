@@ -301,14 +301,6 @@ export const Flashcards: React.FC<Props> = ({
     }
   }, [isFlipped]);
 
-  const getFontSize = (word: string) => {
-    const len = word.length;
-    if (len > 18) return 'text-xl sm:text-5xl';
-    if (len > 14) return 'text-2xl sm:text-6xl';
-    if (len > 10) return 'text-3xl sm:text-6xl';
-    return 'text-5xl sm:text-6xl';
-  };
-
   if (savedMnemonics.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-24 text-center space-y-6">
@@ -360,9 +352,7 @@ export const Flashcards: React.FC<Props> = ({
           {/* Date Range inside Main Container */}
           <div className="grid grid-cols-2 gap-3 sm:gap-8">
             <div className="space-y-2 sm:space-y-3">
-              <span className="block text-[8px] sm:text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2 sm:ml-4">
-                {t.from} <span className="sm:hidden opacity-60">(mm/dd/yyyy)</span>
-              </span>
+              <span className="block text-[8px] sm:text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2 sm:ml-4">{t.from}</span>
               <div className="relative group">
                 <input 
                   type="date" 
@@ -373,9 +363,7 @@ export const Flashcards: React.FC<Props> = ({
               </div>
             </div>
             <div className="space-y-2 sm:space-y-3">
-              <span className="block text-[8px] sm:text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2 sm:ml-4">
-                {t.to} <span className="sm:hidden opacity-60">(mm/dd/yyyy)</span>
-              </span>
+              <span className="block text-[8px] sm:text-[10px] font-black uppercase text-gray-500 tracking-widest ml-2 sm:ml-4">{t.to}</span>
               <div className="relative group">
                 <input 
                   type="date" 
@@ -460,7 +448,7 @@ export const Flashcards: React.FC<Props> = ({
           <div className="absolute inset-0 backface-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-gray-100 dark:border-slate-800">
             <img src={current.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="Word Visual" referrerPolicy="no-referrer" />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent flex flex-col justify-end p-8 sm:p-10">
-              <h3 className={`${getFontSize(current.word)} font-black text-white tracking-tight drop-shadow-lg`}>{current.word}</h3>
+              <h3 className="text-5xl sm:text-6xl font-black text-white tracking-tight drop-shadow-lg">{current.word}</h3>
               <p className="text-white/70 font-mono mt-2 text-lg sm:text-xl drop-shadow-md">[{current.data.transcription}]</p>
             </div>
             
