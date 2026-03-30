@@ -360,6 +360,7 @@ export const Flashcards: React.FC<Props> = ({
                   onChange={e => setDateFrom(e.target.value)} 
                   className="date-input w-full pl-2 pr-1 sm:px-8 py-3 sm:py-6 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent rounded-xl sm:rounded-[2rem] outline-none focus:border-indigo-500 font-black text-gray-900 dark:text-white transition-all text-[10px] sm:text-lg" 
                 />
+                <div className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[8px] font-black text-gray-400 uppercase opacity-50">mm/dd/yyyy</div>
               </div>
             </div>
             <div className="space-y-2 sm:space-y-3">
@@ -371,6 +372,7 @@ export const Flashcards: React.FC<Props> = ({
                   onChange={e => setDateTo(e.target.value)} 
                   className="date-input w-full pl-2 pr-1 sm:px-8 py-3 sm:py-6 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent rounded-xl sm:rounded-[2rem] outline-none focus:border-indigo-500 font-black text-gray-900 dark:text-white transition-all text-[10px] sm:text-lg" 
                 />
+                <div className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[8px] font-black text-gray-400 uppercase opacity-50">mm/dd/yyyy</div>
               </div>
             </div>
           </div>
@@ -448,7 +450,16 @@ export const Flashcards: React.FC<Props> = ({
           <div className="absolute inset-0 backface-hidden bg-white dark:bg-[#0f172a] rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-gray-100 dark:border-slate-800">
             <img src={current.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="Word Visual" referrerPolicy="no-referrer" />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent flex flex-col justify-end p-8 sm:p-10">
-              <h3 className="text-5xl sm:text-6xl font-black text-white tracking-tight drop-shadow-lg">{current.word}</h3>
+              <h3 
+                className="font-black text-white tracking-tight drop-shadow-lg leading-none break-words"
+                style={{ 
+                  fontSize: current.word.length > 15 ? '2rem' : 
+                           current.word.length > 10 ? '3rem' : 
+                           'clamp(2.5rem, 10vw, 4.5rem)' 
+                }}
+              >
+                {current.word}
+              </h3>
               <p className="text-white/70 font-mono mt-2 text-lg sm:text-xl drop-shadow-md">[{current.data.transcription}]</p>
             </div>
             

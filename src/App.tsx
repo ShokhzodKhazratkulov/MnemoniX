@@ -71,6 +71,29 @@ export default function App() {
   const [forceCloseFlashcardDetail, setForceCloseFlashcardDetail] = useState(false);
   const [forceCloseFlashcardReview, setForceCloseFlashcardReview] = useState(false);
   const [language, setLanguage] = useState<Language>(Language.ENGLISH);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [mnemonic, setMnemonic] = useState<MnemonicResponse | null>(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -244,7 +267,7 @@ export default function App() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const t = TRANSLATIONS[Language.ENGLISH];
+  const t = TRANSLATIONS[language] || TRANSLATIONS[Language.ENGLISH];
 
   const navigateTo = async (newView: AppView) => {
     if (newView !== view) {
@@ -833,43 +856,14 @@ export default function App() {
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
               </button>
               
-              {/* Language Dropdown */}
-              <div className="relative">
-                <button 
-                  onClick={() => setIsLangOpen(!isLangOpen)}
-                  className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 rounded-full text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm"
-                >
-                  <Languages size={20} />
-                </button>
-                
-                <AnimatePresence>
-                  {isLangOpen && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50"
-                    >
-                      {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
-                        <button
-                          key={l}
-                          onClick={() => {
-                            setLanguage(l);
-                            setIsLangOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                            language === l 
-                              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              {/* Full Screen Button */}
+              <button 
+                onClick={toggleFullscreen}
+                title={isFullscreen ? t.exitFullScreen : t.fullScreen}
+                className="w-10 h-10 flex items-center justify-center bg-white/80 dark:bg-slate-900/80 border border-gray-100 dark:border-slate-800 rounded-full text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all shadow-sm"
+              >
+                {isFullscreen ? <X size={20} /> : <Layers size={20} />}
+              </button>
             </div>
           </div>
 
@@ -926,28 +920,17 @@ export default function App() {
                         {theme === 'light' ? t.darkMode : t.lightMode}
                       </button>
 
-                      {/* Language Selector */}
-                      <div className="border-t border-gray-100 dark:border-slate-800 mt-2 pt-2">
-                        <div className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                          {t.langLabel}
-                        </div>
-                        {Object.values(Language).filter(l => l !== Language.ENGLISH).map((l) => (
-                          <button
-                            key={l}
-                            onClick={() => {
-                              setLanguage(l);
-                              setIsMenuOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                              language === l 
-                                ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            {l}
-                          </button>
-                        ))}
-                      </div>
+                      {/* Full Screen Toggle */}
+                      <button
+                        onClick={() => {
+                          toggleFullscreen();
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                      >
+                        <Layers size={18} />
+                        {isFullscreen ? t.exitFullScreen : t.fullScreen}
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -1138,6 +1121,7 @@ export default function App() {
                 onSignIn={() => navigateTo(AppView.AUTH)}
                 onNavigate={navigateTo}
                 onProfileUpdate={() => fetchProfile(user.id)}
+                onLanguageChange={(lang) => setLanguage(lang)}
                 language={language}
                 t={t.profile}
               />
