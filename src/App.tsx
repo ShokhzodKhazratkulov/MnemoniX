@@ -424,12 +424,14 @@ export default function App() {
       let img: string;
       let audio: string | undefined;
 
-      const { data: existingMnemonic } = await supabase
+      const { data: existingMnemonics } = await supabase
         .from('mnemonics')
         .select('*')
         .eq('word', correctedWord)
         .eq('language', contentLanguage)
-        .maybeSingle();
+        .limit(1);
+      
+      const existingMnemonic = existingMnemonics?.[0];
 
       if (existingMnemonic) {
         mnemonicData = existingMnemonic.data as MnemonicResponse;
@@ -492,7 +494,7 @@ export default function App() {
         mnemonicData.audioUrl = audio;
 
         // Save to global library
-        const { data: newMnemonic, error: insertError } = await supabase.from('mnemonics').insert({
+        const { data: newMnemonicList, error: insertError } = await supabase.from('mnemonics').insert({
           word: correctedWord,
           data: mnemonicData,
           image_url: img,
@@ -500,17 +502,20 @@ export default function App() {
           language: contentLanguage,
           keyword: mnemonicData.phoneticLink,
           story: mnemonicData.imagination
-        }).select().single();
+        }).select().limit(1);
+        
+        const newMnemonic = newMnemonicList?.[0];
 
         if (insertError) {
           // If it already exists (race condition), just fetch it
           if (insertError.code === '23505') {
-            const { data: existing } = await supabase
+            const { data: existingList } = await supabase
               .from('mnemonics')
               .select('*')
               .eq('word', correctedWord)
               .eq('language', contentLanguage)
-              .single();
+              .limit(1);
+            const existing = existingList?.[0];
             if (existing) {
               mnemonicData = existing.data as MnemonicResponse;
               img = existing.image_url;
@@ -532,12 +537,14 @@ export default function App() {
 
       // 2. Save to user's personal list if logged in
       if (user) {
-        const { data: wordRecord, error: fetchError } = await supabase
+        const { data: wordRecords, error: fetchError } = await supabase
           .from('mnemonics')
           .select('id')
           .eq('word', correctedWord)
-          .eq('language', language)
-          .single();
+          .eq('language', contentLanguage)
+          .limit(1);
+        
+        const wordRecord = wordRecords?.[0];
 
         if (fetchError) {
           console.error('Error fetching word record:', fetchError);
@@ -595,12 +602,14 @@ export default function App() {
     try {
       // 1. Ensure mnemonic exists in DB
       let mnemonicId;
-      const { data: existing } = await supabase
+      const { data: existingList } = await supabase
         .from('mnemonics')
         .select('id')
         .eq('word', data.word)
-        .eq('language', language)
-        .maybeSingle();
+        .eq('language', contentLanguage)
+        .limit(1);
+      
+      const existing = existingList?.[0];
         
       if (existing) {
         mnemonicId = existing.id;
@@ -612,12 +621,13 @@ export default function App() {
             data: data,
             image_url: img,
             audio_url: data.audioUrl,
-            language: language
+            language: contentLanguage
           })
           .select()
-          .single();
+          .limit(1);
+        
         if (mErr) throw mErr;
-        mnemonicId = newM.id;
+        mnemonicId = newM?.[0]?.id;
       }
 
       // 2. Create post
@@ -626,7 +636,7 @@ export default function App() {
         .insert({
           user_id: user.id,
           mnemonic_id: mnemonicId,
-          language: language
+          language: contentLanguage
         });
       
       if (pErr) throw pErr;
@@ -665,12 +675,14 @@ export default function App() {
       };
 
       // 1. Save to global library if not exists
-      const { data: existing } = await supabase
+      const { data: existingList } = await supabase
         .from('mnemonics')
         .select('id')
         .eq('word', post.mnemonic_data.english_word)
         .eq('language', post.language)
-        .maybeSingle();
+        .limit(1);
+      
+      const existing = existingList?.[0];
 
       if (!existing) {
         await supabase.from('mnemonics').insert({
@@ -683,12 +695,14 @@ export default function App() {
 
       // 2. Save to user's personal list
       if (user) {
-        const { data: wordRecord } = await supabase
+        const { data: wordRecords } = await supabase
           .from('mnemonics')
           .select('id')
           .eq('word', post.mnemonic_data.english_word)
           .eq('language', post.language)
-          .maybeSingle();
+          .limit(1);
+        
+        const wordRecord = wordRecords?.[0];
 
         if (wordRecord) {
           const { error: upsertError } = await supabase
