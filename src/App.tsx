@@ -1016,6 +1016,7 @@ export default function App() {
                 language={language} 
                 onDelete={handleDelete} 
                 t={t.dashboard} 
+                fullT={t}
                 profile={userProfile}
               />
             </motion.div>
