@@ -70,7 +70,10 @@ export default function App() {
   const [isFlashcardReviewOpen, setIsFlashcardReviewOpen] = useState(false);
   const [forceCloseFlashcardDetail, setForceCloseFlashcardDetail] = useState(false);
   const [forceCloseFlashcardReview, setForceCloseFlashcardReview] = useState(false);
-  const [language, setLanguage] = useState<Language>(Language.ENGLISH);
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('mnemonix_ui_language');
+    return (saved as Language) || Language.ENGLISH;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [mnemonic, setMnemonic] = useState<MnemonicResponse | null>(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -122,6 +125,10 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    localStorage.setItem('mnemonix_ui_language', language);
+  }, [language]);
+
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }: any) => {
@@ -168,7 +175,7 @@ export default function App() {
           data: uw.mnemonics.data,
           imageUrl: uw.mnemonics.image_url,
           timestamp: new Date(uw.created_at).getTime(),
-          language: language,
+          language: uw.mnemonics.language || contentLanguage,
           isHard: uw.is_hard,
           isMastered: uw.is_mastered
         }));
@@ -192,8 +199,9 @@ export default function App() {
 
       if (data) {
         setUserProfile(data);
-        // Sync app language with user's preferred language
-        if (data.preferred_language) {
+        // Sync app language with user's preferred language only if no UI language is saved
+        const savedLang = localStorage.getItem('mnemonix_ui_language');
+        if (data.preferred_language && !savedLang) {
           setLanguage(data.preferred_language as Language);
         }
         if (!data.is_personalized && view !== AppView.PERSONALIZATION) {
@@ -259,6 +267,10 @@ export default function App() {
       categories: { ...en.categories, ...(base.categories || {}) },
     };
   }, [language]);
+
+  const contentLanguage = useMemo(() => {
+    return userProfile?.preferred_language || language;
+  }, [userProfile?.preferred_language, language]);
 
   const navigateTo = async (newView: AppView) => {
     if (newView !== view) {
@@ -411,7 +423,6 @@ export default function App() {
       let mnemonicData: MnemonicResponse;
       let img: string;
       let audio: string | undefined;
-      const contentLanguage = userProfile?.preferred_language || Language.UZBEK;
 
       const { data: existingMnemonic } = await supabase
         .from('mnemonics')
@@ -1005,7 +1016,7 @@ export default function App() {
             <motion.div key="search" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <SearchPage 
                 user={user}
-                language={language}
+                language={contentLanguage}
                 state={state}
                 mnemonic={mnemonic}
                 imageUrl={imageUrl}
@@ -1027,7 +1038,7 @@ export default function App() {
             <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Dashboard 
                 savedMnemonics={savedMnemonics} 
-                language={language} 
+                language={contentLanguage} 
                 onDelete={handleDelete} 
                 t={t.dashboard} 
                 fullT={t}
@@ -1053,7 +1064,7 @@ export default function App() {
             <motion.div key="flashcards" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Flashcards 
                 savedMnemonics={savedMnemonics} 
-                language={language} 
+                language={contentLanguage} 
                 onToggleHard={handleToggleHard}
                 onToggleMastered={handleToggleMastered}
                 onDetailChange={(isOpen) => {
@@ -1105,7 +1116,7 @@ export default function App() {
             <motion.div key="posts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Posts 
                 user={user} 
-                language={language} 
+                language={contentLanguage} 
                 theme={theme} 
                 viewMode="all" 
                 onNavigate={navigateTo}
@@ -1124,7 +1135,7 @@ export default function App() {
             <motion.div key="my-posts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Posts 
                 user={user} 
-                language={language} 
+                language={contentLanguage} 
                 theme={theme} 
                 viewMode="mine" 
                 onNavigate={navigateTo}
@@ -1143,7 +1154,7 @@ export default function App() {
             <motion.div key="my-remixes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Posts 
                 user={user} 
-                language={language} 
+                language={contentLanguage} 
                 theme={theme} 
                 viewMode="remixes" 
                 onNavigate={navigateTo}
@@ -1162,7 +1173,7 @@ export default function App() {
             <motion.div key="create-post" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <Posts 
                 user={user} 
-                language={language} 
+                language={contentLanguage} 
                 theme={theme} 
                 viewMode="create" 
                 onNavigate={navigateTo}
@@ -1179,7 +1190,7 @@ export default function App() {
             <PracticePartner 
               word={practiceWord?.word || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word}
               meaning={practiceWord?.meaning || mnemonic?.meaning || selectedFlashcardWord?.data.meaning || savedMnemonics[0]?.data.meaning}
-              language={language}
+              language={contentLanguage}
               onClose={() => {
                 setView(AppView.SEARCH);
                 setPracticeWord(null);
@@ -1245,7 +1256,7 @@ export default function App() {
                 <MnemonicCard 
                   data={selectedMnemonicForReview.data} 
                   imageUrl={selectedMnemonicForReview.imageUrl} 
-                  language={language} 
+                  language={selectedMnemonicForReview.language} 
                   onPractice={startPractice}
                   t={t}
                 />

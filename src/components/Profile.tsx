@@ -47,6 +47,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
     full_name: '',
     avatar_url: '',
     preferred_language: Language.UZBEK,
+    ui_language: language,
     daily_goal: 50,
     ielts_goal: 7
   });
@@ -82,6 +83,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
           full_name: data.full_name || '',
           avatar_url: data.avatar_url || '',
           preferred_language: data.preferred_language || Language.UZBEK,
+          ui_language: language,
           daily_goal: data.daily_goal || 50,
           ielts_goal: data.ielts_goal || 7
         });
@@ -507,9 +509,10 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.uiLanguage}</label>
                           <select 
-                            value={language}
+                            value={editForm.ui_language}
                             onChange={(e) => {
                               const newLang = e.target.value as Language;
+                              setEditForm({...editForm, ui_language: newLang});
                               if (onLanguageChange) onLanguageChange(newLang);
                             }}
                             className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none transition-all font-bold text-gray-900 dark:text-white"

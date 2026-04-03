@@ -73,6 +73,7 @@ export interface Profile {
   subscription_id: string | null;
   created_at: string;
   preferred_language?: Language;
+  ui_language?: Language;
   daily_goal?: number;
   ielts_goal?: number;
   is_personalized?: boolean;
