@@ -35,9 +35,10 @@ interface Props {
   onLanguageChange?: (lang: Language) => void;
   language: Language;
   t: any;
+  fullT: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, onLanguageChange, language, t }) => {
+export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, onLanguageChange, language, t, fullT }) => {
   const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -176,7 +177,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
   };
 
   const getMonthName = (date: Date) => {
-    return t.months[date.getMonth()] || t.months[0];
+    return fullT.months[date.getMonth()] || fullT.months[0];
   };
 
   const joinDate = user ? `${getMonthName(new Date(user.created_at))} ${new Date(user.created_at).getFullYear()}` : t.guestSession;
@@ -421,7 +422,7 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
                   <div className="space-y-4">
                     {(activeModal === 'searched' ? savedMnemonics : savedMnemonics.filter(m => m.isMastered)).length === 0 ? (
                       <div className="text-center py-12">
-                        <p className="text-gray-500 font-bold">{t.empty}</p>
+                        <p className="text-gray-500 font-bold">{fullT.empty}</p>
                       </div>
                     ) : (
                       (activeModal === 'searched' ? savedMnemonics : savedMnemonics.filter(m => m.isMastered)).map((m) => (

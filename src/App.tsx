@@ -1096,6 +1096,7 @@ export default function App() {
                 language={language}
                 onLanguageChange={setLanguage}
                 t={t.profile}
+                fullT={t}
               />
             </motion.div>
           )}
