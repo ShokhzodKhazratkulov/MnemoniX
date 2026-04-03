@@ -25,6 +25,7 @@ interface Props {
   forceCloseDetail?: boolean;
   forceCloseReview?: boolean;
   t: any;
+  fullT: any;
 }
 
 export const Flashcards: React.FC<Props> = ({ 
@@ -39,7 +40,8 @@ export const Flashcards: React.FC<Props> = ({
   onSearchWord,
   forceCloseDetail, 
   forceCloseReview,
-  t
+  t,
+  fullT
 }) => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -258,7 +260,7 @@ export const Flashcards: React.FC<Props> = ({
 
       autoTable(doc, {
         startY: yPos,
-        head: [['#', 'Word', 'Meaning']],
+        head: [[ '#', fullT.wordHeader, fullT.meaningHeader]],
         body: tableData,
         theme: 'striped',
         styles: {
@@ -339,6 +341,7 @@ export const Flashcards: React.FC<Props> = ({
                 language={language} 
                 onSearch={onSearchWord}
                 onPractice={onPractice}
+                t={fullT}
               />
             </div>
           </div>
@@ -572,7 +575,7 @@ export const Flashcards: React.FC<Props> = ({
         <button 
           onClick={handleShuffle}
           className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-white rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95 flex-shrink-0"
-          title="Shuffle"
+          title={fullT.shuffle}
         >
           <Shuffle size={20} className="sm:size-6" />
         </button>
@@ -587,7 +590,7 @@ export const Flashcards: React.FC<Props> = ({
             className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-all ${
               isHard ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-red-500'
             }`}
-            title="Mark as Hard"
+            title={fullT.markHard}
           >
             <Flag size={20} fill={isHard ? "currentColor" : "none"} />
           </button>
@@ -601,7 +604,7 @@ export const Flashcards: React.FC<Props> = ({
             className={`w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-2xl transition-all ${
               isMastered ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-emerald-500'
             }`}
-            title="Mark as Mastered"
+            title={fullT.markMastered}
           >
             <CheckCircle size={20} fill={isMastered ? "currentColor" : "none"} />
           </button>

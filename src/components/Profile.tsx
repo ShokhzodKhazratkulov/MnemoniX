@@ -175,21 +175,11 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
     }
   };
 
-  const getMonthName = (date: Date, lang: Language) => {
-    const months = {
-      [Language.ENGLISH]: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-      [Language.UZBEK]: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
-      [Language.RUSSIAN]: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
-      [Language.KAZAKH]: ['Қаңтар', 'Ақпан', 'Наурыз', 'Сәуір', 'Мамыр', 'Маусым', 'Шілде', 'Тамыз', 'Қыркүйек', 'Қазан', 'Қараша', 'Желтоқсан'],
-      [Language.TAJIK]: ['Январ', 'Феврал', 'Март', 'Апрел', 'Май', 'Июн', 'Июл', 'Август', 'Сентябр', 'Октябр', 'Ноябр', 'Декабр'],
-      [Language.KYRGYZ]: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
-      [Language.TURKMEN]: ['Ýanwar', 'Fewral', 'Mart', 'Aprel', 'Maý', 'Iýun', 'Iýul', 'Awgust', 'Sentýabr', 'Oktýabr', 'Noýabr', 'Dekabr']
-    };
-    const monthList = months[lang] || months[Language.UZBEK];
-    return monthList[date.getMonth()];
+  const getMonthName = (date: Date) => {
+    return t.months[date.getMonth()] || t.months[0];
   };
 
-  const joinDate = user ? `${getMonthName(new Date(user.created_at), language)} ${new Date(user.created_at).getFullYear()}` : t.guestSession;
+  const joinDate = user ? `${getMonthName(new Date(user.created_at))} ${new Date(user.created_at).getFullYear()}` : t.guestSession;
 
   const trialEndsAt = user?.trial_ends_at ? new Date(user.trial_ends_at) : null;
   const isTrialExpired = trialEndsAt ? trialEndsAt.getTime() < Date.now() : false;

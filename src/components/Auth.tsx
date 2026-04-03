@@ -7,9 +7,10 @@ import { supabase } from '../supabaseClient';
 interface AuthProps {
   onClose?: () => void;
   onSuccess?: () => void;
+  t: any;
 }
 
-export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
+export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess, t }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,7 +31,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
         if (error) throw error;
         
         if (!data.session) {
-          setMessage('Your account has been created. Please check your email and verify your address before logging in.');
+          setMessage(t.authVerifyEmail);
           setIsSignUp(false); // Switch to Sign In view
           setPassword(''); // Clear password for security
           return;
@@ -77,11 +78,16 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
           </div>
           
           <h1 className="text-[8vw] font-black text-white leading-[0.85] tracking-tighter uppercase mb-8">
-            Master<br />Words<br />Faster
+            {t.authHeroTitle.split('\n').map((line: string, i: number) => (
+              <React.Fragment key={i}>
+                {line}
+                {i < t.authHeroTitle.split('\n').length - 1 && <br />}
+              </React.Fragment>
+            ))}
           </h1>
           
           <p className="text-indigo-100 text-xl font-medium max-w-md leading-relaxed">
-            Join thousands of learners using AI-powered mnemonics to build an indestructible vocabulary.
+            {t.authHeroSubtitle}
           </p>
         </div>
 
@@ -94,7 +100,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
             ))}
           </div>
           <p className="text-indigo-100 font-bold text-sm uppercase tracking-widest">
-            +12k Active Learners
+            {t.activeLearners}
           </p>
         </div>
 
@@ -108,10 +114,10 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
         <div className="max-w-md w-full mx-auto">
           <div className="mb-12">
             <h2 className="text-4xl lg:text-5xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
+              {isSignUp ? t.createAccount : t.welcomeBack}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">
-              {isSignUp ? 'Start your journey to fluency today.' : 'Enter your details to continue learning.'}
+              {isSignUp ? t.startJourney : t.enterDetails}
             </p>
           </div>
 
@@ -121,7 +127,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
               className="flex items-center justify-center gap-3 py-4 border-2 border-gray-100 dark:border-slate-800 rounded-2xl font-black text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-900 transition-all shadow-sm w-full"
             >
               <Chrome size={20} className="text-indigo-600" />
-              Continue with Google
+              {t.continueWithGoogle}
             </button>
           </div>
 
@@ -130,13 +136,13 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
               <div className="w-full border-t-2 border-gray-100 dark:border-slate-800"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase tracking-[0.2em] font-black">
-              <span className="px-4 bg-white dark:bg-black text-gray-400">Or Email</span>
+              <span className="px-4 bg-white dark:bg-black text-gray-400">{t.orEmail}</span>
             </div>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Email Address</label>
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.emailAddress}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -151,7 +157,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Password</label>
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">{t.password}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -192,12 +198,12 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
               disabled={loading}
               className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black shadow-2xl shadow-indigo-500/40 hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-lg"
             >
-              {loading ? <Loader2 className="animate-spin" size={24} /> : (isSignUp ? 'Create Account' : 'Sign In')}
+              {loading ? <Loader2 className="animate-spin" size={24} /> : (isSignUp ? t.createAccount : t.signIn)}
             </button>
           </form>
 
           <p className="mt-12 text-center text-gray-500 dark:text-gray-400 font-bold">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            {isSignUp ? t.alreadyHaveAccount : t.dontHaveAccount}{' '}
             <button
               onClick={() => {
                 setIsSignUp(!isSignUp);
@@ -206,7 +212,7 @@ export const Auth: React.FC<AuthProps> = ({ onClose, onSuccess }) => {
               }}
               className="text-indigo-600 dark:text-indigo-400 font-black hover:underline ml-1"
             >
-              {isSignUp ? 'Sign In' : 'Join MnemoniX'}
+              {isSignUp ? t.signIn : t.joinMnemonix}
             </button>
           </p>
         </div>

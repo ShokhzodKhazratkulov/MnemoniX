@@ -244,7 +244,7 @@ export default function App() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const t = TRANSLATIONS[Language.ENGLISH];
+  const t = TRANSLATIONS[language] || TRANSLATIONS[Language.ENGLISH];
 
   const navigateTo = async (newView: AppView) => {
     if (newView !== view) {
@@ -899,7 +899,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {view === AppView.AUTH && (
             <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Auth onClose={() => goBack()} onSuccess={() => { setIsGuest(false); setView(AppView.HOME); }} />
+              <Auth onClose={() => goBack()} onSuccess={() => { setIsGuest(false); setView(AppView.HOME); }} t={t} />
             </motion.div>
           )}
 
@@ -915,7 +915,7 @@ export default function App() {
               <div className="text-center max-w-4xl mx-auto space-y-6 py-4 sm:py-8">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-sm font-black uppercase tracking-wider animate-bounce">
                   <Sparkles size={16} />
-                  AI-Powered Learning
+                  {t.aiPowered}
                 </div>
                 <h1 className="text-4xl sm:text-7xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1]">
                   {t.heroTitle}
@@ -950,37 +950,37 @@ export default function App() {
               {/* Footer Section */}
               <div className="pt-8 pb-4 border-t border-gray-100 dark:border-slate-800 space-y-4">
                 <div className="text-center space-y-4">
-                  <h4 className="text-gray-400 dark:text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">Contact us:</h4>
+                  <h4 className="text-gray-400 dark:text-gray-500 font-black text-[10px] uppercase tracking-[0.2em]">{t.contactUs}</h4>
                   <div className="flex justify-center gap-4 sm:gap-8">
                     <a href="https://www.instagram.com/mnemonix.io?igsh=b3UxZTZyOXJ0enhu" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-pink-500 border-pink-500/10 transition-all shadow-sm group-hover:scale-110">
                         <Instagram size={24} />
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-pink-500 transition-colors">Instagram</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-pink-500 transition-colors">{t.instagram}</span>
                     </a>
                     <a href="https://t.me/mnemonix_io" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-blue-400 border-blue-400/10 transition-all shadow-sm group-hover:scale-110">
                         <Send size={24} />
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-blue-400 transition-colors">Telegram</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-blue-400 transition-colors">{t.telegram}</span>
                     </a>
                     <a href="mailto:hello@mnemonix.io" className="flex flex-col items-center gap-2 group">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-red-500 border-red-500/10 transition-all shadow-sm group-hover:scale-110">
                         <Mail size={24} />
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-red-500 transition-colors">Gmail</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-red-500 transition-colors">{t.gmail}</span>
                     </a>
                     <a href="tel:+998504504182" className="flex flex-col items-center gap-2 group">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl flex items-center justify-center text-emerald-500 border-emerald-500/10 transition-all shadow-sm group-hover:scale-110">
                         <Phone size={24} />
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-emerald-500 transition-colors">Call</span>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 group-hover:text-emerald-500 transition-colors">{t.call}</span>
                     </a>
                   </div>
                 </div>
                 <div className="text-center pt-4">
                   <p className="text-gray-400 dark:text-gray-600 text-[9px] font-black uppercase tracking-[0.2em]">
-                    © All rights are reserved - 2026
+                    {t.copyright}
                   </p>
                 </div>
               </div>
@@ -1056,6 +1056,7 @@ export default function App() {
                   handleSearch(undefined, word);
                 }}
                 t={t.flashcards}
+                fullT={t}
               />
             </motion.div>
           )}
@@ -1078,6 +1079,7 @@ export default function App() {
                 onNavigate={navigateTo}
                 onProfileUpdate={() => fetchProfile(user.id)}
                 language={language}
+                onLanguageChange={setLanguage}
                 t={t.profile}
               />
             </motion.div>
@@ -1222,13 +1224,14 @@ export default function App() {
                   className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-800 hover:scale-110 transition-transform active:scale-95 flex items-center gap-2 font-black text-gray-600 dark:text-gray-400"
                 >
                   <ChevronLeft size={24} />
-                  Back to {selectedCategory}
+                  {t.backToCategory.replace('{category}', selectedCategory)}
                 </button>
                 <MnemonicCard 
                   data={selectedMnemonicForReview.data} 
                   imageUrl={selectedMnemonicForReview.imageUrl} 
                   language={language} 
                   onPractice={startPractice}
+                  t={t}
                 />
               </div>
             </motion.div>
@@ -1272,15 +1275,15 @@ export default function App() {
               <Sparkles size={18} />
               <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-indigo-600 animate-pulse" />
             </div>
-            <span className="text-[10px] sm:text-base font-black">Practice</span>
+            <span className="text-[10px] sm:text-base font-black">{t.practice}</span>
 
             {/* Tooltip */}
             <div className="absolute bottom-full right-0 mb-4 px-3 py-1.5 bg-slate-900 text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold uppercase tracking-widest">
-              Master "{ 
+              {t.masterNow.replace('{word}', 
                 (view === AppView.FLASHCARDS ? selectedFlashcardWord?.word : 
                  view === AppView.WORD_REVIEW ? selectedMnemonicForReview?.word : 
-                 mnemonic?.word) || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word
-              }" now
+                 mnemonic?.word) || mnemonic?.word || selectedFlashcardWord?.word || savedMnemonics[0]?.data.word || ''
+              )}
             </div>
           </motion.button>
         )}

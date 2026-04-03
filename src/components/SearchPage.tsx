@@ -124,7 +124,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
                   ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse' 
                   : 'text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-gray-50/50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800'
               }`}
-              title="Voice input"
+              title={t.voiceInput}
             >
               <Mic size={isListening ? 28 : 24} />
             </button>
@@ -194,10 +194,10 @@ export const SearchPage: React.FC<SearchPageProps> = ({
             <div className="relative z-10 space-y-6 max-w-lg">
               <div className="space-y-2">
                 <h3 className="text-3xl font-black tracking-tight leading-tight">
-                  Save your progress & sync across devices
+                  {t.syncTitle}
                 </h3>
                 <p className="text-indigo-100 font-medium text-lg">
-                  Create a free account to build your personal library and track your learning journey.
+                  {t.syncSubtitle}
                 </p>
               </div>
               <button 
@@ -256,6 +256,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
               language={language} 
               onSearch={(word) => handleSearch(undefined, word)}
               onPractice={onPractice}
+              t={t}
             />
           </motion.div>
         )}

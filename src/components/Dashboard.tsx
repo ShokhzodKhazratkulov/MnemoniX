@@ -199,20 +199,25 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
                 </motion.div>
                 
                 <h3 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white leading-tight tracking-tighter">
-                  Woow!<br />Congratulations!
+                  {t.congratsTitle.split('\n').map((line: string, i: number) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i === 0 && <br />}
+                    </React.Fragment>
+                  ))}
                 </h3>
                 
                 <div className="py-4 space-y-2">
                   <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
-                    Target Reached! 🎯
+                    {t.targetReached}
                   </p>
                   <p className="text-gray-500 dark:text-gray-400 font-bold text-lg">
-                    You've hit your daily word goal of <span className="text-indigo-600 dark:text-indigo-400">{profile?.daily_goal || 10} words</span>.
+                    {t.dailyGoalHit.replace('{goal}', (profile?.daily_goal || 10).toString())}
                   </p>
                 </div>
 
                 <p className="text-gray-400 dark:text-gray-500 font-medium italic">
-                  "Success is the sum of small efforts, repeated day in and day out."
+                  {t.successQuote}
                 </p>
                 
                 <div className="pt-8">
@@ -221,7 +226,7 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
                     transition={{ duration: 1.5, repeat: Infinity }}
                     className="inline-block px-6 py-2 bg-gray-100 dark:bg-slate-800 rounded-full text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-[0.3em]"
                   >
-                    Tap anywhere to continue
+                    {t.tapToContinue}
                   </motion.div>
                 </div>
               </div>
@@ -283,7 +288,7 @@ export const Dashboard: React.FC<Props> = ({ savedMnemonics, language, onDelete,
         </div>
 
         <div className="space-y-3 sm:space-y-6">
-          <p className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 font-medium">{t.goal}: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal ? (profile.ielts_goal % 1 === 0 ? `${profile.ielts_goal}.0` : profile.ielts_goal) : '7.0'} Band Score</span></p>
+          <p className="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 font-medium">{t.goal}: <span className="text-indigo-600 dark:text-indigo-400 font-black">{profile?.ielts_goal ? (profile.ielts_goal % 1 === 0 ? `${profile.ielts_goal}.0` : profile.ielts_goal) : '7.0'} {t.bandScore}</span></p>
           
           <div className="relative h-3 sm:h-6 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div 

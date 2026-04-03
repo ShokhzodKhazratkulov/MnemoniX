@@ -12,11 +12,12 @@ interface Props {
   language: Language;
   onSearch?: (word: string) => void;
   onPractice?: (word: string, meaning: string) => void;
+  t: any;
 }
 
 const gemini = new GeminiService();
 
-export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSearch, onPractice }) => {
+export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSearch, onPractice, t }) => {
   const [timer, setTimer] = useState(5);
   const [showContent, setShowContent] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -43,25 +44,9 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
     };
   }, []);
 
-  const researchNote = {
-    [Language.ENGLISH]: "Research secret: Raugh and Atkinson's experiment showed that the method is 2-3 times more effective when the user imagines the image themselves.",
-    [Language.UZBEK]: "Tadqiqot siri: Ro va Atkinson tajribasi shuni ko'rsatdiki, foydalanuvchi tasvirni o'zi tasavvur qilganda, usul 2-3 baravar samaraliroq bo'ladi.",
-    [Language.RUSSIAN]: "Секрет исследования: эксперимент Ро и Аткинсона показал, что метод в 2-3 раза эффективнее, когда пользователь сам представляет изображение.",
-    [Language.KAZAKH]: "Зерттеу құпиясы: Ро мен Аткинсонның эксперименті көрсеткендей, пайдаланушы кескінді өзі елестеткенде әдіс 2-3 есе тиімдірек болады.",
-    [Language.TAJIK]: "Сирри тадқиқот: таҷрибаи Ро ва Аткинсон нишон дод, ки вақте корбар тасвирро худаш тасаввур мекунад, усул 2-3 маротиба самараноктар аст.",
-    [Language.KYRGYZ]: "Изилдөө сыры: Ро жана Аткинсондун эксперименти көрсөткөндөй, колдонуучу сүрөттү өзү элестеткенде ыкма 2-3 эсе натыйжалуу болот.",
-    [Language.TURKMEN]: "Gözleg syry: Ro we Atkinsonuň synagy, ulanyjy şekili öz-özüne göz öňüne getirende, usulyň 2-3 esse has täsirli bolýandygyny görkezdi."
-  }[language];
+  const researchNote = t.researchNote;
 
-  const revealText = {
-    [Language.ENGLISH]: "Reveal Image",
-    [Language.UZBEK]: "Tasvirni ko'rish",
-    [Language.RUSSIAN]: "Показать изображение",
-    [Language.KAZAKH]: "Кескінді көрсету",
-    [Language.TAJIK]: "Нишон додани тасвир",
-    [Language.KYRGYZ]: "Сүрөттү көрсөтүү",
-    [Language.TURKMEN]: "Şekili görkez"
-  }[language];
+  const revealText = t.revealImage;
 
   const safeData = {
     word: data?.word || 'English Word',
@@ -188,7 +173,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
                 
                 {/* Tooltip-like label */}
                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap hidden sm:block">
-                  {language === Language.UZBEK ? "Hikoyani tinglash" : (language === Language.RUSSIAN ? "Слушать историю" : "Listen Story")}
+                  {t.listenStory}
                 </span>
               </button>
             </div>
@@ -252,11 +237,11 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
           {timer > 0 && isImageRevealed && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white p-6 text-center">
               <p className="text-lg font-bold mb-2">
-                {language === Language.UZBEK ? "Buni tasavvur qiling" : (language === Language.RUSSIAN ? "Представьте это" : "Visualize this for")}
+                {t.visualizeThis}
               </p>
               <p className="text-6xl font-black">{timer}</p>
               <p className="mt-4 text-sm opacity-80">
-                {language === Language.UZBEK ? "Ko'zingizni yuming va sahnani ko'ring..." : (language === Language.RUSSIAN ? "Закройте глаза и представьте сцену..." : "Close your eyes and see the scene...")}
+                {t.closeEyes}
               </p>
             </div>
           )}
@@ -265,25 +250,25 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
         <div className="space-y-6 max-w-2xl mx-auto w-full">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.01]">
             <h3 className="text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
-              {language === Language.UZBEK ? "Tasavvur (Vizual)" : (language === Language.RUSSIAN ? "Воображение (Визуал)" : "Imagination (Visual)")}
+              {t.imagination}
             </h3>
             <p className="text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{safeData.imagination}</p>
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-orange-400 transition-transform hover:scale-[1.02]">
             <h3 className="text-orange-600 dark:text-orange-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
-              {language === Language.UZBEK ? "Fonetik bog'liqlik (Ovoz)" : (language === Language.RUSSIAN ? "Фонетическая связь (Звук)" : "Phonetic Link (Sound)")}
+              {t.phoneticLink}
             </h3>
             <p className="text-gray-800 dark:text-gray-200 text-lg font-medium italic">{safeData.phoneticLink}</p>
           </div>
           <div className="bg-indigo-600 p-4 sm:p-6 rounded-2xl shadow-xl text-white transition-transform hover:scale-[1.02]">
              <h3 className="text-indigo-200 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-80">
-               {language === Language.UZBEK ? "Mnemonik kalit" : (language === Language.RUSSIAN ? "Мнемонический ключ" : "Mnemonic Key")}
+               {t.mnemonicKey}
              </h3>
             <p className="text-lg sm:text-xl font-semibold italic">"{safeData.connectorSentence}"</p>
           </div>
           <div className="bg-gray-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-200 dark:border-slate-800">
              <h3 className="text-gray-400 dark:text-gray-500 font-bold uppercase text-[10px] tracking-widest mb-4">
-               {language === Language.UZBEK ? "Sinonimlar" : (language === Language.RUSSIAN ? "Синонимы" : "Synonyms")}
+               {t.synonyms}
              </h3>
              <div className="flex flex-wrap gap-2">
                {safeData.synonyms.map((syn, idx) => (
@@ -299,7 +284,7 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
           </div>
           <div className="bg-gray-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-gray-200 dark:border-slate-800">
              <h3 className="text-gray-400 dark:text-gray-500 font-bold uppercase text-[10px] tracking-widest mb-4">
-               {language === Language.UZBEK ? "Misollar" : (language === Language.RUSSIAN ? "Примеры" : "Examples")}
+               {t.examples}
              </h3>
              <ul className="space-y-3">
                {safeData.examples.map((ex, idx) => (

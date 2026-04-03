@@ -141,13 +141,13 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
         setIsUploading(false);
       };
       reader.onerror = () => {
-        alert(t.error || "Failed to read image. Please try again.");
+        alert(t.failedReadImage || "Failed to read image. Please try again.");
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (err) {
       console.error("Upload error:", err);
-      alert(t.error || "Failed to process image. Please try again.");
+      alert(t.failedProcessImage || "Failed to process image. Please try again.");
       setIsUploading(false);
     }
   };
@@ -246,7 +246,7 @@ export const Posts: React.FC<Props> = ({ user, language, theme, viewMode = 'all'
           <div className="space-y-4">
             <h2 className="text-3xl font-black text-gray-900 dark:text-white">{t.loginRequired}</h2>
             <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto font-medium">
-              Join our community to share your creative mnemonics and help others learn faster!
+              {t.joinCommunity}
             </p>
           </div>
           <button 
