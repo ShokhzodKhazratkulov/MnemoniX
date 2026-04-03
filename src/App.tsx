@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -244,7 +244,21 @@ export default function App() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  const t = TRANSLATIONS[language] || TRANSLATIONS[Language.ENGLISH];
+  const t = useMemo(() => {
+    const base = TRANSLATIONS[language] || TRANSLATIONS[Language.ENGLISH];
+    const en = TRANSLATIONS[Language.ENGLISH];
+    
+    // Deep merge or at least ensure sub-objects exist by falling back to English
+    return {
+      ...en,
+      ...base,
+      dashboard: { ...en.dashboard, ...(base.dashboard || {}) },
+      flashcards: { ...en.flashcards, ...(base.flashcards || {}) },
+      profile: { ...en.profile, ...(base.profile || {}) },
+      posts: { ...en.posts, ...(base.posts || {}) },
+      categories: { ...en.categories, ...(base.categories || {}) },
+    };
+  }, [language]);
 
   const navigateTo = async (newView: AppView) => {
     if (newView !== view) {
