@@ -401,7 +401,7 @@ export default function App() {
     if (word) setSearchQuery(word);
 
     // Check cache
-    const cacheKey = `${query}-${language}`;
+    const cacheKey = `${query}-${contentLanguage}`;
     if (searchCache.current[cacheKey]) {
       setMnemonic(searchCache.current[cacheKey].mnemonic);
       setImageUrl(searchCache.current[cacheKey].imageUrl);
@@ -416,115 +416,138 @@ export default function App() {
     setImageUrl('');
 
     try {
-      let correctedWord = await gemini.checkSpelling(query);
-      correctedWord = correctedWord.toLowerCase().trim();
-      
-      // 1. Check if word exists in global mnemonics library for the SPECIFIC language
-      let mnemonicData: MnemonicResponse;
-      let img: string;
+      // 1. Fast path: Check if word exists in global mnemonics library for the SPECIFIC language
+      // Check with raw query first to avoid AI spelling check if possible
+      let mnemonicData: MnemonicResponse | null = null;
+      let img: string = '';
       let audio: string | undefined;
 
-      const { data: existingMnemonics } = await supabase
+      const { data: rawMnemonics } = await supabase
         .from('mnemonics')
         .select('*')
-        .eq('word', correctedWord)
+        .eq('word', query)
         .eq('language', contentLanguage)
         .limit(1);
       
-      const existingMnemonic = existingMnemonics?.[0];
+      let existingMnemonic = rawMnemonics?.[0];
 
-      if (existingMnemonic) {
+      if (!existingMnemonic) {
+        // 2. If not found, check spelling (slower AI call)
+        setLoadingMessage(t.checkingSpelling);
+        let correctedWord = await gemini.checkSpelling(query);
+        correctedWord = correctedWord.toLowerCase().trim();
+
+        if (correctedWord !== query) {
+          // Check database again with corrected word
+          const { data: correctedMnemonics } = await supabase
+            .from('mnemonics')
+            .select('*')
+            .eq('word', correctedWord)
+            .eq('language', contentLanguage)
+            .limit(1);
+          
+          existingMnemonic = correctedMnemonics?.[0];
+        }
+
+        if (!existingMnemonic) {
+          // 3. Generate new for this specific language
+          setLoadingMessage(t.loadingMnemonic);
+          mnemonicData = await gemini.getMnemonic(correctedWord, contentLanguage);
+          
+          setLoadingMessage(t.loadingImage);
+          const base64Image = await gemini.generateImage(mnemonicData.imagePrompt);
+          
+          // Upload image to storage
+          let storedImageUrl = '';
+          if (base64Image) {
+            try {
+              const imageBlob = await (await fetch(base64Image)).blob();
+              const fileName = `${correctedWord}-${contentLanguage}-${Date.now()}.png`;
+              const { error: uploadError } = await supabase.storage
+                .from('mnemonic_assets')
+                .upload(`images/${fileName}`, imageBlob, { upsert: true });
+              
+              if (!uploadError) {
+                storedImageUrl = getStorageUrl('mnemonic_assets', `images/${fileName}`);
+              } else {
+                console.error('Image upload error:', uploadError);
+              }
+            } catch (imgErr) {
+              console.error('Error processing image for upload:', imgErr);
+            }
+          }
+
+          // Generate and upload audio
+          let storedAudioUrl = '';
+          const ttsText = `${mnemonicData.word}. ${mnemonicData.meaning}. ${mnemonicData.phoneticLink}. ${mnemonicData.imagination}. ${mnemonicData.connectorSentence}`;
+          const base64Audio = await gemini.generateTTS(ttsText, contentLanguage);
+          
+          if (base64Audio) {
+            try {
+              const audioResponse = await fetch(`data:audio/wav;base64,${base64Audio}`);
+              const audioBlob = await audioResponse.blob();
+              const audioFileName = `${correctedWord}-${contentLanguage}-${Date.now()}.wav`;
+              const { error: audioUploadError } = await supabase.storage
+                .from('mnemonic_assets')
+                .upload(`audio/${audioFileName}`, audioBlob, { upsert: true });
+              
+              if (!audioUploadError) {
+                storedAudioUrl = getStorageUrl('mnemonic_assets', `audio/${audioFileName}`);
+              } else {
+                console.error('Audio upload error:', audioUploadError);
+              }
+            } catch (audioErr) {
+              console.error('Error processing audio for upload:', audioErr);
+            }
+          }
+
+          img = storedImageUrl || base64Image;
+          audio = storedAudioUrl || (base64Audio ? `data:audio/wav;base64,${base64Audio}` : '');
+          mnemonicData.audioUrl = audio;
+
+          // Save to global library
+          const { data: newMnemonicList, error: insertError } = await supabase.from('mnemonics').insert({
+            word: correctedWord,
+            data: mnemonicData,
+            image_url: img,
+            audio_url: audio,
+            language: contentLanguage,
+            keyword: mnemonicData.phoneticLink,
+            story: mnemonicData.imagination
+          }).select().limit(1);
+          
+          const newMnemonic = newMnemonicList?.[0];
+
+          if (insertError) {
+            // If it already exists (race condition), just fetch it
+            if (insertError.code === '23505') {
+              const { data: existingList } = await supabase
+                .from('mnemonics')
+                .select('*')
+                .eq('word', correctedWord)
+                .eq('language', contentLanguage)
+                .limit(1);
+              const existing = existingList?.[0];
+              if (existing) {
+                mnemonicData = existing.data as MnemonicResponse;
+                img = existing.image_url;
+              }
+            } else {
+              console.error('Error inserting mnemonic:', insertError);
+              throw new Error(`Supabase Mnemonic Save Error: ${insertError.message} (${insertError.code})`);
+            }
+          }
+        } else {
+          // Found after spelling correction
+          mnemonicData = existingMnemonic.data as MnemonicResponse;
+          img = existingMnemonic.image_url;
+          audio = existingMnemonic.audio_url;
+        }
+      } else {
+        // Found immediately with raw query
         mnemonicData = existingMnemonic.data as MnemonicResponse;
         img = existingMnemonic.image_url;
         audio = existingMnemonic.audio_url;
-      } else {
-        // Generate new for this specific language
-        setLoadingMessage(t.loadingMnemonic);
-        mnemonicData = await gemini.getMnemonic(correctedWord, contentLanguage);
-        
-        setLoadingMessage(t.loadingImage);
-        const base64Image = await gemini.generateImage(mnemonicData.imagePrompt);
-        
-        // Upload image to storage
-        let storedImageUrl = '';
-        if (base64Image) {
-          try {
-            const imageBlob = await (await fetch(base64Image)).blob();
-            const fileName = `${correctedWord}-${contentLanguage}-${Date.now()}.png`;
-            const { error: uploadError } = await supabase.storage
-              .from('mnemonic_assets')
-              .upload(`images/${fileName}`, imageBlob, { upsert: true });
-            
-            if (!uploadError) {
-              storedImageUrl = getStorageUrl('mnemonic_assets', `images/${fileName}`);
-            } else {
-              console.error('Image upload error:', uploadError);
-            }
-          } catch (imgErr) {
-            console.error('Error processing image for upload:', imgErr);
-          }
-        }
-
-        // Generate and upload audio
-        let storedAudioUrl = '';
-        const ttsText = `${mnemonicData.word}. ${mnemonicData.meaning}. ${mnemonicData.phoneticLink}. ${mnemonicData.imagination}. ${mnemonicData.connectorSentence}`;
-        const base64Audio = await gemini.generateTTS(ttsText, contentLanguage);
-        
-        if (base64Audio) {
-          try {
-            const audioResponse = await fetch(`data:audio/wav;base64,${base64Audio}`);
-            const audioBlob = await audioResponse.blob();
-            const audioFileName = `${correctedWord}-${contentLanguage}-${Date.now()}.wav`;
-            const { error: audioUploadError } = await supabase.storage
-              .from('mnemonic_assets')
-              .upload(`audio/${audioFileName}`, audioBlob, { upsert: true });
-            
-            if (!audioUploadError) {
-              storedAudioUrl = getStorageUrl('mnemonic_assets', `audio/${audioFileName}`);
-            } else {
-              console.error('Audio upload error:', audioUploadError);
-            }
-          } catch (audioErr) {
-            console.error('Error processing audio for upload:', audioErr);
-          }
-        }
-
-        img = storedImageUrl || base64Image;
-        audio = storedAudioUrl || (base64Audio ? `data:audio/wav;base64,${base64Audio}` : '');
-        mnemonicData.audioUrl = audio;
-
-        // Save to global library
-        const { data: newMnemonicList, error: insertError } = await supabase.from('mnemonics').insert({
-          word: correctedWord,
-          data: mnemonicData,
-          image_url: img,
-          audio_url: audio,
-          language: contentLanguage,
-          keyword: mnemonicData.phoneticLink,
-          story: mnemonicData.imagination
-        }).select().limit(1);
-        
-        const newMnemonic = newMnemonicList?.[0];
-
-        if (insertError) {
-          // If it already exists (race condition), just fetch it
-          if (insertError.code === '23505') {
-            const { data: existingList } = await supabase
-              .from('mnemonics')
-              .select('*')
-              .eq('word', correctedWord)
-              .eq('language', contentLanguage)
-              .limit(1);
-            const existing = existingList?.[0];
-            if (existing) {
-              mnemonicData = existing.data as MnemonicResponse;
-              img = existing.image_url;
-            }
-          } else {
-            console.error('Error inserting mnemonic:', insertError);
-            throw new Error(`Supabase Mnemonic Save Error: ${insertError.message} (${insertError.code})`);
-          }
-        }
       }
 
       setMnemonic(mnemonicData);
@@ -532,15 +555,20 @@ export default function App() {
       setState(AppState.RESULTS);
       setLoadingMessage('');
 
-      // Update cache
+      // Update cache with both the original query and the corrected word
       searchCache.current[cacheKey] = { mnemonic: mnemonicData, imageUrl: img };
+      if (mnemonicData.word.toLowerCase() !== query) {
+        const correctedCacheKey = `${mnemonicData.word.toLowerCase()}-${contentLanguage}`;
+        searchCache.current[correctedCacheKey] = { mnemonic: mnemonicData, imageUrl: img };
+      }
 
       // 2. Save to user's personal list if logged in
-      if (user) {
+      if (user && mnemonicData) {
+        const wordToSave = mnemonicData.word.toLowerCase();
         const { data: wordRecords, error: fetchError } = await supabase
           .from('mnemonics')
           .select('id')
-          .eq('word', correctedWord)
+          .eq('word', wordToSave)
           .eq('language', contentLanguage)
           .limit(1);
         
@@ -567,7 +595,7 @@ export default function App() {
           }
           fetchUserWords();
         }
-      } else {
+      } else if (!user && mnemonicData) {
         // Guest mode - local state only
         const newSavedMnemonic: SavedMnemonic = {
           id: Math.random().toString(36).substr(2, 9),
@@ -575,7 +603,7 @@ export default function App() {
           data: mnemonicData,
           imageUrl: img,
           timestamp: Date.now(),
-          language: language,
+          language: contentLanguage,
           isHard: false,
           isMastered: false
         };
