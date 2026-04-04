@@ -34,11 +34,12 @@ interface Props {
   onProfileUpdate?: () => void;
   onLanguageChange?: (lang: Language) => void;
   language: Language;
+  profile?: any;
   t: any;
   fullT: any;
 }
 
-export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, onLanguageChange, language, t, fullT }) => {
+export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, masteredCount, userPostCount, userRemixCount, onSignOut, onSignIn, onNavigate, onProfileUpdate, onLanguageChange, language, profile, t, fullT }) => {
   const [activeModal, setActiveModal] = useState<'none' | 'searched' | 'mastered' | 'edit'>('none');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -53,10 +54,20 @@ export const Profile: React.FC<Props> = ({ user, savedMnemonics, totalWords, mas
   });
 
   useEffect(() => {
-    if (user) {
+    if (profile) {
+      setEditForm({
+        username: profile.username || '',
+        full_name: profile.full_name || '',
+        avatar_url: profile.avatar_url || '',
+        preferred_language: profile.preferred_language || Language.UZBEK,
+        ui_language: language,
+        daily_goal: profile.daily_goal || 50,
+        ielts_goal: profile.ielts_goal || 7
+      });
+    } else if (user) {
       fetchProfile();
     }
-  }, [user]);
+  }, [user, profile]);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);

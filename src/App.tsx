@@ -156,12 +156,27 @@ export default function App() {
       setSavedMnemonics([]);
       return;
     }
+
+    // Try loading from cache first
+    const cacheKey = `mnemonix_user_words_${user.id}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        setSavedMnemonics(JSON.parse(cached));
+      } catch (e) {
+        console.error('Error parsing cached words:', e);
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_words')
         .select(`
-          *,
-          mnemonics (*)
+          id,
+          created_at,
+          is_hard,
+          is_mastered,
+          mnemonics (word, data, image_url, language)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -180,6 +195,8 @@ export default function App() {
           isMastered: uw.is_mastered
         }));
         setSavedMnemonics(formatted);
+        // Update cache
+        localStorage.setItem(cacheKey, JSON.stringify(formatted));
       }
     } catch (err) {
       console.error('Error fetching user words:', err);
@@ -188,6 +205,17 @@ export default function App() {
 
   // Fetch user profile
   const fetchProfile = async (userId: string) => {
+    // Try loading from cache first
+    const cacheKey = `mnemonix_user_profile_${userId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        setUserProfile(JSON.parse(cached));
+      } catch (e) {
+        console.error('Error parsing cached profile:', e);
+      }
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -199,6 +227,8 @@ export default function App() {
 
       if (data) {
         setUserProfile(data);
+        // Update cache
+        localStorage.setItem(cacheKey, JSON.stringify(data));
         // Sync app language with user's preferred language only if no UI language is saved
         const savedLang = localStorage.getItem('mnemonix_ui_language');
         if (data.preferred_language && !savedLang) {
@@ -1148,6 +1178,7 @@ export default function App() {
                 onProfileUpdate={() => fetchProfile(user.id)}
                 language={language}
                 onLanguageChange={setLanguage}
+                profile={userProfile}
                 t={t.profile}
                 fullT={t}
               />

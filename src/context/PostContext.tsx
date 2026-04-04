@@ -35,7 +35,8 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const cache = React.useRef<Record<string, { posts: Post[], hasMore: boolean, page: number }>>({});
 
   const fetchPosts = async (silent: boolean = false, reset: boolean = false, viewMode: string = 'all', language: Language = Language.UZBEK) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     const cacheKey = `${viewMode}-${language}-${user?.id || 'guest'}`;
 
     if (reset) {
@@ -69,10 +70,19 @@ export const PostProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let query = supabase
         .from('posts')
         .select(`
-          *,
+          id,
+          created_at,
+          user_id,
+          mnemonic_id,
+          language,
+          parent_post_id,
+          mnemonic_data,
+          visuals,
+          engagement,
+          is_updated,
           profiles!user_id (username, full_name, avatar_url),
-          mnemonics:mnemonic_id (*),
-          reactions (*),
+          mnemonics:mnemonic_id (word, keyword, story, image_url, data),
+          reactions (id, user_id, reaction_type),
           parent:parent_post_id (
             user_id,
             profiles:user_id (username, full_name, avatar_url)
