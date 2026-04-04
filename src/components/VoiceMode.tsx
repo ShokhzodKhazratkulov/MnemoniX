@@ -257,8 +257,8 @@ export const VoiceMode: React.FC<Props> = ({ onClose, uiLanguage, contentLanguag
             Har bir so‘z uchun quyidagi strukturani qo‘llang:
             1. So‘zning transkripsiyasi va ${contentLanguage}cha ma’nosini aniq ayting.
             2. Morfologik tahlil: So‘zni mantiqiy qismlarga bo‘ling.
-            3. Tasavvur (Imagination): Yorqin, g‘alati yoki kulgili sahna yarating.
-            4. Phonetic Link (Talaffuz bog'liqligi): So‘zning talaffuzi ${contentLanguage} tilidagi qaysi so‘zga o‘xshashligini toping va bog'lang.
+            3. Phonetic Link (Talaffuz bog'liqligi): So‘zning talaffuzi ${contentLanguage} tilidagi qaysi so‘zga o‘xshashligini toping va bog'lang.
+            4. Tasavvur (Imagination): Yorqin, g‘alati yoki kulgili sahna yarating.
             5. Connector Sentence: So‘z va tasvirni birlashtiruvchi 1 ta qisqa gap.
             6. Examples: So‘z qatnashgan 2 ta oddiy gap (Inglizcha gap, keyin tarjimasi).
             7. Visualisation Command: Foydalanuvchiga ushbu tasvirni 5 soniya davomida tasavvur qilishni buyuring.

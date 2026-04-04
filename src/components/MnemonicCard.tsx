@@ -248,17 +248,17 @@ export const MnemonicCard: React.FC<Props> = ({ data, imageUrl, language, onSear
         </div>
 
         <div className="space-y-6 max-w-2xl mx-auto w-full">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.01]">
-            <h3 className="text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
-              {t.imagination}
-            </h3>
-            <p className="text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{safeData.imagination}</p>
-          </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-orange-400 transition-transform hover:scale-[1.02]">
             <h3 className="text-orange-600 dark:text-orange-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
               {t.phoneticLink}
             </h3>
             <p className="text-gray-800 dark:text-gray-200 text-lg font-medium italic">{safeData.phoneticLink}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border-l-8 border-indigo-500 transition-transform hover:scale-[1.01]">
+            <h3 className="text-indigo-600 dark:text-indigo-400 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-60">
+              {t.imagination}
+            </h3>
+            <p className="text-gray-800 dark:text-gray-200 text-lg leading-relaxed">{safeData.imagination}</p>
           </div>
           <div className="bg-indigo-600 p-4 sm:p-6 rounded-2xl shadow-xl text-white transition-transform hover:scale-[1.02]">
              <h3 className="text-indigo-200 font-bold uppercase text-[10px] tracking-widest mb-2 opacity-80">
